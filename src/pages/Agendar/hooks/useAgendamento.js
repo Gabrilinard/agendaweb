@@ -171,20 +171,35 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
     setHorario('');
   };
 
-  const enviarReservasEmLote = async () => {
-    if (reservasTemporarias.length === 0) {
-      success('Solicitação Enviada!');
-      return;
-    }
-  
+  const enviarReservasEmLote = async (options = {}) => {
+    const onSuccess = typeof options === 'function' ? options : options?.onSuccess;
+
     if (!user) {
       warning('Você precisa estar logado para fazer uma consulta.');
       return;
     }
-  
+
+    const reservasParaEnviar = reservasTemporarias.length > 0
+      ? reservasTemporarias
+      : (() => {
+          if (!dataSelecionada || !horario) {
+            showError('Por favor, preencha todos os campos corretamente.');
+            return null;
+          }
+
+          const dataFormatada = formatarDataBrasil(dataSelecionada);
+          return [{
+            dia: dataFormatada,
+            horario,
+            horarioFinal: calcularHorarioFinal(horario)
+          }];
+        })();
+
+    if (!reservasParaEnviar) return;
+
     try {
-      await Promise.all(reservasTemporarias.map(async (reserva) => {
-        await agendarService.createReserva({
+      const idsCriados = await Promise.all(reservasParaEnviar.map(async (reserva) => {
+        const response = await agendarService.createReserva({
           nome: user.nome,
           sobrenome: user.sobrenome,
           email: user.email,
@@ -196,14 +211,21 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
           usuario_id: user.id,
           nomeProfissional: nomeProfissional || null,
         });
+
+        return response?.data?.id;
       }));
 
-      setReservasTemporarias([]); 
+      setReservasTemporarias([]);
       setDatasSelecionadas([]);
+      setDataSelecionada(new Date());
+      setHorario('');
 
-      const novoCount = (sessionStorage.getItem('solicitCount') ? parseInt(sessionStorage.getItem('solicitCount')) : 0) + 1;
-      sessionStorage.setItem('solicitCount', novoCount);
-      window.location.reload();
+      setSolicitCount((prevCount) => prevCount + 1);
+      success('Solicitação Enviada!');
+
+      if (onSuccess) {
+        onSuccess({ reservaIds: idsCriados.filter(Boolean) });
+      }
     } catch (error) {
       console.error('Erro ao enviar reservas:', error);
       showError('Erro ao tentar enviar as consultas. Tente novamente.');

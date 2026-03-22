@@ -192,13 +192,18 @@ const EmpresasProfissionais = () => {
         }));
     };
 
-    const handleInscrever = (nome, tipo) => {
+    const handleInscrever = (profissional) => {
         if (!user) {
             warning('Você precisa estar logado para agendar.');
             navigate('/Entrar');
             return;
         }
-        navigate('/Agendar', { state: { nome, tipo } });
+        navigate('/Agendar', { 
+            state: { 
+                nome: profissional.nomeCompleto, 
+                tipo: profissional.tipoProfissional 
+            } 
+        });
     };
 
     const profissionaisAtuais = profissionaisPorCategoria[categoriaAtiva] || [];
@@ -319,7 +324,7 @@ const EmpresasProfissionais = () => {
                                                 </div>
                                             )}
                                         </EmpresaInfo>
-                                        <InscreverButton onClick={() => handleInscrever(profissional.nomeCompleto, 'profissional')}>
+                                        <InscreverButton onClick={() => handleInscrever(profissional)}>
                                             Agende Agora
                                         </InscreverButton>
                                     </EmpresaCard>
@@ -350,4 +355,3 @@ const EmpresasProfissionais = () => {
 };
 
 export default EmpresasProfissionais;
-

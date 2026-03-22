@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Footer from '../../components/Footer';
 import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
@@ -15,16 +15,17 @@ import { useReservaActions } from './hooks/useReservaActions';
 import { useReservas } from './hooks/useReservas';
 
 import {
-  Container,
-  Container_Important,
-  ContainerGeral,
-  TituloAgendamento
+    Container,
+    Container_Important,
+    ContainerGeral,
+    TituloAgendamento
 } from './style';
 
 const Agendar = () => {
     const { user } = useAuth();
+    const navigate = useNavigate();
     const location = useLocation();
-    const { nome: nomeProfissional } = location.state || {};
+    const { nome: nomeProfissional, tipo } = location.state || {};
     const emailNotification = useEmailNotification(user);
 
     const { 
@@ -67,6 +68,24 @@ const Agendar = () => {
         handleEmergencySubmit
     } = useEmergencia(user, nomeProfissional);
 
+    const tipoProfissional = (tipo || profissionalInfo?.tipoProfissional || '').toLowerCase();
+
+    const handleSolicitarConsulta = async () => {
+        await enviarReservasEmLote({
+            onSuccess: ({ reservaIds }) => {
+                if (
+                    tipoProfissional === 'dentista' ||
+                    tipoProfissional === 'nutricionista' ||
+                    tipoProfissional === 'medico' ||
+                    tipoProfissional === 'fisioterapeuta' ||
+                    tipoProfissional === 'fonoaudiologo'
+                ) {
+                    navigate('/Formulario', { state: { nomeProfissional, tipoProfissional, reservaIds } });
+                }
+            }
+        });
+    };
+
     return (
         <ContainerGeral>
             <Header />
@@ -93,7 +112,7 @@ const Agendar = () => {
                             horariosDisponiveis={horariosDisponiveis}
                             isDateAvailable={isDateAvailable}
                             adicionarDiaReserva={() => adicionarDiaReserva(reservas)}
-                            enviarReservas={enviarReservasEmLote}
+                            enviarReservas={handleSolicitarConsulta}
                             reservasTemporarias={reservasTemporarias}
                             datasSelecionadas={datasSelecionadas}
                             onEmergencyClick={() => setShowEmergencyModal(true)}

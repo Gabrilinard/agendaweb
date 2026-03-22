@@ -47,6 +47,7 @@ export const useProfissional = (nomeProfissional) => {
 
           setProfissionalInfo({
             id: profissional.id,
+            tipoProfissional: profissional.tipoProfissional,
             nome: profData.nome,
             sobrenome: profData.sobrenome,
             descricao: profData.descricao,
