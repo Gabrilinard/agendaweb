@@ -338,6 +338,45 @@ const Registro = () => {
     return `${apenasNumeros.slice(0, 3)}.${apenasNumeros.slice(3, 6)}.${apenasNumeros.slice(6, 9)}-${apenasNumeros.slice(9, 11)}`;
   };
 
+  const formatarHorarioInput = (valor) => {
+    if (!valor) return '';
+    const apenasNumeros = String(valor).replace(/\D/g, '').slice(0, 4);
+    if (apenasNumeros.length <= 2) return apenasNumeros;
+    return `${apenasNumeros.slice(0, 2)}:${apenasNumeros.slice(2)}`;
+  };
+
+  const normalizarHorario24h = (valor) => {
+    if (!valor) return '';
+    const texto = String(valor).trim();
+
+    const matchAMPM = texto.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)/i);
+    if (matchAMPM) {
+      let horas = parseInt(matchAMPM[1], 10);
+      const minutos = parseInt(matchAMPM[2], 10);
+      const periodo = matchAMPM[4].toUpperCase();
+
+      if (Number.isNaN(horas) || Number.isNaN(minutos)) return '';
+      if (minutos < 0 || minutos > 59) return '';
+
+      if (periodo === 'PM' && horas !== 12) horas += 12;
+      if (periodo === 'AM' && horas === 12) horas = 0;
+      if (horas < 0 || horas > 23) return '';
+
+      return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`;
+    }
+
+    const apenasNumeros = texto.replace(/\D/g, '').slice(0, 4);
+    if (apenasNumeros.length !== 4) return texto;
+
+    const horas = parseInt(apenasNumeros.slice(0, 2), 10);
+    const minutos = parseInt(apenasNumeros.slice(2, 4), 10);
+    if (Number.isNaN(horas) || Number.isNaN(minutos)) return '';
+    if (horas < 0 || horas > 23) return '';
+    if (minutos < 0 || minutos > 59) return '';
+
+    return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`;
+  };
+
   const validarCPF = (cpf) => {
     if (!cpf) return false;
     
@@ -477,6 +516,31 @@ const Registro = () => {
             ...prev,
             [dia]: novosHorarios
         };
+    });
+  };
+
+  const ordenarHorariosDia = (dia) => {
+    setHorariosAtendimento(prev => {
+      const horarios = [...(prev[dia] || [])];
+      const regexHorarioValido = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+      const comMeta = horarios.map((v, idx) => {
+        const texto = String(v || '').trim();
+        const valido = regexHorarioValido.test(texto);
+        const minutos = valido ? (parseInt(texto.slice(0, 2), 10) * 60 + parseInt(texto.slice(3, 5), 10)) : Number.POSITIVE_INFINITY;
+        return { valor: v, idx, valido, minutos };
+      });
+
+      comMeta.sort((a, b) => {
+        if (a.valido !== b.valido) return a.valido ? -1 : 1;
+        if (a.minutos !== b.minutos) return a.minutos - b.minutos;
+        return a.idx - b.idx;
+      });
+
+      return {
+        ...prev,
+        [dia]: comMeta.map(i => i.valor)
+      };
     });
   };
 
@@ -959,9 +1023,17 @@ const Registro = () => {
                         {horariosAtendimento[dia]?.map((horario, index) => (
                           <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                             <Input
-                              type="time"
+                              type="text"
                               value={horario}
-                              onChange={(e) => handleHorarioChange(dia, index, e.target.value)}
+                              onChange={(e) => handleHorarioChange(dia, index, formatarHorarioInput(e.target.value))}
+                              onBlur={(e) => {
+                                const normalizado = normalizarHorario24h(e.target.value);
+                                handleHorarioChange(dia, index, normalizado);
+                                ordenarHorariosDia(dia);
+                              }}
+                              placeholder="HH:MM"
+                              inputMode="numeric"
+                              maxLength={5}
                               required
                               style={{ width: '110px' }}
                             />
