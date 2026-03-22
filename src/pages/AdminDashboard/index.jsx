@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import Footer from '../../components/Footer';
 import { useAuth } from "../../contexts/AuthContext";
 import { useNotification } from '../../contexts/NotificationContext';
-import { Button, Button_2, Container, DatePickerWrapper, DrawerContainer, DrawerHeader, DrawerTitle, FormContainer, Input, Label, Wrapper } from './style';
+import { Button, Button_2, Container, DatePickerWrapper, DrawerContainer, DrawerHeader, DrawerTitle, FormContainer, Input, Label, WelcomeCard, WelcomeList, WelcomeText, WelcomeTitle, Wrapper } from './style';
 import CriarConsulta from './telas/CriarConsulta';
 import EditarInformacoes from './telas/EditarInformacoes';
 import EditarMapa from './telas/EditarMapa';
@@ -44,7 +44,8 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [reservasPorData, setReservasPorData] = useState({});
-  const [showConsultas, setShowConsultas] = useState(true);
+  const [showHome, setShowHome] = useState(true);
+  const [showConsultas, setShowConsultas] = useState(false);
   const [showMapEdit, setShowMapEdit] = useState(false);
   const [editLatitude, setEditLatitude] = useState(null);
   const [editLongitude, setEditLongitude] = useState(null);
@@ -461,7 +462,6 @@ const AdminDashboard = () => {
       });
 
       setReservasPorData(reservasPorDataObj);
-      setShowConsultas(true);
     } catch (error) {
       console.error('Erro ao buscar consultas:', error);
     }
@@ -859,6 +859,16 @@ const AdminDashboard = () => {
         }}>
           <div style={{ display: 'flex', gap: '8px' }}>
             <Button_2 onClick={() => {
+              setShowHome(true);
+              setShowConsultas(false);
+              setShowReservas(false);
+              setShowHistory(false);
+              setShowUrgencias(false);
+            }}>
+              Início
+            </Button_2>
+            <Button_2 onClick={() => {
+              setShowHome(false);
               setShowConsultas(true);
               setShowReservas(false);
               setShowHistory(false);
@@ -866,10 +876,18 @@ const AdminDashboard = () => {
             }}>
               Ver Consultas
             </Button_2>
-            <Button_2 onClick={() => setShowForm(true)}>
+            <Button_2 onClick={() => {
+              setShowHome(false);
+              setShowConsultas(false);
+              setShowReservas(false);
+              setShowHistory(false);
+              setShowUrgencias(false);
+              setShowForm(true);
+            }}>
               Criar Consulta
             </Button_2>
             <Button_2 onClick={() => {
+              setShowHome(false);
               setShowReservas(true);
               setShowConsultas(false);
               setShowHistory(false);
@@ -878,6 +896,7 @@ const AdminDashboard = () => {
               Ver Solicitações
             </Button_2>
             <Button_2 onClick={() => {
+              setShowHome(false);
               setShowHistory(true);
               setShowConsultas(false);
               setShowReservas(false);
@@ -886,6 +905,7 @@ const AdminDashboard = () => {
               Ver Histórico
             </Button_2>
             <Button_2 onClick={() => {
+              setShowHome(false);
               setShowUrgencias(true);
               setShowConsultas(false);
               setShowReservas(false);
@@ -897,6 +917,11 @@ const AdminDashboard = () => {
               try {
                 const response = await axios.get(`http://localhost:3000/usuarios/solicitarDados/${user.id}`);
                 const userData = response.data;
+                setShowHome(false);
+                setShowConsultas(false);
+                setShowReservas(false);
+                setShowHistory(false);
+                setShowUrgencias(false);
                 setShowMapEdit(true);
                 setEditingUserId(user.id);
                 if (userData.latitude && userData.longitude) {
@@ -910,6 +935,11 @@ const AdminDashboard = () => {
                 }
               } catch (error) {
                 console.error('Erro ao buscar dados do usuário:', error);
+                setShowHome(false);
+                setShowConsultas(false);
+                setShowReservas(false);
+                setShowHistory(false);
+                setShowUrgencias(false);
                 setShowMapEdit(true);
                 setEditingUserId(user.id);
               }
@@ -920,6 +950,11 @@ const AdminDashboard = () => {
               try {
                 const response = await axios.get(`http://localhost:3000/usuarios/solicitarDados/${user.id}`);
                 const userData = response.data;
+                setShowHome(false);
+                setShowConsultas(false);
+                setShowReservas(false);
+                setShowHistory(false);
+                setShowUrgencias(false);
                 setShowInfoEdit(true);
                 setEditingUserId(user.id);
                 setEditDescricao(userData.descricao || '');
@@ -960,56 +995,78 @@ const AdminDashboard = () => {
         </div>
       </header>
       <Container>
-        <div>
-      <VerSolicitacoes
-        show={showReservas}
-        reservas={reservas}
-        formatarDataExibicao={formatarDataExibicao}
-        formatarHorarioBrasil={formatarHorarioBrasil}
-        selecionarReservaParaFormulario={selecionarReservaParaFormulario}
-        reservaSelecionada={reservaSelecionada}
-        formularioSelecionado={formularioSelecionado}
-        carregandoFormulario={carregandoFormulario}
-        erroFormulario={erroFormulario}
-        onFecharFormulario={fecharFormularioSelecionado}
-        toggleStatus={toggleStatus}
-        mostrarMotivo={mostrarMotivo}
-        setMostrarMotivo={setMostrarMotivo}
-        motivo={motivo}
-        setMotivo={setMotivo}
-        negarReserva={negarReserva}
-        onEditarReserva={abrirEdicaoReserva}
-        removerReserva={removerReserva}
-      />
+        {showHome && (
+          <WelcomeCard>
+            <WelcomeTitle>
+              Bem-vindo(a){user?.nome ? `, ${user.nome}` : ''}!
+            </WelcomeTitle>
+            <WelcomeText>
+              Aqui você consegue gerenciar as coisas relacionadas ao seu trabalho, como sua agenda, solicitações de agendamento e seus dados de atendimento.
+            </WelcomeText>
+            <WelcomeList>
+              <li>Organize sua agenda e confirme atendimentos.</li>
+              <li>Acompanhe e responda solicitações de agendamento.</li>
+              <li>Consulte o histórico de atendimentos.</li>
+              <li>Atualize seu mapa e informações do perfil profissional.</li>
+            </WelcomeList>
+          </WelcomeCard>
+        )}
+        {showReservas && (
+          <VerSolicitacoes
+            show={showReservas}
+            reservas={reservas}
+            formatarDataExibicao={formatarDataExibicao}
+            formatarHorarioBrasil={formatarHorarioBrasil}
+            selecionarReservaParaFormulario={selecionarReservaParaFormulario}
+            reservaSelecionada={reservaSelecionada}
+            formularioSelecionado={formularioSelecionado}
+            carregandoFormulario={carregandoFormulario}
+            erroFormulario={erroFormulario}
+            onFecharFormulario={fecharFormularioSelecionado}
+            toggleStatus={toggleStatus}
+            mostrarMotivo={mostrarMotivo}
+            setMostrarMotivo={setMostrarMotivo}
+            motivo={motivo}
+            setMotivo={setMotivo}
+            negarReserva={negarReserva}
+            onEditarReserva={abrirEdicaoReserva}
+            removerReserva={removerReserva}
+          />
+        )}
 
-      <VerUrgencias
-        show={showUrgencias}
-        reservas={reservas}
-        formatarDataExibicao={formatarDataExibicao}
-        formatarHorarioBrasil={formatarHorarioBrasil}
-        success={success}
-        showError={showError}
-        buscarReservas={buscarReservas}
-        onEditarReserva={abrirEdicaoReserva}
-        removerReserva={removerReserva}
-      />
+        {showUrgencias && (
+          <VerUrgencias
+            show={showUrgencias}
+            reservas={reservas}
+            formatarDataExibicao={formatarDataExibicao}
+            formatarHorarioBrasil={formatarHorarioBrasil}
+            success={success}
+            showError={showError}
+            buscarReservas={buscarReservas}
+            onEditarReserva={abrirEdicaoReserva}
+            removerReserva={removerReserva}
+          />
+        )}
 
-      <VerHistorico
-        show={showHistory}
-        reservas={reservas}
-        searchHistory={searchHistory}
-        setSearchHistory={setSearchHistory}
-        formatarDataExibicao={formatarDataExibicao}
-        formatarHorarioBrasil={formatarHorarioBrasil}
-      />
-    </div>
+        {showHistory && (
+          <VerHistorico
+            show={showHistory}
+            reservas={reservas}
+            searchHistory={searchHistory}
+            setSearchHistory={setSearchHistory}
+            formatarDataExibicao={formatarDataExibicao}
+            formatarHorarioBrasil={formatarHorarioBrasil}
+          />
+        )}
 
-        <VerConsultas
-          show={showConsultas}
-          reservas={reservas}
-          formatarDataExibicao={formatarDataExibicao}
-          formatarHorarioBrasil={formatarHorarioBrasil}
-        />
+        {showConsultas && (
+          <VerConsultas
+            show={showConsultas}
+            reservas={reservas}
+            formatarDataExibicao={formatarDataExibicao}
+            formatarHorarioBrasil={formatarHorarioBrasil}
+          />
+        )}
 
       </Container>
       

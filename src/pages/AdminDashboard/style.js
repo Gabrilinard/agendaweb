@@ -13,6 +13,35 @@ export const Container = styled.div`
   flex-grow: 1;
 `;
 
+export const WelcomeCard = styled.div`
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto 20px auto;
+  padding: 24px;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0px 4px 14px rgba(0, 0, 0, 0.08);
+  text-align: left;
+`;
+
+export const WelcomeTitle = styled.h2`
+  margin: 0 0 10px 0;
+  color: #333;
+`;
+
+export const WelcomeText = styled.p`
+  margin: 0 0 14px 0;
+  color: #444;
+  line-height: 1.5;
+`;
+
+export const WelcomeList = styled.ul`
+  margin: 0;
+  padding-left: 18px;
+  color: #444;
+  line-height: 1.6;
+`;
+
 export const TableWrapper = styled.div`
   width: 100%;
   overflow-x: auto; /* Adiciona rolagem horizontal */
