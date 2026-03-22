@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -14,8 +15,68 @@ import {
   TextArea
 } from '../style';
 
+const normalizarTexto = (value) => (
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+);
+
+const normalizarTipoProfissional = (value) => {
+  const base = normalizarTexto(value);
+
+  const pluralMap = {
+    medicos: 'medico',
+    fisioterapeutas: 'fisioterapeuta',
+    fonoaudiologos: 'fonoaudiologo'
+  };
+
+  const possivelTipo = pluralMap[base] || base;
+
+  const especialidadesMedicas = [
+    'Clínico Geral',
+    'Oftalmologista',
+    'Cardiologista',
+    'Dermatologista',
+    'Pediatra',
+    'Ginecologista',
+    'Ortopedista',
+    'Neurologista',
+    'Psiquiatra',
+    'Endocrinologista',
+    'Gastroenterologista',
+    'Urologista',
+    'Otorrinolaringologista',
+    'Pneumologista',
+    'Reumatologista',
+    'Oncologista',
+    'Hematologista',
+    'Nefrologista',
+    'Anestesiologista',
+    'Radiologista',
+    'Patologista',
+    'Medicina do Trabalho',
+    'Medicina Esportiva',
+    'Geriatra',
+    'Mastologista',
+    'Proctologista',
+    'Angiologista',
+    'Cirurgião Geral',
+    'Cirurgião Plástico',
+    'Cirurgião Cardiovascular',
+    'Neurocirurgião',
+    'Cirurgião Pediátrico'
+  ];
+
+  const especialidadesSet = new Set(especialidadesMedicas.map(normalizarTexto));
+  if (especialidadesSet.has(possivelTipo)) return 'medico';
+
+  return possivelTipo;
+};
+
 const mapTipoAtendimento = (tipoProfissional) => {
-  const tipo = (tipoProfissional || '').toLowerCase();
+  const tipo = normalizarTipoProfissional(tipoProfissional);
   if (tipo === 'medico') return 'medico';
   if (tipo === 'fisioterapeuta') return 'fisioterapia';
   if (tipo === 'fonoaudiologo') return 'fonoaudiologia';
@@ -145,6 +206,11 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
 
     setIsSubmitting(true);
     try {
+      if (!reservaIdsNormalizados.length) {
+        showError('Não foi possível identificar a reserva vinculada a este formulário.');
+        return;
+      }
+
       const payload = {
         profissional: nomeProfissional || null,
         tipoProfissional: (tipoProfissional || '').toLowerCase(),
@@ -234,10 +300,13 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
         createdAt: new Date().toISOString()
       };
 
-      const storageKey = reservaIdsNormalizados.length
-        ? `formulario:${payload.tipoProfissional}:${reservaIdsNormalizados.join(',')}`
-        : `formulario:${payload.tipoProfissional}:sem_reserva:${Date.now()}`;
-      sessionStorage.setItem(storageKey, JSON.stringify(payload));
+      await axios.post('http://localhost:3000/formularios', {
+        reservaIds: reservaIdsNormalizados,
+        tipoFormulario: 'saude_geral',
+        tipoAtendimento: atendimentoTipo,
+        usuarioId: user.id,
+        conteudo: payload
+      });
 
       success('Formulário enviado com sucesso!');
       navigate('/minhas-consultas');
@@ -251,7 +320,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <SectionTitle>🩺 2. Motivo da Consulta</SectionTitle>
+      <SectionTitle>🩺 1. Motivo da Consulta</SectionTitle>
       <Grid>
         <Field style={{ gridColumn: '1 / -1' }}>
           <Label>Qual o principal motivo da consulta?</Label>
@@ -281,7 +350,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
         </Field>
       </Grid>
 
-      <SectionTitle>🏥 3. Histórico de Saúde</SectionTitle>
+      <SectionTitle>🏥 2. Histórico de Saúde</SectionTitle>
       <Grid>
         <Field>
           <Label>Possui alguma doença diagnosticada?</Label>
@@ -318,7 +387,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
         </Field>
       </Grid>
 
-      <SectionTitle>💊 4. Medicamentos e Alergias</SectionTitle>
+      <SectionTitle>💊 3. Medicamentos e Alergias</SectionTitle>
       <Grid>
         <Field>
           <Label>Usa algum medicamento atualmente?</Label>
@@ -360,7 +429,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
         </Field>
       </Grid>
 
-      <SectionTitle>🧬 5. Hábitos de Vida</SectionTitle>
+      <SectionTitle>🧬 4. Hábitos de Vida</SectionTitle>
       <Grid>
         <Field>
           <Label>Alimentação</Label>
@@ -402,7 +471,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
         </Field>
       </Grid>
 
-      <SectionTitle>🧠 6. Saúde Emocional</SectionTitle>
+      <SectionTitle>🧠 5. Saúde Emocional</SectionTitle>
       <Grid>
         <Field>
           <Label>Nível de estresse</Label>
@@ -431,7 +500,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
         </Field>
       </Grid>
 
-      <SectionTitle>🔽 7. Selecione o tipo de atendimento</SectionTitle>
+      <SectionTitle>🔽 6. Selecione o tipo de atendimento</SectionTitle>
       <Grid>
         <Field style={{ gridColumn: '1 / -1' }}>
           <Label>Tipo</Label>
@@ -445,7 +514,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
 
       {atendimentoTipo === 'medico' && (
         <>
-          <SectionTitle>🩻 8. BLOCO ESPECÍFICO – MÉDICO</SectionTitle>
+          <SectionTitle>🩻 7. BLOCO ESPECÍFICO – MÉDICO</SectionTitle>
           <Grid>
             <Field>
               <Label>Já passou por esse problema antes?</Label>
@@ -489,7 +558,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
 
       {atendimentoTipo === 'fisioterapia' && (
         <>
-          <SectionTitle>🏃‍♂️ 9. BLOCO ESPECÍFICO – FISIOTERAPIA</SectionTitle>
+          <SectionTitle>🏃‍♂️ 7. BLOCO ESPECÍFICO – FISIOTERAPIA</SectionTitle>
           <Grid>
             <Field style={{ gridColumn: '1 / -1' }}>
               <Label>Queixa principal</Label>
@@ -548,7 +617,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
 
       {atendimentoTipo === 'fonoaudiologia' && (
         <>
-          <SectionTitle>🗣️ 10. BLOCO ESPECÍFICO – FONOAUDIOLOGIA</SectionTitle>
+          <SectionTitle>🗣️ 7. BLOCO ESPECÍFICO – FONOAUDIOLOGIA</SectionTitle>
           <Grid>
             <Field>
               <Label>Dificuldade na fala?</Label>
@@ -639,7 +708,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
         </>
       )}
 
-      <SectionTitle>⚠️ 11. Outros Sintomas</SectionTitle>
+      <SectionTitle>⚠️ 8. Outros Sintomas</SectionTitle>
       <Grid>
         <Field>
           <label>
@@ -668,7 +737,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
         </Field>
       </Grid>
 
-      <SectionTitle>📎 12. Observações</SectionTitle>
+      <SectionTitle>📎 9. Observações</SectionTitle>
       <Grid>
         <Field style={{ gridColumn: '1 / -1' }}>
           <Label>Informações adicionais</Label>
@@ -689,4 +758,3 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
 };
 
 export default SaudeGeral;
-

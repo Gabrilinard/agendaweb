@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -70,6 +71,11 @@ const Nutricao = ({ nomeProfissional, reservaIds }) => {
 
     setIsSubmitting(true);
     try {
+      if (!reservaIdsNormalizados.length) {
+        showError('Não foi possível identificar a reserva vinculada a este formulário.');
+        return;
+      }
+
       const payload = {
         profissional: nomeProfissional || null,
         tipoProfissional: 'nutricionista',
@@ -85,10 +91,13 @@ const Nutricao = ({ nomeProfissional, reservaIds }) => {
         createdAt: new Date().toISOString()
       };
 
-      const storageKey = reservaIdsNormalizados.length
-        ? `formulario:nutricionista:${reservaIdsNormalizados.join(',')}`
-        : `formulario:nutricionista:sem_reserva:${Date.now()}`;
-      sessionStorage.setItem(storageKey, JSON.stringify(payload));
+      await axios.post('http://localhost:3000/formularios', {
+        reservaIds: reservaIdsNormalizados,
+        tipoFormulario: 'nutricionista',
+        tipoAtendimento: null,
+        usuarioId: user.id,
+        conteudo: payload
+      });
 
       success('Formulário de nutrição enviado com sucesso!');
       navigate('/minhas-consultas');
@@ -233,4 +242,3 @@ const Nutricao = ({ nomeProfissional, reservaIds }) => {
 };
 
 export default Nutricao;
-

@@ -16,6 +16,41 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
 
   const { setSolicitCount } = emailNotification;
 
+  const normalizarDiaSemana = (dia) => {
+    if (!dia) return '';
+    return String(dia)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/-?feira/g, '')
+      .replace(/\s+/g, '')
+      .trim();
+  };
+
+  const normalizarDataISO = (data) => {
+    if (!data) return '';
+
+    if (data instanceof Date) {
+      return formatarDataBrasil(data);
+    }
+
+    let raw = String(data).trim();
+    if (raw.includes('T')) raw = raw.split('T')[0];
+    if (raw.includes(' ')) raw = raw.split(' ')[0];
+
+    if (raw.includes('/')) {
+      const partes = raw.split('/');
+      if (partes.length === 3) {
+        const [dia, mes, ano] = partes;
+        if (dia && mes && ano) {
+          return `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+        }
+      }
+    }
+
+    return raw;
+  };
+
   const calcularHorarioFinal = (horario) => {
     if (!horario) return '';
     const [hora, minuto] = horario.split(':').map(Number);
@@ -37,30 +72,28 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
       let horariosDoDia = [];
       if (profissionalInfo.horariosAtendimento) {
         if (typeof profissionalInfo.horariosAtendimento === 'object' && !Array.isArray(profissionalInfo.horariosAtendimento)) {
-             horariosDoDia = profissionalInfo.horariosAtendimento[diaSemana] || [];
+          const horariosAtendimento = profissionalInfo.horariosAtendimento;
+          const chaveExata = Object.keys(horariosAtendimento).find((k) => (
+            normalizarDiaSemana(k) === normalizarDiaSemana(diaSemana)
+          ));
+          horariosDoDia = (chaveExata ? horariosAtendimento[chaveExata] : horariosAtendimento[diaSemana]) || [];
         }
       }
 
       const dataFormatada = formatarDataBrasil(dataSelecionada);
       
-      const horariosLivres = horariosDoDia.filter(h => {
-        const hFormatado = formatarHorarioBrasil(h);
-        const ocupado = reservasProfissional.some(reserva => {
-            let dataReserva = reserva.dia;
-            if (typeof reserva.dia === 'string') {
-               if (reserva.dia.includes('T')) {
-                  dataReserva = reserva.dia.split('T')[0];
-               }
-            } else if (reserva.dia instanceof Date) {
-               dataReserva = formatarDataBrasil(reserva.dia);
-            }
-            
-            const horarioReserva = formatarHorarioBrasil(reserva.horario);
-            
-            return dataReserva === dataFormatada && 
-                   horarioReserva === hFormatado && 
-                   reserva.status !== 'cancelado' && 
-                   reserva.status !== 'recusado';
+      const horariosDoDiaFormatados = (Array.isArray(horariosDoDia) ? horariosDoDia : [])
+        .map((h) => formatarHorarioBrasil(h))
+        .filter(Boolean);
+
+      const horariosLivres = horariosDoDiaFormatados.filter((hFormatado) => {
+        const ocupado = (Array.isArray(reservasProfissional) ? reservasProfissional : []).some((reserva) => {
+          const dataReserva = normalizarDataISO(reserva?.dia);
+          const horarioReserva = formatarHorarioBrasil(reserva?.horario);
+          return dataReserva === dataFormatada &&
+            horarioReserva === hFormatado &&
+            reserva?.status !== 'cancelado' &&
+            reserva?.status !== 'recusado';
         });
         return !ocupado;
       });
@@ -81,7 +114,9 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
     
     if (Array.isArray(profissionalInfo.diasAtendimento)) {
         if (profissionalInfo.diasAtendimento.includes('Todos os dias')) return true;
-        return profissionalInfo.diasAtendimento.includes(diaSemana);
+        return profissionalInfo.diasAtendimento.some((d) => (
+          normalizarDiaSemana(d) === normalizarDiaSemana(diaSemana)
+        ));
     }
     return true;
   };

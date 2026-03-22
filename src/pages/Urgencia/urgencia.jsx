@@ -60,8 +60,20 @@ const Urgencia = () => {
       );
       
       urgentRequests.sort((a, b) => {
-        const dateA = new Date(a.dia);
-        const dateB = new Date(b.dia);
+        const toDateObj = (value) => {
+          if (!value) return new Date(0);
+          if (value instanceof Date) return value;
+          const raw = String(value).includes('T') ? String(value).split('T')[0] : String(value);
+          const parts = raw.split('-');
+          if (parts.length >= 3) {
+            const [ano, mes, dia] = parts;
+            return new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
+          }
+          return new Date(raw);
+        };
+
+        const dateA = toDateObj(a.dia);
+        const dateB = toDateObj(b.dia);
         if (dateA - dateB !== 0) return dateA - dateB;
         return (a.horario || '').localeCompare(b.horario || '');
       });
@@ -77,17 +89,23 @@ const Urgencia = () => {
 
   const formatarData = (dataString) => {
     if (!dataString) return '';
-    const date = new Date(dataString);
-    if (isNaN(date.getTime())) {
-        if (typeof dataString === 'string' && dataString.includes('-')) {
-            const parts = dataString.split('-');
-            if (parts.length === 3) {
-                return `${parts[2]}/${parts[1]}/${parts[0]}`;
-            }
-        }
-        return dataString;
+    if (dataString instanceof Date) {
+      const dia = String(dataString.getDate()).padStart(2, '0');
+      const mes = String(dataString.getMonth() + 1).padStart(2, '0');
+      const ano = dataString.getFullYear();
+      return `${dia}/${mes}/${ano}`;
     }
-    return date.toLocaleDateString('pt-BR');
+    if (typeof dataString === 'string') {
+      let dataParaFormatar = dataString;
+      if (dataParaFormatar.includes('T')) {
+        dataParaFormatar = dataParaFormatar.split('T')[0];
+      }
+      const parts = dataParaFormatar.split('-');
+      if (parts.length >= 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+    }
+    return String(dataString);
   };
 
   const formatarHorario = (horario) => {

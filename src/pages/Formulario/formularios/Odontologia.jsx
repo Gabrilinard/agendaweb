@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -74,6 +75,11 @@ const Odontologia = ({ nomeProfissional, reservaIds }) => {
 
     setIsSubmitting(true);
     try {
+      if (!reservaIdsNormalizados.length) {
+        showError('Não foi possível identificar a reserva vinculada a este formulário.');
+        return;
+      }
+
       const payload = {
         profissional: nomeProfissional || null,
         tipoProfissional: 'dentista',
@@ -89,10 +95,13 @@ const Odontologia = ({ nomeProfissional, reservaIds }) => {
         createdAt: new Date().toISOString()
       };
 
-      const storageKey = reservaIdsNormalizados.length
-        ? `formulario:dentista:${reservaIdsNormalizados.join(',')}`
-        : `formulario:dentista:sem_reserva:${Date.now()}`;
-      sessionStorage.setItem(storageKey, JSON.stringify(payload));
+      await axios.post('http://localhost:3000/formularios', {
+        reservaIds: reservaIdsNormalizados,
+        tipoFormulario: 'dentista',
+        tipoAtendimento: null,
+        usuarioId: user.id,
+        conteudo: payload
+      });
 
       success('Formulário odontológico enviado com sucesso!');
       navigate('/minhas-consultas');
@@ -261,4 +270,3 @@ const Odontologia = ({ nomeProfissional, reservaIds }) => {
 };
 
 export default Odontologia;
-

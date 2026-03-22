@@ -22,7 +22,69 @@ const Formulario = () => {
     return null;
   }
 
-  const tipo = (tipoProfissional || '').toLowerCase();
+  const normalizarTexto = (value) => (
+    String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim()
+  );
+
+  const normalizarTipoProfissional = (value) => {
+    const base = normalizarTexto(value);
+
+    const pluralMap = {
+      medicos: 'medico',
+      dentistas: 'dentista',
+      nutricionistas: 'nutricionista',
+      fisioterapeutas: 'fisioterapeuta',
+      fonoaudiologos: 'fonoaudiologo'
+    };
+
+    const possivelTipo = pluralMap[base] || base;
+
+    const especialidadesMedicas = [
+      'Clínico Geral',
+      'Oftalmologista',
+      'Cardiologista',
+      'Dermatologista',
+      'Pediatra',
+      'Ginecologista',
+      'Ortopedista',
+      'Neurologista',
+      'Psiquiatra',
+      'Endocrinologista',
+      'Gastroenterologista',
+      'Urologista',
+      'Otorrinolaringologista',
+      'Pneumologista',
+      'Reumatologista',
+      'Oncologista',
+      'Hematologista',
+      'Nefrologista',
+      'Anestesiologista',
+      'Radiologista',
+      'Patologista',
+      'Medicina do Trabalho',
+      'Medicina Esportiva',
+      'Geriatra',
+      'Mastologista',
+      'Proctologista',
+      'Angiologista',
+      'Cirurgião Geral',
+      'Cirurgião Plástico',
+      'Cirurgião Cardiovascular',
+      'Neurocirurgião',
+      'Cirurgião Pediátrico'
+    ];
+
+    const especialidadesSet = new Set(especialidadesMedicas.map(normalizarTexto));
+    if (especialidadesSet.has(possivelTipo)) return 'medico';
+
+    return possivelTipo;
+  };
+
+  const tipo = normalizarTipoProfissional(tipoProfissional);
 
   return (
     <PageWrapper>

@@ -201,7 +201,8 @@ const EmpresasProfissionais = () => {
         navigate('/Agendar', { 
             state: { 
                 nome: profissional.nomeCompleto, 
-                tipo: profissional.tipoProfissional 
+                tipo: profissional.tipoProfissional,
+                categoria: categoriaAtiva
             } 
         });
     };

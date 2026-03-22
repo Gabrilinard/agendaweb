@@ -10,7 +10,14 @@ import { useNavigate } from 'react-router-dom';
 import Footer from '../../components/Footer';
 import { useAuth } from "../../contexts/AuthContext";
 import { useNotification } from '../../contexts/NotificationContext';
-import { Button, Button_2, Container, DatePickerWrapper, DaysWrapper, DivInputContainer, DrawerContainer, DrawerHeader, DrawerTitle, FormContainer, Input, Label, Select, Table, TableWrapper, Td, Th, Wrapper } from './style';
+import { Button, Button_2, Container, DatePickerWrapper, DrawerContainer, DrawerHeader, DrawerTitle, FormContainer, Input, Label, Wrapper } from './style';
+import CriarConsulta from './telas/CriarConsulta';
+import EditarInformacoes from './telas/EditarInformacoes';
+import EditarMapa from './telas/EditarMapa';
+import VerConsultas from './telas/VerConsultas';
+import VerHistorico from './telas/VerHistorico';
+import VerSolicitacoes from './telas/VerSolicitacoes';
+import VerUrgencias from './telas/VerUrgencias';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -58,8 +65,61 @@ const AdminDashboard = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [showUrgencias, setShowUrgencias] = useState(false);
   const [searchHistory, setSearchHistory] = useState('');
+  const [reservaSelecionada, setReservaSelecionada] = useState(null);
+  const [formularioSelecionado, setFormularioSelecionado] = useState(null);
+  const [carregandoFormulario, setCarregandoFormulario] = useState(false);
+  const [erroFormulario, setErroFormulario] = useState('');
 
   const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+
+  const selecionarReservaParaFormulario = async (reserva) => {
+    if (!reserva?.id) return;
+
+    setReservaSelecionada(reserva);
+    setFormularioSelecionado(null);
+    setErroFormulario('');
+    setCarregandoFormulario(true);
+
+    try {
+      const response = await axios.get(`http://localhost:3000/formularios/reserva/${reserva.id}`);
+      setFormularioSelecionado(response.data);
+    } catch (error) {
+      if (error?.response?.status === 404) {
+        setErroFormulario('Nenhum formulário encontrado para esta solicitação.');
+      } else {
+        setErroFormulario('Erro ao buscar formulário.');
+      }
+      setFormularioSelecionado(null);
+    } finally {
+      setCarregandoFormulario(false);
+    }
+  };
+
+  const fecharFormularioSelecionado = () => {
+    setReservaSelecionada(null);
+    setFormularioSelecionado(null);
+    setErroFormulario('');
+  };
+
+  const abrirEdicaoReserva = (reserva) => {
+    if (!reserva?.id) return;
+    setEditReservaId(reserva.id);
+
+    let dataReserva;
+    if (typeof reserva.dia === 'string') {
+      if (reserva.dia.includes('T')) {
+        dataReserva = new Date(reserva.dia.split('T')[0] + 'T12:00:00');
+      } else {
+        dataReserva = new Date(reserva.dia + 'T12:00:00');
+      }
+    } else {
+      dataReserva = new Date(reserva.dia);
+    }
+
+    setEditReservaData(dataReserva);
+    setEditReservaHorario(reserva.horario);
+    setShowReservaEdit(true);
+  };
 
   const handleEditDiaChange = (e) => {
     const dia = e.target.value;
@@ -867,7 +927,6 @@ const AdminDashboard = () => {
                 setEditModalidade(userData.modalidade || '');
                 setEditValorConsulta(userData.valorConsulta || '');
                 
-                // Parse diasAtendimento
                 let dias = userData.diasAtendimento;
                 if (typeof dias === 'string') {
                     try {
@@ -878,7 +937,6 @@ const AdminDashboard = () => {
                 }
                 setEditDiasAtendimento(Array.isArray(dias) ? dias : []);
 
-                // Parse horariosAtendimento
                 let horarios = userData.horariosAtendimento;
                 if (typeof horarios === 'string') {
                     try {
@@ -903,797 +961,126 @@ const AdminDashboard = () => {
       </header>
       <Container>
         <div>
-      {showReservas && (
-        <TableWrapper>
-          <Table>
-            <thead>
-              <tr>
-                <Th>Nome</Th>
-                <Th>Email</Th>
-                <Th>Telefone</Th>
-                <Th>Dia</Th>
-                <Th>Horário</Th>
-                <Th>Status</Th>
-                <Th>Ações</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {reservas.filter(reserva => {
-                if (!reserva.dia) return false;
-                
-                if (reserva.is_urgente) return false;
+      <VerSolicitacoes
+        show={showReservas}
+        reservas={reservas}
+        formatarDataExibicao={formatarDataExibicao}
+        formatarHorarioBrasil={formatarHorarioBrasil}
+        selecionarReservaParaFormulario={selecionarReservaParaFormulario}
+        reservaSelecionada={reservaSelecionada}
+        formularioSelecionado={formularioSelecionado}
+        carregandoFormulario={carregandoFormulario}
+        erroFormulario={erroFormulario}
+        onFecharFormulario={fecharFormularioSelecionado}
+        toggleStatus={toggleStatus}
+        mostrarMotivo={mostrarMotivo}
+        setMostrarMotivo={setMostrarMotivo}
+        motivo={motivo}
+        setMotivo={setMotivo}
+        negarReserva={negarReserva}
+        onEditarReserva={abrirEdicaoReserva}
+        removerReserva={removerReserva}
+      />
 
-                let dataReserva;
-                if (typeof reserva.dia === 'string') {
-                    let dataParaFormatar = reserva.dia;
-                    if (reserva.dia.includes('T')) {
-                        dataParaFormatar = reserva.dia.split('T')[0];
-                    }
-                    const partes = dataParaFormatar.split('-');
-                    if (partes.length === 3) {
-                        const [ano, mes, dia] = partes;
-                        dataReserva = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
-                    } else {
-                        dataReserva = new Date(dataParaFormatar);
-                    }
-                } else {
-                    dataReserva = new Date(reserva.dia);
-                }
-                
-                dataReserva.setHours(0, 0, 0, 0);
-                const hoje = new Date();
-                hoje.setHours(0, 0, 0, 0);
-                
-                return dataReserva >= hoje;
-              })
-              .map(reserva => (
-                <tr key={reserva.id}>
-                  <Td>{reserva.nome} {reserva.sobrenome}</Td>
-                  <Td>{reserva.email}</Td>
-                  <Td>{reserva.telefone}</Td>
-                  <Td>{formatarDataExibicao(reserva.dia)}</Td>
-                  <Td>{formatarHorarioBrasil(reserva.horario)}</Td>
-                  <Td>{reserva.status}</Td>
-                  <Td>
-                    {reserva.status === 'confirmado' ? (
-                      <Button onClick={() => toggleStatus(reserva)} style={{ background: 'orange', color: 'white' }}>
-                        Tirar Confirmação
-                      </Button>
-                    ) : (
-                      <Button onClick={() => toggleStatus(reserva)} style={{ background: 'green', color: 'white' }}>
-                        Confirmar
-                      </Button>
-                    )}
+      <VerUrgencias
+        show={showUrgencias}
+        reservas={reservas}
+        formatarDataExibicao={formatarDataExibicao}
+        formatarHorarioBrasil={formatarHorarioBrasil}
+        success={success}
+        showError={showError}
+        buscarReservas={buscarReservas}
+        onEditarReserva={abrirEdicaoReserva}
+        removerReserva={removerReserva}
+      />
 
-                    <Button onClick={() => setMostrarMotivo(reserva.id)} style={{ backgroundColor: 'red', color: 'white' }}>
-                      Negar
-                    </Button>
-
-                    {mostrarMotivo === reserva.id && (
-                      <div>
-                        <input
-                          type="text"
-                          value={motivo}
-                          onChange={(e) => setMotivo(e.target.value)}
-                          placeholder="Digite o motivo da negação"
-                          style={{
-                            padding: '8px',
-                            width: '300px',
-                            margin: '10px 0',
-                            display: 'block',
-                          }}
-                        />
-                        <div style={{ marginTop: '10px' }}>
-                          <button
-                            onClick={() => negarReserva(reserva)}
-                            style={{
-                              backgroundColor: 'green',
-                              color: 'white',
-                              marginRight: '10px', 
-                            }}
-                          >
-                            Confirmar Negação
-                          </button>
-
-                          <button
-                            onClick={() => setMostrarMotivo(null)}
-                            style={{
-                              backgroundColor: 'gray',
-                              color: 'white',
-                            }}
-                          >
-                            Cancelar
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    <Button onClick={() => {
-                      setEditReservaId(reserva.id);
-                      let dataReserva;
-                      if (typeof reserva.dia === 'string') {
-                          if (reserva.dia.includes('T')) {
-                              dataReserva = new Date(reserva.dia.split('T')[0] + 'T12:00:00');
-                          } else {
-                              dataReserva = new Date(reserva.dia + 'T12:00:00');
-                          }
-                      } else {
-                          dataReserva = new Date(reserva.dia);
-                      }
-                      setEditReservaData(dataReserva);
-                      setEditReservaHorario(reserva.horario);
-                      setShowReservaEdit(true);
-                    }} style={{ background: 'blue', color: 'white' }}>
-                      Editar
-                    </Button>
-
-                    <Button onClick={() => removerReserva(reserva.id)} style={{ background: 'red', color: 'white' }}>
-                      Remover
-                    </Button>
-                  </Td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </TableWrapper>
-      )}
-
-      {showUrgencias && (
-        <TableWrapper>
-          <h3 style={{ padding: '0 20px', color: '#d32f2f' }}>Solicitações de Urgência</h3>
-          <Table>
-            <thead>
-              <tr>
-                <Th>Nome</Th>
-                <Th>Telefone</Th>
-                <Th>Data</Th>
-                <Th>Horário</Th>
-                <Th>Descrição</Th>
-                <Th>Arquivo</Th>
-                <Th>Ações</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {reservas.filter(reserva => reserva.is_urgente).map(reserva => (
-                <tr key={reserva.id}>
-                  <Td>{reserva.nome} {reserva.sobrenome}</Td>
-                  <Td>{reserva.telefone}</Td>
-                  <Td>{formatarDataExibicao(reserva.dia)}</Td>
-                  <Td>{formatarHorarioBrasil(reserva.horario)}</Td>
-                  <Td>{reserva.descricao_urgencia}</Td>
-                  <Td>
-                    {reserva.arquivo_urgencia ? (
-                      <a href={`http://localhost:3000${reserva.arquivo_urgencia}`} target="_blank" rel="noopener noreferrer">
-                        Ver Arquivo
-                      </a>
-                    ) : 'Sem arquivo'}
-                  </Td>
-                  <Td>
-                    <Button onClick={() => {
-                         // Remover flag de urgente e confirmar
-                         axios.patch(`http://localhost:3000/reservas/${reserva.id}`, { is_urgente: false, status: 'confirmado' })
-                           .then(() => {
-                             success('Urgência atendida e convertida em consulta confirmada!');
-                             buscarReservas();
-                           })
-                           .catch(err => showError('Erro ao processar urgência.'));
-                    }} style={{ background: 'green', color: 'white' }}>
-                      Aceitar
-                    </Button>
-                    <Button onClick={() => {
-                      setEditReservaId(reserva.id);
-                      let dataReserva;
-                      if (typeof reserva.dia === 'string') {
-                          if (reserva.dia.includes('T')) {
-                              dataReserva = new Date(reserva.dia.split('T')[0] + 'T12:00:00');
-                          } else {
-                              dataReserva = new Date(reserva.dia + 'T12:00:00');
-                          }
-                      } else {
-                          dataReserva = new Date(reserva.dia);
-                      }
-                      setEditReservaData(dataReserva);
-                      setEditReservaHorario(reserva.horario);
-                      setShowReservaEdit(true);
-                    }} style={{ background: 'blue', color: 'white' }}>
-                      Editar
-                    </Button>
-                    <Button onClick={() => removerReserva(reserva.id)} style={{ background: 'red', color: 'white' }}>
-                      Remover
-                    </Button>
-                  </Td>
-                </tr>
-              ))}
-              {reservas.filter(reserva => reserva.is_urgente).length === 0 && (
-                <tr>
-                  <Td colSpan="7" style={{ textAlign: 'center' }}>Nenhuma solicitação de urgência encontrada.</Td>
-                </tr>
-              )}
-            </tbody>
-          </Table>
-        </TableWrapper>
-      )}
-
-      {showHistory && (
-        <TableWrapper>
-          <div style={{ marginBottom: '20px', padding: '0 20px' }}>
-            <h3 style={{ color: '#333', marginBottom: '10px' }}>Histórico de Consultas</h3>
-            <Input 
-              type="text" 
-              placeholder="Pesquisar por nome, email ou telefone..." 
-              value={searchHistory}
-              onChange={(e) => setSearchHistory(e.target.value)}
-              style={{ width: '100%', maxWidth: '400px' }}
-            />
-          </div>
-          <Table>
-            <thead>
-              <tr>
-                <Th>Nome</Th>
-                <Th>Email</Th>
-                <Th>Telefone</Th>
-                <Th>Dia</Th>
-                <Th>Horário</Th>
-                <Th>Status</Th>
-              </tr>
-            </thead>
-            <tbody>
-              {reservas.filter(reserva => {
-                if (!reserva.dia) return false;
-                
-                let dataReserva;
-                if (typeof reserva.dia === 'string') {
-                    let dataParaFormatar = reserva.dia;
-                    if (reserva.dia.includes('T')) {
-                        dataParaFormatar = reserva.dia.split('T')[0];
-                    }
-                    const partes = dataParaFormatar.split('-');
-                    if (partes.length === 3) {
-                        const [ano, mes, dia] = partes;
-                        dataReserva = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
-                    } else {
-                        dataReserva = new Date(dataParaFormatar);
-                    }
-                } else {
-                    dataReserva = new Date(reserva.dia);
-                }
-                
-                dataReserva.setHours(0, 0, 0, 0);
-                const hoje = new Date();
-                hoje.setHours(0, 0, 0, 0);
-                
-                // Filtra apenas datas passadas
-                if (dataReserva >= hoje) return false;
-
-                if (searchHistory) {
-                    const query = searchHistory.toLowerCase();
-                    const nomeCompleto = `${reserva.nome || ''} ${reserva.sobrenome || ''}`.toLowerCase();
-                    return (
-                        nomeCompleto.includes(query) ||
-                        (reserva.email && reserva.email.toLowerCase().includes(query)) ||
-                        (reserva.telefone && reserva.telefone.includes(query))
-                    );
-                }
-                return true;
-              })
-              .sort((a, b) => {
-                  const dateA = new Date(a.dia);
-                  const dateB = new Date(b.dia);
-                  return dateB - dateA;
-              })
-              .map(reserva => (
-                <tr key={reserva.id}>
-                  <Td>{reserva.nome} {reserva.sobrenome}</Td>
-                  <Td>{reserva.email}</Td>
-                  <Td>{reserva.telefone}</Td>
-                  <Td>{formatarDataExibicao(reserva.dia)}</Td>
-                  <Td>{formatarHorarioBrasil(reserva.horario)}</Td>
-                  <Td>{reserva.status}</Td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
-        </TableWrapper>
-      )}
+      <VerHistorico
+        show={showHistory}
+        reservas={reservas}
+        searchHistory={searchHistory}
+        setSearchHistory={setSearchHistory}
+        formatarDataExibicao={formatarDataExibicao}
+        formatarHorarioBrasil={formatarHorarioBrasil}
+      />
     </div>
 
-        {showConsultas && (
-          <DaysWrapper>
-            {(() => {
-              const todasReservasConfirmadas = reservas.filter(r => r && r.status === 'confirmado');
-              
-              if (todasReservasConfirmadas.length === 0) {
-                return (
-                  <div style={{ 
-                    textAlign: 'center', 
-                    padding: '40px 20px', 
-                    fontSize: '18px', 
-                    color: '#666', 
-                    width: '100%',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    minHeight: '60vh',
-                    margin: '0 auto',
-                    gridColumn: '1 / -1'
-                  }}>
-                    Nenhuma Consulta Marcada
-                  </div>
-                );
-              }
-
-              const reservasPorDataConfirmadas = todasReservasConfirmadas.reduce((acc, reserva) => {
-                if (!reserva.dia) return acc;
-                
-                let dataReserva;
-                if (typeof reserva.dia === 'string') {
-                  let dataParaFormatar = reserva.dia;
-                  if (reserva.dia.includes('T')) {
-                    dataParaFormatar = reserva.dia.split('T')[0];
-                  }
-                  const partes = dataParaFormatar.split('-');
-                  if (partes.length === 3) {
-                    const [ano, mes, dia] = partes;
-                    dataReserva = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
-                  } else {
-                    dataReserva = new Date(dataParaFormatar);
-                  }
-                } else {
-                  dataReserva = new Date(reserva.dia);
-                }
-                
-                dataReserva.setHours(0, 0, 0, 0);
-                const hoje = new Date();
-                hoje.setHours(0, 0, 0, 0);
-                
-                if (dataReserva >= hoje) {
-                  const dataKey = dataReserva.toISOString().split('T')[0];
-                  if (!acc[dataKey]) {
-                    acc[dataKey] = [];
-                  }
-                  acc[dataKey].push(reserva);
-                }
-                
-                return acc;
-              }, {});
-
-              const datasComConsultas = Object.keys(reservasPorDataConfirmadas)
-                .sort((a, b) => a.localeCompare(b));
-
-              return datasComConsultas.map((dataKey) => {
-                const reservasDoDia = reservasPorDataConfirmadas[dataKey]
-                  .sort((a, b) => {
-                    const horarioA = a.horario || '00:00';
-                    const horarioB = b.horario || '00:00';
-                    return horarioA.localeCompare(horarioB);
-                  });
-
-                return (
-                  <div key={dataKey} style={{
-                    backgroundColor: '#f1f1f1',
-                    padding: '20px',
-                    borderRadius: '8px',
-                    marginBottom: '15px',
-                    border: '1px solid #ddd'
-                  }}>
-                    <h3 style={{ 
-                      margin: '0 0 15px 0', 
-                      color: '#333',
-                      fontSize: '18px',
-                      fontWeight: 'bold'
-                    }}>
-                      {formatarDataExibicao(dataKey)}
-                    </h3>
-                    <div style={{ marginTop: '10px' }}>
-                      {reservasDoDia.map(reserva => (
-                        <div key={reserva.id} style={{
-                          padding: '10px',
-                          marginBottom: '8px',
-                          backgroundColor: '#fff',
-                          borderRadius: '4px',
-                          borderLeft: '3px solid #4caf50'
-                        }}>
-                          <strong>{formatarHorarioBrasil(reserva.horario)}</strong> - {reserva.nome} {reserva.sobrenome}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              });
-            })()}
-          </DaysWrapper>
-        )}
+        <VerConsultas
+          show={showConsultas}
+          reservas={reservas}
+          formatarDataExibicao={formatarDataExibicao}
+          formatarHorarioBrasil={formatarHorarioBrasil}
+        />
 
       </Container>
       
-      <DrawerContainer isOpen={showForm} ref={formDrawerRef}>
-        <DrawerHeader>
-          <DrawerTitle>Criar Consulta</DrawerTitle>
-        </DrawerHeader>
-        
-        <FormContainer style={{ maxWidth: '100%', boxShadow: 'none', padding: 0 }}>
-          <Label>CPF do Usuário:</Label>
-          <Input
-            type="text"
-            value={cpfUsuario}
-            onChange={(e) => {
-              let valor = e.target.value.replace(/\D/g, '');
-              if (valor.length <= 11) {
-                let formatado = valor;
-                if (valor.length > 3) formatado = valor.slice(0, 3) + '.' + valor.slice(3);
-                if (valor.length > 6) formatado = valor.slice(0, 3) + '.' + valor.slice(3, 6) + '.' + valor.slice(6);
-                if (valor.length > 9) formatado = valor.slice(0, 3) + '.' + valor.slice(3, 6) + '.' + valor.slice(6, 9) + '-' + valor.slice(9);
-                setCpfUsuario(formatado);
-              }
-            }}
-            placeholder="000.000.000-00"
-            maxLength={14}
-          />
+      <CriarConsulta
+        show={showForm}
+        drawerRef={formDrawerRef}
+        cpfUsuario={cpfUsuario}
+        setCpfUsuario={setCpfUsuario}
+        userId={userId}
+        nomeReserva={nomeReserva}
+        sobrenomeReserva={sobrenomeReserva}
+        emailReserva={emailReserva}
+        telefoneReserva={telefoneReserva}
+        dataReserva={dataReserva}
+        setDataReserva={setDataReserva}
+        horarioReserva={horarioReserva}
+        setHorarioReserva={setHorarioReserva}
+        formatarHorarioBrasil={formatarHorarioBrasil}
+        handleCreateReserva={handleCreateReserva}
+      />
 
-          {userId && (
-            <DivInputContainer>
-              <div>
-                <Label>Nome:</Label>
-                <Input
-                  type="text"
-                  value={nomeReserva}
-                  disabled
-                />
-              </div>
-              <div>
-                <Label>Sobrenome:</Label>
-                <Input
-                  type="text"
-                  value={sobrenomeReserva}
-                  disabled
-                />
-              </div>
-              <div>
-                <Label>Email:</Label>
-                <Input
-                  type="email"
-                  value={emailReserva}
-                  disabled
-                />
-              </div>
-              <div>
-                <Label>Telefone:</Label>
-                <Input
-                  type="text"
-                  value={telefoneReserva}
-                  disabled
-                />
-              </div>
-            </DivInputContainer>
-          )}
+      <EditarMapa
+        show={showMapEdit}
+        drawerRef={mapDrawerRef}
+        LocationPickerEdit={LocationPickerEdit}
+        handleMapClick={handleMapClick}
+        editLatitude={editLatitude}
+        editLongitude={editLongitude}
+        editUfRegiao={editUfRegiao}
+        editCidade={editCidade}
+        handleEditarMapa={handleEditarMapa}
+        onCancelar={() => {
+          setShowMapEdit(false);
+          setEditingUserId(null);
+          setEditLatitude(null);
+          setEditLongitude(null);
+          setEditCidade('');
+          setEditUfRegiao('');
+        }}
+      />
 
-          <Label>Data da Consulta:</Label>
-          <DatePickerWrapper>
-            <DatePicker
-              selected={dataReserva}
-              onChange={(date) => setDataReserva(date)}
-              minDate={new Date()}
-              dateFormat="dd/MM/yyyy"
-              locale={ptBR}
-              showPopperArrow={false}
-              required
-            />
-          </DatePickerWrapper>
-
-          <Label>Horário (HH:mm):</Label>
-          <Input
-            type="text"
-            placeholder="HH:MM (ex: 14:30)"
-            value={horarioReserva ? (formatarHorarioBrasil(horarioReserva) || horarioReserva) : ''}
-            onChange={(e) => {
-              let valor = e.target.value.replace(/\D/g, '');
-              
-              if (valor.length <= 2) {
-                setHorarioReserva(valor);
-              } else if (valor.length <= 4) {
-                setHorarioReserva(valor.slice(0, 2) + ':' + valor.slice(2));
-              } else {
-                setHorarioReserva(valor.slice(0, 2) + ':' + valor.slice(2, 4));
-              }
-            }}
-            onBlur={(e) => {
-              let valor = e.target.value;
-              if (!valor) return;
-              
-              if (valor.includes(' ')) {
-                const partes = valor.split(' ');
-                if (partes.length >= 2) {
-                  const horaMinuto = partes[0];
-                  const periodo = partes[1].toUpperCase();
-                  const [hora, minuto] = horaMinuto.split(':');
-                  let horas = parseInt(hora, 10);
-                  
-                  if (periodo === 'PM' && horas !== 12) {
-                    horas += 12;
-                  } else if (periodo === 'AM' && horas === 12) {
-                    horas = 0;
-                  }
-                  
-                  valor = `${String(horas).padStart(2, '0')}:${minuto || '00'}`;
-                }
-              }
-              
-              const horarioFormatado = formatarHorarioBrasil(valor);
-              if (horarioFormatado && horarioFormatado.match(/^\d{2}:\d{2}$/)) {
-                const [h, m] = horarioFormatado.split(':');
-                if (parseInt(h) >= 0 && parseInt(h) <= 23 && parseInt(m) >= 0 && parseInt(m) <= 59) {
-                  setHorarioReserva(horarioFormatado);
-                }
-              } else if (valor.match(/^\d{2}:\d{2}$/)) {
-                const [h, m] = valor.split(':');
-                if (parseInt(h) >= 0 && parseInt(h) <= 23 && parseInt(m) >= 0 && parseInt(m) <= 59) {
-                  setHorarioReserva(valor);
-                }
-              }
-            }}
-            maxLength={5}
-            required
-          />
-
-          <Button onClick={handleCreateReserva} style={{ width: '100%', marginTop: '10px' }}>
-            Criar Consulta
-          </Button>
-        </FormContainer>
-      </DrawerContainer>
-
-      <DrawerContainer isOpen={showMapEdit} ref={mapDrawerRef}>
-        <DrawerHeader>
-          <DrawerTitle>Editar Localização</DrawerTitle>
-        </DrawerHeader>
-        
-        <FormContainer style={{ maxWidth: '100%', boxShadow: 'none', padding: 0 }}>
-          <Label>Clique no mapa para selecionar sua localização:</Label>
-          <div style={{ width: '100%', height: '400px', marginBottom: '15px', border: '1px solid #ccc', borderRadius: '4px', overflow: 'hidden' }}>
-            <LocationPickerEdit 
-              onLocationSelect={handleMapClick}
-              initialLat={editLatitude}
-              initialLng={editLongitude}
-            />
-          </div>
-
-          {editLatitude && editLongitude && (
-            <>
-              <Input
-                type="text"
-                value={editUfRegiao}
-                placeholder="UF/Região (preenchido automaticamente)"
-                readOnly
-                style={{ backgroundColor: '#f0f0f0', marginBottom: '10px' }}
-              />
-              <Input
-                type="text"
-                value={editCidade}
-                placeholder="Cidade (preenchida automaticamente)"
-                readOnly
-                style={{ backgroundColor: '#f0f0f0', marginBottom: '10px' }}
-              />
-              <p style={{ fontSize: '12px', color: '#666', marginBottom: '15px' }}>
-                Localização selecionada: {editLatitude.toFixed(6)}, {editLongitude.toFixed(6)}
-              </p>
-            </>
-          )}
-
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Button onClick={handleEditarMapa} style={{ backgroundColor: 'green', color: 'white' }}>
-              Salvar Localização
-            </Button>
-            <Button onClick={() => {
-              setShowMapEdit(false);
-              setEditingUserId(null);
-              setEditLatitude(null);
-              setEditLongitude(null);
-              setEditCidade('');
-              setEditUfRegiao('');
-            }} style={{ backgroundColor: 'gray', color: 'white' }}>
-              Cancelar
-            </Button>
-          </div>
-        </FormContainer>
-      </DrawerContainer>
-
-      <DrawerContainer isOpen={showInfoEdit} ref={infoDrawerRef}>
-        <DrawerHeader>
-          <DrawerTitle>Editar Informações</DrawerTitle>
-        </DrawerHeader>
-        
-        <FormContainer style={{ maxWidth: '100%', boxShadow: 'none', padding: 0 }}>
-          <Label>Descrição:</Label>
-          <textarea
-            value={editDescricao}
-            onChange={(e) => setEditDescricao(e.target.value)}
-            placeholder="Descreva sua experiência e especialidades..."
-            style={{
-              width: '100%',
-              padding: '10px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              minHeight: '100px',
-              fontFamily: 'Figtree, sans-serif',
-              resize: 'vertical',
-              marginBottom: '15px',
-              boxSizing: 'border-box'
-            }}
-          />
-
-          <Label>Público Atendido:</Label>
-          <Select
-            value={editPublicoAtendido}
-            onChange={(e) => setEditPublicoAtendido(e.target.value)}
-            style={{ marginBottom: '15px' }}
-          >
-            <option value="">Selecione...</option>
-            <option value="Adultos">Adultos</option>
-            <option value="Crianças">Crianças</option>
-            <option value="Idosos">Idosos</option>
-            <option value="Adultos e Crianças">Adultos e Crianças</option>
-            <option value="Adultos e Idosos">Adultos e Idosos</option>
-            <option value="Crianças e Idosos">Crianças e Idosos</option>
-            <option value="Todos">Todos</option>
-          </Select>
-
-          <Label>Modalidade:</Label>
-          <Select
-            value={editModalidade}
-            onChange={(e) => setEditModalidade(e.target.value)}
-            style={{ marginBottom: '15px' }}
-          >
-            <option value="">Selecione...</option>
-            <option value="presencial">Presencial</option>
-            <option value="online">Online</option>
-            <option value="domiciliar">Domiciliar</option>
-            <option value="presencial,online">Presencial e Online</option>
-            <option value="presencial,domiciliar">Presencial e Domiciliar</option>
-            <option value="online,domiciliar">Online e Domiciliar</option>
-            <option value="presencial,online,domiciliar">Presencial, Online e Domiciliar</option>
-          </Select>
-
-          <Label>Valor da Consulta:</Label>
-          <div style={{ marginBottom: '15px' }}>
-             <Select
-               value={editValorConsulta === 'A negociar' ? 'A negociar' : 'Definir valor'}
-               onChange={(e) => {
-                 if (e.target.value === 'A negociar') {
-                   setEditValorConsulta('A negociar');
-                 } else {
-                   setEditValorConsulta('');
-                 }
-               }}
-               style={{ marginBottom: '10px' }}
-             >
-               <option value="Definir valor">Definir valor (R$)</option>
-               <option value="A negociar">Valor a negociar</option>
-             </Select>
-             
-             {editValorConsulta !== 'A negociar' && (
-               <Input
-                 type="number"
-                 placeholder="Ex: 150.00"
-                 value={editValorConsulta}
-                 onChange={(e) => setEditValorConsulta(e.target.value)}
-                 min="0"
-                 step="0.01"
-               />
-             )}
-          </div>
-
-          <Label>Dias de Atendimento:</Label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px' }}>
-            <Select onChange={handleEditDiaChange} value="">
-              <option value="" disabled>Adicionar dia...</option>
-              <option value="Todos os dias">Todos os dias</option>
-              {diasSemana.map(dia => (
-                <option key={dia} value={dia} disabled={editDiasAtendimento.includes(dia)}>
-                  {dia}
-                </option>
-              ))}
-            </Select>
-            
-            {editDiasAtendimento.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                {editDiasAtendimento.map(dia => (
-                  <span key={dia} style={{ background: '#e0e0e0', padding: '5px 10px', borderRadius: '15px', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '14px' }}>
-                    {dia}
-                    <button 
-                      type="button" 
-                      onClick={() => handleEditDiaChange({ target: { value: dia } })}
-                      style={{ border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 'bold', color: '#ff4444', display: 'flex', alignItems: 'center', padding: 0 }}
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {editDiasAtendimento.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
-              <Label>Horários por Dia:</Label>
-              {editDiasAtendimento.map(dia => (
-                <div key={dia} style={{ marginBottom: '15px', padding: '10px', border: '1px solid #eee', borderRadius: '4px' }}>
-                  <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>{dia}</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                    {editHorariosAtendimento[dia]?.map((horario, index) => (
-                      <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <Input
-                          type="time"
-                          value={horario}
-                          onChange={(e) => handleEditHorarioChange(dia, index, e.target.value)}
-                          required
-                          style={{ width: '110px' }}
-                        />
-                        {editHorariosAtendimento[dia].length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleEditRemoveHorario(dia, index)}
-                            style={{
-                              background: '#ff4444',
-                              color: 'white',
-                              border: 'none',
-                              borderRadius: '50%',
-                              width: '20px',
-                              height: '20px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '12px'
-                            }}
-                            title="Remover horário"
-                          >
-                            ×
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => handleEditAddHorario(dia)}
-                      style={{
-                        background: '#28a745',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        padding: '5px 10px',
-                        cursor: 'pointer',
-                        fontSize: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '5px'
-                      }}
-                    >
-                      + Adicionar Horário
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Button onClick={handleEditarInformacoes} style={{ backgroundColor: 'green', color: 'white' }}>
-              Salvar Informações
-            </Button>
-            <Button onClick={() => {
-              setShowInfoEdit(false);
-              setEditingUserId(null);
-              setEditDescricao('');
-              setEditPublicoAtendido('');
-              setEditModalidade('');
-              setEditValorConsulta('');
-              setEditDiasAtendimento([]);
-              setEditHorariosAtendimento({});
-            }} style={{ backgroundColor: 'gray', color: 'white' }}>
-              Cancelar
-            </Button>
-          </div>
-        </FormContainer>
-      </DrawerContainer>
+      <EditarInformacoes
+        show={showInfoEdit}
+        drawerRef={infoDrawerRef}
+        editDescricao={editDescricao}
+        setEditDescricao={setEditDescricao}
+        editPublicoAtendido={editPublicoAtendido}
+        setEditPublicoAtendido={setEditPublicoAtendido}
+        editModalidade={editModalidade}
+        setEditModalidade={setEditModalidade}
+        editValorConsulta={editValorConsulta}
+        setEditValorConsulta={setEditValorConsulta}
+        diasSemana={diasSemana}
+        editDiasAtendimento={editDiasAtendimento}
+        handleEditDiaChange={handleEditDiaChange}
+        editHorariosAtendimento={editHorariosAtendimento}
+        handleEditHorarioChange={handleEditHorarioChange}
+        handleEditRemoveHorario={handleEditRemoveHorario}
+        handleEditAddHorario={handleEditAddHorario}
+        handleEditarInformacoes={handleEditarInformacoes}
+        onCancelar={() => {
+          setShowInfoEdit(false);
+          setEditingUserId(null);
+          setEditDescricao('');
+          setEditPublicoAtendido('');
+          setEditModalidade('');
+          setEditValorConsulta('');
+          setEditDiasAtendimento([]);
+          setEditHorariosAtendimento({});
+        }}
+      />
 
       <DrawerContainer isOpen={showReservaEdit}>
         <DrawerHeader>

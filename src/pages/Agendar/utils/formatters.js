@@ -1,6 +1,30 @@
 export const formatarDataBrasil = (data) => {
   if (!data) return '';
+  if (data instanceof Date) {
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, '0');
+    const dia = String(data.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+  }
+
+  if (typeof data === 'string') {
+    let raw = data.trim();
+    if (raw.includes('T')) raw = raw.split('T')[0];
+    if (raw.includes(' ')) raw = raw.split(' ')[0];
+
+    const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (isoMatch) return raw;
+
+    const brMatch = raw.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (brMatch) {
+      const [, dia, mes, ano] = brMatch;
+      return `${ano}-${mes}-${dia}`;
+    }
+  }
+
   const dataLocal = new Date(data);
+  if (isNaN(dataLocal.getTime())) return String(data);
+
   const ano = dataLocal.getFullYear();
   const mes = String(dataLocal.getMonth() + 1).padStart(2, '0');
   const dia = String(dataLocal.getDate()).padStart(2, '0');

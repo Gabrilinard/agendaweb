@@ -112,16 +112,26 @@ const MinhasConsultas = () => {
 
   const formatarData = (dataString) => {
     if (!dataString) return '';
-    try {
-      const data = new Date(dataString);
-      return data.toLocaleDateString('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch {
-      return dataString;
+    if (dataString instanceof Date) {
+      const dia = String(dataString.getDate()).padStart(2, '0');
+      const mes = String(dataString.getMonth() + 1).padStart(2, '0');
+      const ano = dataString.getFullYear();
+      return `${dia}/${mes}/${ano}`;
     }
+    if (typeof dataString === 'string') {
+      let dataParaFormatar = dataString;
+      if (dataParaFormatar.includes('T')) {
+        dataParaFormatar = dataParaFormatar.split('T')[0];
+      }
+      if (dataParaFormatar.includes('-')) {
+        const partes = dataParaFormatar.split('-');
+        if (partes.length >= 3) {
+          const [ano, mes, dia] = partes;
+          return `${dia}/${mes}/${ano}`;
+        }
+      }
+    }
+    return String(dataString);
   };
 
   const formatarHorario = (horario) => {
@@ -457,4 +467,3 @@ const MinhasConsultas = () => {
 };
 
 export default MinhasConsultas;
-
