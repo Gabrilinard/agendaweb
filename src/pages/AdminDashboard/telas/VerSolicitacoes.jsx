@@ -22,6 +22,174 @@ const VerSolicitacoes = ({
 }) => {
   if (!show) return null;
 
+  const parseConteudoFormulario = () => {
+    const conteudo = formularioSelecionado?.conteudo;
+
+    if (!conteudo) return null;
+
+    if (typeof conteudo === 'string') {
+      const texto = conteudo.trim();
+      if (!texto) return null;
+      try {
+        return JSON.parse(texto);
+      } catch {
+        return texto;
+      }
+    }
+
+    return conteudo;
+  };
+
+  const formatarTituloCampo = (chave) => {
+    if (!chave) return '';
+    const chaveLower = String(chave).trim().toLowerCase();
+    const traducoesDiretas = {
+      created_at: 'Criado em',
+      createdat: 'Criado em',
+      created: 'Criado em',
+      updated_at: 'Atualizado em',
+      updatedat: 'Atualizado em',
+      updated: 'Atualizado em'
+    };
+    if (traducoesDiretas[chaveLower]) return traducoesDiretas[chaveLower];
+
+    const texto = String(chave)
+      .replace(/_/g, ' ')
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .trim();
+
+    const siglas = new Set(['cpf', 'rg', 'uf', 'sus', 'crm', 'cro', 'crn', 'crefito', 'crfa', 'id', 'cep']);
+    return texto
+      .split(/\s+/)
+      .map((palavra) => {
+        const p = palavra.toLowerCase();
+        if (p === 'create' && palavra.length === 6) return 'Criado';
+        if (p === 'created') return 'Criado';
+        if (p === 'createdat') return 'Criado em';
+        if (p === 'at') return 'em';
+        if (p === 'update' && palavra.length === 6) return 'Atualizado';
+        if (p === 'updated') return 'Atualizado';
+        if (p === 'updatedat') return 'Atualizado em';
+        if (siglas.has(p)) return p.toUpperCase();
+        return palavra.charAt(0).toUpperCase() + palavra.slice(1);
+      })
+      .join(' ');
+  };
+
+  const formatarValorCampo = (valor) => {
+    if (valor === null || valor === undefined || valor === '') return '—';
+    if (typeof valor === 'boolean') return valor ? 'Sim' : 'Não';
+    if (typeof valor === 'number') return String(valor);
+
+    if (typeof valor === 'string') {
+      const texto = valor.trim();
+      const matchData = texto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (matchData) return `${matchData[3]}/${matchData[2]}/${matchData[1]}`;
+
+      const matchDataHora = texto.match(/^(\d{4})-(\d{2})-(\d{2})T/);
+      if (matchDataHora) return `${matchDataHora[3]}/${matchDataHora[2]}/${matchDataHora[1]}`;
+
+      const matchHora = texto.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+      if (matchHora) return `${String(parseInt(matchHora[1], 10)).padStart(2, '0')}:${matchHora[2]}`;
+
+      return texto;
+    }
+
+    return String(valor);
+  };
+
+  const renderConteudo = (valor, path = 'root') => {
+    if (valor === null || valor === undefined) {
+      return <div style={{ color: '#666' }}>—</div>;
+    }
+
+    if (Array.isArray(valor)) {
+      if (valor.length === 0) return <div style={{ color: '#666' }}>—</div>;
+
+      const todosPrimitivos = valor.every((v) => v === null || v === undefined || ['string', 'number', 'boolean'].includes(typeof v));
+      if (todosPrimitivos) {
+        return (
+          <ul style={{ margin: 0, paddingLeft: '18px' }}>
+            {valor.map((item, idx) => (
+              <li key={`${path}.item.${idx}`}>{formatarValorCampo(item)}</li>
+            ))}
+          </ul>
+        );
+      }
+
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {valor.map((item, idx) => (
+            <div
+              key={`${path}.obj.${idx}`}
+              style={{
+                backgroundColor: '#fff',
+                border: '1px solid #e6e6e6',
+                borderRadius: '8px',
+                padding: '12px'
+              }}
+            >
+              {renderConteudo(item, `${path}.${idx}`)}
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    if (typeof valor === 'object') {
+      const entries = Object.entries(valor);
+      if (entries.length === 0) return <div style={{ color: '#666' }}>—</div>;
+
+      const chaves = entries.map(([k]) => k).sort((a, b) => a.localeCompare(b, 'pt-BR'));
+
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {chaves.map((k) => {
+            const v = valor[k];
+            const ehEstruturado = v && (typeof v === 'object' || Array.isArray(v));
+
+            if (!ehEstruturado) {
+              return (
+                <div
+                  key={`${path}.${k}`}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '220px 1fr',
+                    gap: '10px',
+                    alignItems: 'start'
+                  }}
+                >
+                  <div style={{ fontWeight: 700, color: '#333' }}>{formatarTituloCampo(k)}</div>
+                  <div style={{ color: '#333' }}>{formatarValorCampo(v)}</div>
+                </div>
+              );
+            }
+
+            return (
+              <div key={`${path}.${k}`}>
+                <div style={{ fontWeight: 800, color: '#333', marginBottom: '8px' }}>{formatarTituloCampo(k)}</div>
+                <div
+                  style={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #e6e6e6',
+                    borderRadius: '8px',
+                    padding: '12px'
+                  }}
+                >
+                  {renderConteudo(v, `${path}.${k}`)}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    return <div style={{ color: '#333' }}>{formatarValorCampo(valor)}</div>;
+  };
+
+  const conteudoFormatado = parseConteudoFormulario();
+
   return (
     <>
       <TableWrapper>
@@ -216,21 +384,21 @@ const VerSolicitacoes = ({
           {carregandoFormulario && <div style={{ marginTop: '12px' }}>Carregando...</div>}
           {!carregandoFormulario && erroFormulario && <div style={{ marginTop: '12px', color: '#b71c1c' }}>{erroFormulario}</div>}
           {!carregandoFormulario && !erroFormulario && formularioSelecionado && (
-            <pre
+            <div
               style={{
                 marginTop: '12px',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
                 backgroundColor: '#fff',
-                padding: '12px',
-                borderRadius: '6px',
-                border: '1px solid #e0e0e0',
-                maxHeight: '420px',
-                overflow: 'auto'
+                padding: '14px',
+                borderRadius: '8px',
+                border: '1px solid #e0e0e0'
               }}
             >
-              {JSON.stringify(formularioSelecionado.conteudo, null, 2)}
-            </pre>
+              {conteudoFormatado ? (
+                renderConteudo(conteudoFormatado)
+              ) : (
+                <div style={{ color: '#666' }}>Nenhuma informação preenchida.</div>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -239,4 +407,3 @@ const VerSolicitacoes = ({
 };
 
 export default VerSolicitacoes;
-
