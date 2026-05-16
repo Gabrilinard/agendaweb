@@ -1,195 +1,124 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Button, Container, Dropdown, Nav, Navbar } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
-import styled from 'styled-components';
+import { Bell, Menu, X } from 'lucide-react';
+import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import pngLogoAgende from '../../assets/pnglogoagende.png';
 import { useAuth } from '../../contexts/AuthContext';
+import {
+    Avatar,
+    BellBtn,
+    BrandArea,
+    BrandName,
+    BrandTagline,
+    BrandText,
+    EmergencyBtn,
+    EmergencyDot,
+    HeaderContent,
+    HeaderWrapper,
+    LoginBtn,
+    LogoCircle,
+    LogoImg,
+    MobileMenuBtn,
+    MobileNav,
+    MobileNavLink,
+    NavArea,
+    NavLink,
+    NotifBadge,
+    RightArea,
+    UserChip,
+    UserDetails,
+    UserNameText,
+    UserRoleText,
+} from './style';
 
-const StyledNavbar = styled(Navbar)`
-  background-color: rgb(227, 228, 222);
-  height: 110px;
-  padding: 0 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const StyledNavLeft = styled(Nav)`
-  display: flex;
-  gap: 20px;
-  justify-content: flex-start;
-  position: absolute;
-  left: 20px;
-
-  .nav-link {
-    color: green !important;
-    font-size: 1.1rem;
-    font-family: 'Figtree', sans-serif;
-  }
-
-  .nav-link:hover {
-    color: rgb(40, 40, 40) !important;
-  }
-
-  @media (max-width: 768px) {
-  }
-`;
-
-const StyledNavRight = styled(Nav)`
-  display: flex;
-  gap: 20px;
-  justify-content: flex-end;
-  position: absolute;
-  right: 20px;
-
-  .nav-link {
-    color: rgb(30, 30, 30) !important;
-    font-size: 1.1rem;
-    font-family: 'Figtree', sans-serif;
-  }
-
-  .nav-link:hover {
-    color: #28a745 !important;
-  }
-
-  @media (max-width: 768px) {
-    display: none; /* Esconde os links principais em telas pequenas */
-  }
-`;
-
-const StyledBrand = styled(Navbar.Brand)`
-  color: rgb(57, 57, 57) !important;
-  font-size: 1.7rem;
-  font-weight: bold;
-  text-align: center;
-  flex-grow: 0;
-  margin-left: auto;
-  font-family: 'Figtree', sans-serif;
-  margin-right: auto;
-`;
-
-const StyledButton = styled(Button)`
-  background-color: rgb(56, 128, 58);
-  border-radius: 50px;
-  color: white;
-  padding: 15px 30px;
-  border: none;
-
-  &:hover {
-    background-color: #4caf50;
-  }
-`;
-
-const StyledDropdownToggle = styled(Dropdown.Toggle)`
-  color: rgb(57, 57, 57) !important;
-  font-size: 1.1rem;
-  font-family: 'Figtree', sans-serif;
-  text-decoration: none;
-
-  &:hover {
-    color: rgb(95, 94, 94) !important;
-  }
-`;
-
-const Sidebar = styled.div`
-  background-color: rgb(227, 228, 222);
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 250px;
-  height: 100vh;
-  padding: 20px;
-  display: ${({ show }) => (show ? 'block' : 'none')};
-  transition: transform 0.3s ease;
-  z-index: 999;
-
-  @media (min-width: 769px) {
-    display: none; /* Esconde a sidebar em telas maiores */
-  }
-`;
+const NAV_LINKS = [
+    { label: 'Início', path: '/' },
+    { label: 'Profissionais', path: '/profissionais' },
+    { label: 'Minhas Consultas', path: '/minhas-consultas' },
+];
 
 const Header = () => {
-  const [showSidebar, setShowSidebar] = useState(false);
-  const [isOpen, setIsOpen] = useState(false); // Controle do estado do Navbar.Toggle
-  const sidebarRef = useRef(null);
-  const navigate = useNavigate();
-  const { user } = useAuth(); // Pegando o usuário autenticado do contexto
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { user } = useAuth();
+    const [mobileOpen, setMobileOpen] = useState(false);
 
-  const handleAgendarClick = () => {
-    navigate('/Agendar');
-  };
+    const initials = user
+        ? `${user.nome?.[0] || ''}${user.sobrenome?.[0] || ''}`.toUpperCase()
+        : '';
+    const tipoLabel = user?.tipoUsuario === 'profissional' ? 'Profissional' : 'Paciente';
 
-  const toggleSidebar = () => {
-    setShowSidebar(!showSidebar);
-    setIsOpen(!isOpen); // Alterar o estado do hambúrguer
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current &&
-        !sidebarRef.current.contains(event.target) &&
-        showSidebar
-      ) {
-        setShowSidebar(false); // Fecha a sidebar
-        setIsOpen(false); // Fecha o hambúrguer
-      }
+    const go = (path) => {
+        navigate(path);
+        setMobileOpen(false);
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    return (
+        <HeaderWrapper>
+            <HeaderContent>
+                <BrandArea onClick={() => go('/')}>
+                    <LogoCircle>
+                        <LogoImg src={pngLogoAgende} alt="Logo" />
+                    </LogoCircle>
+                    <BrandText>
+                        <BrandName>Agende Aqui</BrandName>
+                        <BrandTagline>SAÚDE SOB DEMANDA</BrandTagline>
+                    </BrandText>
+                </BrandArea>
 
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showSidebar]);
+                <NavArea>
+                    {NAV_LINKS.map(link => (
+                        <NavLink
+                            key={link.path}
+                            $active={location.pathname === link.path}
+                            onClick={() => go(link.path)}
+                        >
+                            {link.label}
+                        </NavLink>
+                    ))}
+                </NavArea>
 
-  const handleNavigation = (link) => {
-    setShowSidebar(false); // Fechar a sidebar ao clicar em um link
-    setIsOpen(false); // Fechar o hambúrguer ao clicar em um link
-    navigate(link);
-  };
+                <RightArea>
+                    <BellBtn>
+                        <Bell size={18} />
+                        {user && <NotifBadge />}
+                    </BellBtn>
+                    {user ? (
+                        <UserChip onClick={() => go('/Conta')}>
+                            <Avatar>{initials || 'U'}</Avatar>
+                            <UserDetails>
+                                <UserNameText>{user.nome} {user.sobrenome}</UserNameText>
+                                <UserRoleText>{tipoLabel}</UserRoleText>
+                            </UserDetails>
+                        </UserChip>
+                    ) : (
+                        <LoginBtn onClick={() => go('/Entrar')}>Entrar</LoginBtn>
+                    )}
+                </RightArea>
 
- return (
-    <StyledNavbar expand="lg">
-      <Container>
-        <StyledNavLeft>
-          <StyledBrand onClick={() => navigate("/")}>Agende Aqui</StyledBrand>
-        </StyledNavLeft>
+                <MobileMenuBtn onClick={() => setMobileOpen(o => !o)}>
+                    {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+                </MobileMenuBtn>
+            </HeaderContent>
 
-        <Navbar.Toggle
-        aria-controls="navbar-nav"
-        onClick={toggleSidebar}
-        style={{ position: 'absolute', right: '20px' }}
-        expanded={isOpen.toString()} // Converte boolean para string
-        />
-
-
-
-          <Sidebar ref={sidebarRef} show={showSidebar ? 'true' : undefined}>
-          <Nav className="flex-column">
-            <Nav.Link onClick={() => handleNavigation("/")}>Home</Nav.Link>
-
-            {user ? (
-              <Nav.Link onClick={() => handleNavigation("/Conta")}>Conta</Nav.Link>
-            ) : (
-              <Nav.Link onClick={() => handleNavigation("/Entrar")}>Entrar</Nav.Link>
+            {mobileOpen && (
+                <MobileNav>
+                    {NAV_LINKS.map(link => (
+                        <MobileNavLink key={link.path} onClick={() => go(link.path)}>
+                            {link.label}
+                        </MobileNavLink>
+                    ))}
+                    {user ? (
+                        <>
+                            <MobileNavLink onClick={() => go('/urgencia')}>Consulta Emergente</MobileNavLink>
+                            <MobileNavLink onClick={() => go('/Conta')}>Minha Conta</MobileNavLink>
+                        </>
+                    ) : (
+                        <MobileNavLink onClick={() => go('/Entrar')}>Entrar</MobileNavLink>
+                    )}
+                </MobileNav>
             )}
-          </Nav>
-        </Sidebar>
-
-        <Navbar.Collapse id="navbar-nav" className={showSidebar ? 'd-none' : ''}>
-          <StyledNavRight>
-            <Nav.Link onClick={() => handleNavigation("/")}>Home</Nav.Link>
-
-            {user ? (
-              <Nav.Link onClick={() => handleNavigation("/Conta")}>Conta</Nav.Link>
-            ) : (
-              <Nav.Link onClick={() => handleNavigation("/Entrar")}>Entrar</Nav.Link>
-            )}
-          </StyledNavRight>
-        </Navbar.Collapse>
-      </Container>
-    </StyledNavbar>
-  );
+        </HeaderWrapper>
+    );
 };
 
 export default Header;

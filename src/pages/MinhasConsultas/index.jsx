@@ -1,468 +1,777 @@
 import axios from 'axios';
 import { ptBR } from 'date-fns/locale';
+import { Calendar, Edit2, FileText, Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useNavigate } from 'react-router-dom';
+import styled from 'styled-components';
 import Footer from '../../components/Footer';
 import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
-import {
-    ButtonsContainer,
-    CancelButton,
-    ConsultaCard,
-    ConsultaHeader,
-    ConsultaInfo,
-    ConsultaInfoRow,
-    ConsultaLabel,
-    ConsultasContainer,
-    ConsultaValue,
-    Container,
-    DatePickerWrapper,
-    DrawerContainer,
-    DrawerHeader,
-    DrawerTitle,
-    EditButton,
-    EmptyMessage,
-    FormContainer,
-    FormInput,
-    FormLabel,
-    StatusBadge,
-    Title
-} from './style';
+
+const DARK_GREEN = '#1C5C40';
+const MID_GREEN = '#2D8A62';
+const BG = '#F7F3EE';
+const BORDER = '#E5E0DA';
+const TEXT = '#111';
+const MUTED = '#666';
+
+const MONTH_SHORT = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+
+const AVATAR_COLORS = [
+  { bg: '#D4EDE1', color: '#1A5C3C' },
+  { bg: '#FDE8CC', color: '#8B4A00' },
+  { bg: '#D6E8F5', color: '#1A4A7A' },
+  { bg: '#F5D6E8', color: '#7A1A5A' },
+  { bg: '#E8E0F5', color: '#4A1A7A' },
+  { bg: '#F5E8D6', color: '#7A4A1A' },
+];
+
+const parseDia = (dia) => {
+  if (!dia) return null;
+  const str = String(dia).split('T')[0];
+  const parts = str.split('-');
+  if (parts.length !== 3) return null;
+  return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+};
+
+const getAvatarColor = (name = '') => {
+  const idx = (name.charCodeAt(0) || 0) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[idx];
+};
+
+const getInitials = (name = '') => {
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+};
+
+// ── Styled Components ──────────────────────────────────────────────────────────
+
+const PageWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: ${BG};
+  font-family: 'Figtree', sans-serif;
+`;
+
+const Content = styled.div`
+  flex: 1;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 48px 32px;
+  width: 100%;
+
+  @media (max-width: 768px) { padding: 32px 16px; }
+`;
+
+const PageTop = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 32px;
+
+  @media (max-width: 600px) { flex-direction: column; }
+`;
+
+const TitleArea = styled.div``;
+
+const SectionLabel = styled.div`
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: ${MID_GREEN};
+  letter-spacing: 0.12em;
+  margin-bottom: 6px;
+`;
+
+const PageTitle = styled.h1`
+  font-size: 2rem;
+  font-weight: 800;
+  color: ${TEXT};
+  margin: 0 0 8px;
+`;
+
+const PageDesc = styled.p`
+  font-size: 0.88rem;
+  color: ${MUTED};
+  line-height: 1.5;
+  margin: 0;
+  max-width: 480px;
+`;
+
+const NewBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: ${DARK_GREEN};
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Figtree', sans-serif;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.2s;
+
+  &:hover { background: ${MID_GREEN}; }
+`;
+
+// Tabs
+const TabsRow = styled.div`
+  display: flex;
+  gap: 4px;
+  background: #EDEAE4;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 28px;
+  width: fit-content;
+`;
+
+const Tab = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border-radius: 9px;
+  border: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Figtree', sans-serif;
+  transition: all 0.15s;
+  background: ${({ $active }) => $active ? '#fff' : 'transparent'};
+  color: ${({ $active }) => $active ? TEXT : MUTED};
+  box-shadow: ${({ $active }) => $active ? '0 1px 4px rgba(0,0,0,0.10)' : 'none'};
+`;
+
+const TabCount = styled.span`
+  background: ${({ $active }) => $active ? '#EDEAE4' : 'transparent'};
+  color: ${MUTED};
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 99px;
+`;
+
+// Card
+const CardWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+`;
+
+const ConsultaCard = styled.div`
+  background: #fff;
+  border-radius: 16px;
+  border: 1.5px solid ${BORDER};
+  overflow: hidden;
+`;
+
+const CardMain = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 24px;
+
+  @media (max-width: 600px) {
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 16px;
+  }
+`;
+
+const DateBox = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  flex-shrink: 0;
+  gap: 1px;
+`;
+
+const DateMonth = styled.span`
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: ${MUTED};
+  letter-spacing: 0.08em;
+`;
+
+const DateDay = styled.span`
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: ${TEXT};
+  line-height: 1;
+`;
+
+const DateTime = styled.span`
+  font-size: 0.72rem;
+  color: ${MUTED};
+  font-weight: 500;
+`;
+
+const CardDivider = styled.div`
+  width: 1px;
+  height: 48px;
+  background: ${BORDER};
+  flex-shrink: 0;
+
+  @media (max-width: 600px) { display: none; }
+`;
+
+const BadgesRow = styled.div`
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+`;
+
+const StatusBadge = styled.span`
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: ${({ $bg }) => $bg};
+  color: ${({ $color }) => $color};
+`;
+
+const ModalityBadge = styled.span`
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 99px;
+  background: #EDEAE4;
+  color: ${MUTED};
+`;
+
+const ProfRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const ProfAvatar = styled.div`
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: ${({ $bg }) => $bg};
+  color: ${({ $color }) => $color};
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+`;
+
+const ProfInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const ProfName = styled.span`
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: ${TEXT};
+`;
+
+const ProfSpec = styled.span`
+  font-size: 0.78rem;
+  color: ${MUTED};
+`;
+
+const CardInfoArea = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const ActionsRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+
+  @media (max-width: 600px) {
+    width: 100%;
+    justify-content: flex-end;
+  }
+`;
+
+const ActionBtn = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  padding: 7px 10px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: ${({ $danger }) => $danger ? '#C53030' : TEXT};
+  cursor: pointer;
+  border-radius: 8px;
+  font-family: 'Figtree', sans-serif;
+  transition: background 0.15s;
+
+  &:hover {
+    background: ${({ $danger }) => $danger ? '#FFF5F5' : '#F2EDE8'};
+  }
+`;
+
+const CardFooter = styled.div`
+  border-top: 1px solid ${BORDER};
+  padding: 10px 24px;
+  font-size: 0.8rem;
+  color: ${MUTED};
+  background: #FAFAF8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const LibeLink = styled.button`
+  background: none;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: ${TEXT};
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 0;
+  font-family: 'Figtree', sans-serif;
+`;
+
+const ConfirmBar = styled.div`
+  border-top: 1px solid #FDDEDE;
+  background: #FFF8F8;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: #C53030;
+  font-weight: 500;
+`;
+
+const ConfirmBtns = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+`;
+
+const ConfirmYes = styled.button`
+  background: #C53030;
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  padding: 6px 16px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Figtree', sans-serif;
+  &:hover { background: #A02828; }
+`;
+
+const ConfirmNo = styled.button`
+  background: transparent;
+  color: ${TEXT};
+  border: 1.5px solid ${BORDER};
+  border-radius: 7px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Figtree', sans-serif;
+  &:hover { background: #F2EDE8; }
+`;
+
+const EmptyMsg = styled.div`
+  text-align: center;
+  padding: 60px 20px;
+  color: ${MUTED};
+  font-size: 0.95rem;
+`;
+
+// Drawer
+const Overlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 300;
+  display: ${({ $open }) => $open ? 'block' : 'none'};
+`;
+
+const Drawer = styled.div`
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 360px;
+  background: #fff;
+  z-index: 301;
+  padding: 28px 24px;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transform: ${({ $open }) => $open ? 'translateX(0)' : 'translateX(100%)'};
+  transition: transform 0.25s ease;
+
+  @media (max-width: 480px) { width: 100%; }
+`;
+
+const DrawerHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const DrawerTitle = styled.h3`
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: ${TEXT};
+  margin: 0;
+`;
+
+const CloseBtn = styled.button`
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: ${MUTED};
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  &:hover { background: #F2EDE8; color: ${TEXT}; }
+`;
+
+const FieldLabel = styled.label`
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: ${MUTED};
+  display: block;
+  margin-bottom: 6px;
+`;
+
+const FieldInput = styled.input`
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid ${BORDER};
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: 'Figtree', sans-serif;
+  outline: none;
+  box-sizing: border-box;
+  &:focus { border-color: ${MID_GREEN}; }
+`;
+
+const SaveBtn = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px;
+  background: ${DARK_GREEN};
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Figtree', sans-serif;
+  margin-top: 8px;
+  &:hover { background: ${MID_GREEN}; }
+`;
+
+const DPWrapper = styled.div`
+  .react-datepicker-wrapper { width: 100%; }
+  .react-datepicker__input-container input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid ${BORDER};
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: 'Figtree', sans-serif;
+    outline: none;
+    box-sizing: border-box;
+    &:focus { border-color: ${MID_GREEN}; }
+  }
+`;
+
+// ── Status helpers ─────────────────────────────────────────────────────────────
+
+const statusStyle = (status) => {
+  switch (status) {
+    case 'confirmado': return { bg: '#D4F0DE', color: '#1A5C3C', label: 'Confirmada' };
+    case 'pendente':   return { bg: '#FEF0CC', color: '#A05800', label: 'Aguardando confirmação' };
+    case 'negado':     return { bg: '#FDDEDE', color: '#C53030', label: 'Cancelada' };
+    case 'ausente':    return { bg: '#FDDEDE', color: '#C53030', label: 'Não compareceu' };
+    default:           return { bg: '#EDEAE4', color: MUTED, label: status };
+  }
+};
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 const MinhasConsultas = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { success, error: showError } = useNotification();
+
   const [consultas, setConsultas] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showEditDrawer, setShowEditDrawer] = useState(false);
+  const [activeTab, setActiveTab] = useState('proximas');
+  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
   const [consultaEditando, setConsultaEditando] = useState(null);
+  const [confirmingId, setConfirmingId] = useState(null);
   const [novaData, setNovaData] = useState(new Date());
   const [novoHorario, setNovoHorario] = useState('');
 
   useEffect(() => {
-    if (!user || !user.id) {
-      navigate('/Entrar');
-      return;
-    }
-
+    if (!user?.id) { navigate('/Entrar'); return; }
     buscarConsultas();
   }, [user]);
 
   const buscarConsultas = async () => {
     try {
       setLoading(true);
-      
-      // Se for profissional, busca por profissional_id, senão busca por usuario_id
       const isProfissional = user.tipoUsuario === 'profissional';
-      const url = isProfissional 
+      const url = isProfissional
         ? `http://localhost:3000/reservas?profissional_id=${user.id}`
         : `http://localhost:3000/reservas?usuario_id=${user.id}`;
-      
-      const response = await axios.get(url);
-      const consultasData = response.data || [];
-      
-      const consultasComNomes = await Promise.all(
-        consultasData.map(async (consulta) => {
-          let nomeOutroUsuario = '';
-          
-          if (isProfissional) {
-            // Se for profissional, busca o nome do paciente
-            if (consulta.usuario_id) {
-              try {
-                const pacienteResponse = await axios.get(`http://localhost:3000/usuarios/solicitarDados/${consulta.usuario_id}`);
-                nomeOutroUsuario = `${pacienteResponse.data.nome} ${pacienteResponse.data.sobrenome}`;
-              } catch (error) {
-                console.error('Erro ao buscar nome do paciente:', error);
-                nomeOutroUsuario = 'Paciente não encontrado';
-              }
-            }
-          } else {
-            // Se for paciente, busca o nome do profissional
-            if (consulta.profissional_id) {
-              try {
-                const profResponse = await axios.get(`http://localhost:3000/usuarios/solicitarDados/${consulta.profissional_id}`);
-                nomeOutroUsuario = `${profResponse.data.nome} ${profResponse.data.sobrenome}`;
-              } catch (error) {
-                console.error('Erro ao buscar nome do profissional:', error);
-                nomeOutroUsuario = 'Profissional não encontrado';
-              }
-            }
-          }
-          
+
+      const { data } = await axios.get(url);
+
+      const enriched = await Promise.all((data || []).map(async (c) => {
+        const otherId = isProfissional ? c.usuario_id : c.profissional_id;
+        if (!otherId) return c;
+        try {
+          const { data: p } = await axios.get(`http://localhost:3000/usuarios/solicitarDados/${otherId}`);
           return {
-            ...consulta,
-            nomeProfissional: isProfissional ? undefined : nomeOutroUsuario,
-            nomePaciente: isProfissional ? nomeOutroUsuario : undefined
+            ...c,
+            nomeOutro: `${p.nome} ${p.sobrenome}`,
+            especialidade: p.tipoProfissional || p.especialidadeMedica || p.profissaoCustomizada || 'Especialista',
+            valorConsulta: p.valorConsulta,
           };
-        })
-      );
-      
-      setConsultas(consultasComNomes);
-    } catch (error) {
-      console.error('Erro ao buscar consultas:', error);
-      showError('Erro ao carregar suas consultas.');
-    } finally {
-      setLoading(false);
-    }
+        } catch { return c; }
+      }));
+
+      setConsultas(enriched);
+    } catch { showError('Erro ao carregar consultas.'); }
+    finally { setLoading(false); }
   };
 
-  const formatarData = (dataString) => {
-    if (!dataString) return '';
-    if (dataString instanceof Date) {
-      const dia = String(dataString.getDate()).padStart(2, '0');
-      const mes = String(dataString.getMonth() + 1).padStart(2, '0');
-      const ano = dataString.getFullYear();
-      return `${dia}/${mes}/${ano}`;
-    }
-    if (typeof dataString === 'string') {
-      let dataParaFormatar = dataString;
-      if (dataParaFormatar.includes('T')) {
-        dataParaFormatar = dataParaFormatar.split('T')[0];
-      }
-      if (dataParaFormatar.includes('-')) {
-        const partes = dataParaFormatar.split('-');
-        if (partes.length >= 3) {
-          const [ano, mes, dia] = partes;
-          return `${dia}/${mes}/${ano}`;
-        }
-      }
-    }
-    return String(dataString);
-  };
+  const today = new Date(); today.setHours(0, 0, 0, 0);
 
-  const formatarHorario = (horario) => {
-    if (!horario) return '';
-    if (typeof horario !== 'string') {
-      horario = String(horario);
-    }
-    
-    const matchHHMM = horario.match(/^(\d{1,2}):(\d{2})/);
-    if (matchHHMM) {
-      const horas = String(parseInt(matchHHMM[1], 10)).padStart(2, '0');
-      const minutos = matchHHMM[2];
-      return `${horas}:${minutos}`;
-    }
-    
-    return horario;
-  };
+  const proximas  = consultas.filter(c => (c.status === 'pendente' || c.status === 'confirmado') && parseDia(c.dia) >= today);
+  const concluidas = consultas.filter(c => (c.status === 'pendente' || c.status === 'confirmado') && parseDia(c.dia) < today);
+  const canceladas = consultas.filter(c => c.status === 'negado' || c.status === 'ausente');
 
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'confirmado':
-        return '#28a745';
-      case 'pendente':
-        return '#ffc107';
-      case 'negado':
-        return '#dc3545';
-      case 'aguardando_confirmacao_paciente':
-        return '#ffc107'; // Yellow for warning/attention
-      default:
-        return '#6c757d';
-    }
-  };
+  const tabList = { proximas, concluidas, canceladas };
+  const shown = tabList[activeTab] || [];
 
-  const getStatusLabel = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'confirmado':
-        return 'Confirmado';
-      case 'pendente':
-        return 'Pendente';
-      case 'negado':
-        return 'Negado';
-      case 'aguardando_confirmacao_paciente':
-        return 'Alteração Solicitada';
-      default:
-        return 'Pendente';
-    }
-  };
+  const handleCancelar = (id) => setConfirmingId(id);
 
-  const handleConfirmarAlteracao = async (consultaId) => {
+  const handleConfirmarCancelamento = async () => {
     try {
-      await axios.patch(`http://localhost:3000/reservas/${consultaId}`, {
-        status: 'confirmado'
-      });
-      success('Alteração confirmada com sucesso!');
+      await axios.patch(`http://localhost:3000/reservas/${confirmingId}`, { status: 'negado' });
+      success('Consulta cancelada.');
+      setConfirmingId(null);
       buscarConsultas();
-    } catch (error) {
-      console.error('Erro ao confirmar alteração:', error);
-      showError('Erro ao confirmar alteração.');
-    }
+    } catch { showError('Erro ao cancelar.'); }
   };
 
-  const handleCancelarConsulta = async (consultaId) => {
-    if (!window.confirm('Tem certeza que deseja cancelar esta consulta?')) {
-      return;
-    }
+  const handleLiberarHorario = (id) => setConfirmingId(id);
 
+  const handleEditar = (c) => {
+    setConsultaEditando(c);
+    const d = parseDia(c.dia) || new Date();
+    setNovaData(d);
+    setNovoHorario(c.horario || '');
+    setEditDrawerOpen(true);
+  };
+
+  const handleSalvar = async () => {
+    if (!novaData || !/^([01]?\d|2[0-3]):([0-5]\d)$/.test(novoHorario)) {
+      showError('Data ou horário inválido.'); return;
+    }
+    const [y, m, d] = [novaData.getFullYear(), String(novaData.getMonth()+1).padStart(2,'0'), String(novaData.getDate()).padStart(2,'0')];
+    const [hh, mm] = novoHorario.split(':').map(Number);
+    const hFinal = new Date(0, 0, 0, hh + 1, mm).toTimeString().slice(0, 5);
     try {
-      await axios.delete(`http://localhost:3000/reservas/${consultaId}`);
-      success('Consulta cancelada com sucesso!');
-      buscarConsultas();
-    } catch (error) {
-      console.error('Erro ao cancelar consulta:', error);
-      showError('Erro ao cancelar consulta.');
-    }
-  };
-
-  const handleEditarConsulta = (consulta) => {
-    setConsultaEditando(consulta);
-    
-    let dataReserva = new Date();
-    if (consulta.dia) {
-      try {
-        if (typeof consulta.dia === 'string') {
-          let dataParaFormatar = consulta.dia;
-          if (consulta.dia.includes('T')) {
-            dataParaFormatar = consulta.dia.split('T')[0];
-          }
-          const partes = dataParaFormatar.split('-');
-          if (partes.length === 3) {
-            const [ano, mes, dia] = partes;
-            dataReserva = new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
-          } else {
-            dataReserva = new Date(dataParaFormatar + 'T00:00:00');
-          }
-        } else {
-          dataReserva = new Date(consulta.dia);
-        }
-      } catch (e) {
-        console.error('Erro ao processar data:', e);
-        dataReserva = new Date();
-      }
-    }
-    
-    if (isNaN(dataReserva.getTime())) {
-      dataReserva = new Date();
-    }
-    
-    setNovaData(dataReserva);
-    setNovoHorario(formatarHorario(consulta.horario) || '');
-    setShowEditDrawer(true);
-  };
-
-  const formatarDataBrasil = (data) => {
-    if (!data) return '';
-    const dataLocal = new Date(data);
-    const ano = dataLocal.getFullYear();
-    const mes = String(dataLocal.getMonth() + 1).padStart(2, '0');
-    const dia = String(dataLocal.getDate()).padStart(2, '0');
-    return `${ano}-${mes}-${dia}`;
-  };
-
-  const validarHorario = (horario) => {
-    return /^([01]?\d|2[0-3]):([0-5]\d)$/.test(horario);
-  };
-
-  const handleSalvarEdicao = async () => {
-    if (!novaData) {
-      showError("Data inválida.");
-      return;
-    }
-
-    if (!validarHorario(novoHorario)) {
-      showError("Horário inválido! Use o formato HH:MM.");
-      return;
-    }
-
-    const dataFormatada = formatarDataBrasil(novaData);
-
-    try {
-      const reservaId = consultaEditando.id;
-
-      if (!reservaId) {
-        showError("Consulta não encontrada.");
-        return;
-      }
-
-      const [horas, minutos] = novoHorario.split(':').map(Number);
-      const horarioObj = new Date();
-      horarioObj.setHours(horas, minutos, 0);
-      horarioObj.setHours(horarioObj.getHours() + 1);
-      const novoHorarioFinal = horarioObj.toTimeString().slice(0, 5);
-
-      const response = await axios.patch(`http://localhost:3000/reservas/editar/${reservaId}`, {
-        dia: dataFormatada,
+      await axios.patch(`http://localhost:3000/reservas/editar/${consultaEditando.id}`, {
+        dia: `${y}-${m}-${d}`,
         horario: novoHorario,
-        horarioFinal: novoHorarioFinal,
+        horarioFinal: hFinal,
         qntd_pessoa: consultaEditando.qntd_pessoa || 1,
-        status: "pendente"
+        status: 'pendente',
       });
-
-      if (response.status === 200) {
-        success("Edição enviada! Aguardando confirmação do profissional.");
-        setShowEditDrawer(false);
-        setConsultaEditando(null);
-        buscarConsultas();
-      }
-    } catch (error) {
-      console.error('Erro ao editar consulta:', error);
-      showError('Erro ao editar consulta.');
-    }
+      success('Edição enviada! Aguardando confirmação.');
+      setEditDrawerOpen(false);
+      buscarConsultas();
+    } catch { showError('Erro ao editar.'); }
   };
 
+  const renderCard = (c) => {
+    const dia = parseDia(c.dia);
+    const { bg, color, label } = statusStyle(c.status);
+    const av = getAvatarColor(c.nomeOutro || '');
+    const initials = getInitials(c.nomeOutro || '');
+    const isActive = c.status === 'pendente' || c.status === 'confirmado';
+    const valor = c.valorConsulta ? `· R$ ${Number(c.valorConsulta).toFixed(0)}` : '';
 
-  if (loading) {
     return (
-      <Container>
-        <Header />
-        <ConsultasContainer>
-          <EmptyMessage>Carregando suas consultas...</EmptyMessage>
-        </ConsultasContainer>
-        <Footer />
-      </Container>
+      <CardWrapper key={c.id}>
+        <ConsultaCard>
+          <CardMain>
+            <DateBox>
+              <DateMonth>{dia ? MONTH_SHORT[dia.getMonth()] : '—'}</DateMonth>
+              <DateDay>{dia ? dia.getDate() : '—'}</DateDay>
+              <DateTime>{c.horario || ''}</DateTime>
+            </DateBox>
+
+            <CardDivider />
+
+            <CardInfoArea>
+              <BadgesRow>
+                <StatusBadge $bg={bg} $color={color}>{label}</StatusBadge>
+                <ModalityBadge>Online</ModalityBadge>
+              </BadgesRow>
+              <ProfRow>
+                <ProfAvatar $bg={av.bg} $color={av.color}>{initials}</ProfAvatar>
+                <ProfInfo>
+                  <ProfName>{c.nomeOutro || '—'}</ProfName>
+                  <ProfSpec>{c.especialidade || ''}{valor}</ProfSpec>
+                </ProfInfo>
+              </ProfRow>
+            </CardInfoArea>
+
+            {isActive && (
+              <ActionsRow>
+                <ActionBtn onClick={() => navigate('/Formulario')}>
+                  <FileText size={14} /> Formulário
+                </ActionBtn>
+                <ActionBtn onClick={() => handleEditar(c)}>
+                  <Edit2 size={14} /> Editar
+                </ActionBtn>
+                <ActionBtn $danger onClick={() => handleCancelar(c.id)}>
+                  <X size={14} /> Cancelar
+                </ActionBtn>
+              </ActionsRow>
+            )}
+          </CardMain>
+
+          {isActive && confirmingId === c.id ? (
+            <ConfirmBar>
+              Tem certeza que deseja cancelar esta consulta?
+              <ConfirmBtns>
+                <ConfirmNo onClick={() => setConfirmingId(null)}>Voltar</ConfirmNo>
+                <ConfirmYes onClick={handleConfirmarCancelamento}>Sim, cancelar</ConfirmYes>
+              </ConfirmBtns>
+            </ConfirmBar>
+          ) : isActive && (
+            <CardFooter>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <Calendar size={13} />
+                Não vai poder ir?&nbsp;
+                <LibeLink onClick={() => handleLiberarHorario(c.id)}>Liberar horário</LibeLink>
+                &nbsp;— outro paciente pode aproveitá-lo.
+              </span>
+            </CardFooter>
+          )}
+        </ConsultaCard>
+      </CardWrapper>
     );
-  }
+  };
 
   return (
-    <Container>
+    <PageWrapper>
       <Header />
-      <ConsultasContainer>
-        <Title>Minhas Consultas</Title>
-        
-        {consultas.length === 0 ? (
-          <EmptyMessage>
-            Você não possui consultas agendadas no momento.
-          </EmptyMessage>
+      <Content>
+        <PageTop>
+          <TitleArea>
+            <SectionLabel>AGENDA</SectionLabel>
+            <PageTitle>Minhas consultas</PageTitle>
+            <PageDesc>
+              Acompanhe status, prepare-se com o formulário, ou avise se não puder comparecer — outro paciente pode aproveitar.
+            </PageDesc>
+          </TitleArea>
+          <NewBtn onClick={() => navigate('/profissionais')}>
+            <Plus size={16} /> Nova consulta
+          </NewBtn>
+        </PageTop>
+
+        <TabsRow>
+          {[
+            { key: 'proximas',  label: 'Próximas',  count: proximas.length },
+            { key: 'concluidas', label: 'Concluídas', count: concluidas.length },
+            { key: 'canceladas', label: 'Canceladas', count: canceladas.length },
+          ].map(t => (
+            <Tab key={t.key} $active={activeTab === t.key} onClick={() => setActiveTab(t.key)}>
+              {t.label}
+              <TabCount $active={activeTab === t.key}>{t.count}</TabCount>
+            </Tab>
+          ))}
+        </TabsRow>
+
+        {loading ? (
+          <EmptyMsg>Carregando...</EmptyMsg>
+        ) : shown.length === 0 ? (
+          <EmptyMsg>Nenhuma consulta nesta categoria.</EmptyMsg>
         ) : (
-          consultas.map((consulta) => (
-            <ConsultaCard key={consulta.id}>
-              <ConsultaHeader>
-                <StatusBadge color={getStatusColor(consulta.status)}>
-                  {getStatusLabel(consulta.status)}
-                </StatusBadge>
-              </ConsultaHeader>
-
-              {consulta.status === 'aguardando_confirmacao_paciente' && (
-                  <div style={{ 
-                      backgroundColor: '#fff3cd', 
-                      color: '#856404', 
-                      padding: '10px', 
-                      borderRadius: '4px', 
-                      marginTop: '10px',
-                      marginBottom: '10px',
-                      fontSize: '14px',
-                      border: '1px solid #ffeeba'
-                  }}>
-                      <strong>Atenção:</strong> O profissional propôs uma alteração para esta consulta.
-                  </div>
-              )}
-              
-              <ConsultaInfo>
-                {user.tipoUsuario === 'profissional' && consulta.nomePaciente && (
-                  <ConsultaInfoRow>
-                    <ConsultaLabel>Paciente:</ConsultaLabel>
-                    <ConsultaValue>{consulta.nomePaciente}</ConsultaValue>
-                  </ConsultaInfoRow>
-                )}
-                {user.tipoUsuario === 'paciente' && consulta.nomeProfissional && (
-                  <ConsultaInfoRow>
-                    <ConsultaLabel>Profissional:</ConsultaLabel>
-                    <ConsultaValue>{consulta.nomeProfissional}</ConsultaValue>
-                  </ConsultaInfoRow>
-                )}
-                
-                <ConsultaInfoRow>
-                  <ConsultaLabel>Data:</ConsultaLabel>
-                  <ConsultaValue>{formatarData(consulta.dia)}</ConsultaValue>
-                </ConsultaInfoRow>
-                
-                <ConsultaInfoRow>
-                  <ConsultaLabel>Horário:</ConsultaLabel>
-                  <ConsultaValue>{formatarHorario(consulta.horario)}</ConsultaValue>
-                </ConsultaInfoRow>
-              </ConsultaInfo>
-              
-              <ButtonsContainer>
-                {consulta.status === 'aguardando_confirmacao_paciente' ? (
-                  <>
-                    <EditButton 
-                      onClick={() => handleConfirmarAlteracao(consulta.id)} 
-                      style={{ backgroundColor: '#28a745' }}
-                    >
-                      Confirmar Alteração
-                    </EditButton>
-                    <CancelButton onClick={() => handleCancelarConsulta(consulta.id)}>
-                      Desistir
-                    </CancelButton>
-                  </>
-                ) : (
-                  <>
-                    <EditButton onClick={() => handleEditarConsulta(consulta)}>
-                      Editar
-                    </EditButton>
-                    <CancelButton onClick={() => handleCancelarConsulta(consulta.id)}>
-                      Cancelar Consulta
-                    </CancelButton>
-                  </>
-                )}
-              </ButtonsContainer>
-            </ConsultaCard>
-          ))
+          shown.map(renderCard)
         )}
-      </ConsultasContainer>
+      </Content>
 
-      <DrawerContainer isOpen={showEditDrawer}>
+      {/* Edit Drawer */}
+      <Overlay $open={editDrawerOpen} onClick={() => setEditDrawerOpen(false)} />
+      <Drawer $open={editDrawerOpen}>
         <DrawerHeader>
-          <DrawerTitle>Editar Consulta</DrawerTitle>
+          <DrawerTitle>Editar consulta</DrawerTitle>
+          <CloseBtn onClick={() => setEditDrawerOpen(false)}><X size={20} /></CloseBtn>
         </DrawerHeader>
-        
-        <FormContainer>
-          <FormLabel>Data:</FormLabel>
-          <DatePickerWrapper>
+
+        <div>
+          <FieldLabel>Data</FieldLabel>
+          <DPWrapper>
             <DatePicker
               selected={novaData}
-              onChange={(date) => {
-                if (date) {
-                  setNovaData(date);
-                }
-              }}
+              onChange={d => d && setNovaData(d)}
               minDate={new Date()}
               dateFormat="dd/MM/yyyy"
               locale={ptBR}
               showPopperArrow={false}
-              required
             />
-          </DatePickerWrapper>
+          </DPWrapper>
+        </div>
 
-          <FormLabel>Horário:</FormLabel>
-          <FormInput
+        <div>
+          <FieldLabel>Horário</FieldLabel>
+          <FieldInput
             type="text"
-            placeholder="HH:MM (ex: 14:30)"
+            placeholder="HH:MM"
             value={novoHorario}
-            onChange={(e) => {
-              let valor = e.target.value.replace(/\D/g, '');
-              
-              if (valor.length <= 2) {
-                setNovoHorario(valor);
-              } else if (valor.length <= 4) {
-                setNovoHorario(valor.slice(0, 2) + ':' + valor.slice(2));
-              } else {
-                setNovoHorario(valor.slice(0, 2) + ':' + valor.slice(2, 4));
-              }
+            onChange={e => {
+              let v = e.target.value.replace(/\D/g, '');
+              if (v.length <= 2) setNovoHorario(v);
+              else setNovoHorario(v.slice(0, 2) + ':' + v.slice(2, 4));
             }}
-            required
           />
+        </div>
 
-          <ButtonsContainer>
-            <EditButton onClick={handleSalvarEdicao}>
-              Salvar
-            </EditButton>
-            <CancelButton onClick={() => {
-              setShowEditDrawer(false);
-              setConsultaEditando(null);
-            }}>
-              Cancelar
-            </CancelButton>
-          </ButtonsContainer>
-        </FormContainer>
-      </DrawerContainer>
-      
+        <SaveBtn onClick={handleSalvar}>Salvar alteração</SaveBtn>
+      </Drawer>
+
       <Footer />
-    </Container>
+    </PageWrapper>
   );
 };
 

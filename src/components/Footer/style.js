@@ -2,14 +2,16 @@ import styled from 'styled-components';
 
 // Container do footer
 export const FooterContainer = styled.footer`
-  background-color: rgb(227, 228, 222);
-  padding: 15px 20px;
+  background-color: #F7F3EE;
+  border-top: 1px solid #E5E0DA;
+  padding: 28px 40px;
   display: flex;
   justify-content: center;
   align-items: center;
+  margin-top: auto;
 
   @media (max-width: 768px) {
-    padding: 15px 20px;
+    padding: 24px 20px;
   }
 `;
 
@@ -193,7 +195,7 @@ export const BrandName = styled.h2`
   font-size: 1.2rem;
   font-family: 'Figtree', sans-serif;
   font-weight: bold;
-  color: #000000 !important;
+  color: #111111 !important;
   margin: 0;
   text-align: left;
 
@@ -206,7 +208,7 @@ export const BrandName = styled.h2`
 export const Description = styled.p`
   font-size: 0.8rem;
   font-family: 'Figtree', sans-serif;
-  color: #333333 !important;
+  color: #555555 !important;
   margin: 0;
   text-align: left;
   line-height: 1.5;
