@@ -3,7 +3,6 @@ import Footer from '../../components/Footer';
 import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
 import EmergencyModal from './components/EmergencyModal';
-import MapComponent from './components/MapComponent';
 import ProfessionalInfo from './components/ProfessionalInfo';
 import ReservationForm from './components/ReservationForm';
 import ReservationList from './components/ReservationList';
@@ -18,7 +17,6 @@ import {
     Container,
     Container_Important,
     ContainerGeral,
-    TituloAgendamento
 } from './style';
 
 const Agendar = () => {
@@ -152,19 +150,29 @@ const Agendar = () => {
         <ContainerGeral>
             <Header />
             <Container>
-                {nomeProfissional ? (
-                    <TituloAgendamento>Agendar com {nomeProfissional}</TituloAgendamento>
-                ) : (
-                    <h2>Agendar Consulta</h2>
-                )}
+                <div style={{ maxWidth: '1100px', width: '100%' }}>
+                    <button
+                        onClick={() => navigate(-1)}
+                        style={{
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            color: '#666', fontSize: '14px', display: 'flex',
+                            alignItems: 'center', gap: '6px', marginBottom: '20px',
+                            padding: 0, fontFamily: 'Figtree, sans-serif',
+                        }}
+                    >
+                        ← Voltar para lista
+                    </button>
 
-                <Container_Important>
-                    {profissionalInfo && nomeProfissional && (
-                        <ProfessionalInfo profissionalInfo={profissionalInfo} />
-                    )}
+                    <Container_Important>
+                        {profissionalInfo && nomeProfissional && (
+                            <ProfessionalInfo
+                                profissionalInfo={profissionalInfo}
+                                location={profissionalLocation}
+                                endereco={enderecoCompleto}
+                            />
+                        )}
 
-                    <div style={{ display: 'flex', gap: '20px', flexDirection: 'column', flex: 1 }}>
-                        <ReservationForm 
+                        <ReservationForm
                             user={user}
                             nomeProfissional={nomeProfissional}
                             dataSelecionada={dataSelecionada}
@@ -178,20 +186,15 @@ const Agendar = () => {
                             reservasTemporarias={reservasTemporarias}
                             datasSelecionadas={datasSelecionadas}
                             onEmergencyClick={() => setShowEmergencyModal(true)}
-                            MapComponent={
-                                <MapComponent 
-                                    location={profissionalLocation} 
-                                    endereco={enderecoCompleto}
-                                />
-                            }
                         />
-                    </div>
-                </Container_Important>
+                    </Container_Important>
 
-                <ReservationList 
-                    reservas={reservas} 
-                    actions={reservaActions}
-                />
+                    <ReservationList
+                        reservas={reservas}
+                        actions={reservaActions}
+                        nomeProfissional={nomeProfissional}
+                    />
+                </div>
             </Container>
             
             <EmergencyModal 

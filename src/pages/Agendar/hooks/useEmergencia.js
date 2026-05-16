@@ -24,11 +24,6 @@ export const useEmergencia = (user, nomeProfissional) => {
       return;
     }
 
-    if (!urgenciaArquivo) {
-      showError('Por favor, adicione um arquivo para comprovar a urgência.');
-      return;
-    }
-
     const formData = new FormData();
     formData.append('nome', user.nome);
     formData.append('sobrenome', user.sobrenome);

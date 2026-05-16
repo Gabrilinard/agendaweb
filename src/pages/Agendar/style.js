@@ -8,9 +8,8 @@ export const ContainerGeral = styled.div`
 
 export const Container = styled.div`
   flex: 1;
-  text-align: center;
-  padding: 20px;
-  background-color: rgb(227, 228, 222);
+  padding: 28px 24px;
+  background-color: #ECEAE3;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -249,16 +248,13 @@ export const Button_geral = styled.div`
 
 export const Container_Important = styled.div`
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  margin: auto;
+  align-items: stretch;
   gap: 20px;
-  max-width: 1200px;
   width: 100%;
+  margin-bottom: 16px;
 
   @media (max-width: 768px) {
     flex-direction: column;
-    align-items: center;
   }
 `;
 
@@ -326,14 +322,14 @@ export const TituloAgendamento = styled.h2`
 
 export const DatePickerWrapper = styled.div`
   width: 100%;
-  
+
   .react-datepicker-wrapper {
     width: 100%;
   }
-  
+
   .react-datepicker__input-container {
     width: 100%;
-    
+
     input {
       width: 100%;
       padding: 10px;
@@ -346,6 +342,7 @@ export const DatePickerWrapper = styled.div`
   .react-datepicker-popper {
     z-index: 9999 !important;
   }
+
 `;
 
 export const InfoProfissionalContainer = styled.div`

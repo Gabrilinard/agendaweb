@@ -529,7 +529,17 @@ const EmpresasProfissionais = () => {
               const hasLocation = p.cidade || p.ufRegiao;
               const hasValor = p.valorConsulta && Number(p.valorConsulta) > 0;
               const hasHorario = p.horariosAtendimento;
-              const firstHorario = hasHorario ? p.horariosAtendimento.split(',')[0].trim() : null;
+              const firstHorario = (() => {
+                if (!hasHorario) return null;
+                try {
+                  const obj = typeof hasHorario === 'string' ? JSON.parse(hasHorario) : hasHorario;
+                  const [dia, horas] = Object.entries(obj)[0];
+                  const hora = Array.isArray(horas) ? horas[0] : horas;
+                  return `${dia} ${hora}`;
+                } catch {
+                  return hasHorario.split(',')[0].trim();
+                }
+              })();
 
               return (
                 <ProfCard key={p.id}>
