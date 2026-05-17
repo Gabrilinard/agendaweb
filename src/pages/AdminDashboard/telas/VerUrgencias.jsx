@@ -65,13 +65,26 @@ const VerUrgencias = ({
 }) => {
   const [now, setNow] = useState(new Date());
   const [selectedId, setSelectedId] = useState(null);
+  const [dismissed, setDismissed] = useState(new Set());
 
   useEffect(() => {
     const iv = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(iv);
   }, []);
 
-  const urgencias = reservas.filter(r => r.is_urgente);
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const urgencias = reservas.filter(r => {
+    if (!r.is_urgente) return false;
+    if (dismissed.has(r.id)) return false;
+    if (r.dia) {
+      const raw = String(r.dia).includes('T') ? String(r.dia).split('T')[0] : String(r.dia);
+      const p = raw.split('-');
+      const d = p.length === 3 ? new Date(+p[0], +p[1] - 1, +p[2]) : new Date(raw);
+      d.setHours(0, 0, 0, 0);
+      if (d < hoje) return false;
+    }
+    return true;
+  });
   const detalhes = urgencias.find(r => r.id === selectedId) || null;
 
   // auto-select first if none selected
@@ -80,9 +93,14 @@ const VerUrgencias = ({
   }, [urgencias.length]);
 
   const aceitar = (r) => {
+    setDismissed(prev => new Set([...prev, r.id]));
+    setSelectedId(null);
     axios.patch(`http://localhost:3000/reservas/${r.id}`, { is_urgente: false, status: 'confirmado' })
-      .then(() => { success('Urgência aceita e convertida em consulta confirmada!'); buscarReservas(); setSelectedId(null); })
-      .catch(() => showError('Erro ao processar urgência.'));
+      .then(() => { success('Urgência aceita e convertida em consulta confirmada!'); buscarReservas(); })
+      .catch(() => {
+        setDismissed(prev => { const s = new Set(prev); s.delete(r.id); return s; });
+        showError('Erro ao processar urgência.');
+      });
   };
 
   const suggestedSlots = getSuggestedSlots();
@@ -102,7 +120,7 @@ const VerUrgencias = ({
           </div>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '20px', alignItems: 'flex-start', height: 'calc(100vh - 100px)' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '20px', alignItems: 'stretch', height: 'calc(100vh - 100px)' }}>
           {/* Left list */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', overflowY: 'auto', height: '100%', paddingBottom: '20px' }}>
             {urgencias.map(r => {
@@ -174,7 +192,7 @@ const VerUrgencias = ({
 
           {/* Right detail panel */}
           {detalhes ? (
-            <div style={{ ...CARD, display: 'flex', flexDirection: 'column', overflowY: 'auto', maxHeight: '100%' }}>
+            <div style={{ ...CARD, display: 'flex', flexDirection: 'column', overflow: 'hidden', height: '100%' }}>
               {/* Patient header */}
               <div style={{
                 padding: '20px 24px',
@@ -211,7 +229,7 @@ const VerUrgencias = ({
                 )}
               </div>
 
-              <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px', overflowY: 'auto', flex: 1 }}>
                 {/* Descrição */}
                 <div>
                   <p style={{ margin: '0 0 8px', fontSize: '11px', fontWeight: '700', color: '#888', textTransform: 'uppercase', letterSpacing: '0.6px' }}>Descrição do paciente</p>
@@ -283,7 +301,7 @@ const VerUrgencias = ({
               </div>
 
               {/* Action footer */}
-              <div style={{ padding: '16px 24px', borderTop: '1px solid #F0EFE9', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginTop: 'auto' }}>
+              <div style={{ padding: '16px 24px', borderTop: '1px solid #F0EFE9', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', flexShrink: 0 }}>
                 {detalhes.telefone && (
                   <a href={`tel:${detalhes.telefone}`} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', border: '1.5px solid #E0DFD9', borderRadius: '8px', textDecoration: 'none', color: '#333', fontSize: '13px', fontWeight: '600', background: 'white' }}>
                     📞 Mensagem

@@ -2,6 +2,7 @@ import axios from 'axios';
 import { ptBR } from 'date-fns/locale';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { Calendar, CalendarDays, CalendarPlus, ClipboardList, Clock, Home, LogOut, MapPin, User, UserCircle, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -87,6 +88,8 @@ const AdminDashboard = () => {
   const [editValorConsulta, setEditValorConsulta] = useState('');
   const [editDiasAtendimento, setEditDiasAtendimento] = useState([]);
   const [editHorariosAtendimento, setEditHorariosAtendimento] = useState({});
+  const [editTipoProfissional, setEditTipoProfissional] = useState('');
+  const [editNumeroConselho, setEditNumeroConselho] = useState('');
 
   const { logout, user } = useAuth();
   const { success, error: showError, warning } = useNotification();
@@ -176,6 +179,8 @@ const AdminDashboard = () => {
       try {
         const { data } = await axios.get(`http://localhost:3000/usuarios/solicitarDados/${user.id}`);
         setEditingUserId(user.id);
+        setEditTipoProfissional(data.tipoProfissional || '');
+        setEditNumeroConselho(data.numeroConselho || '');
         setEditDescricao(data.descricao || '');
         setEditPublicoAtendido(data.publicoAtendido || '');
         setEditModalidade(data.modalidade || '');
@@ -324,6 +329,14 @@ const AdminDashboard = () => {
     } catch { showError('Erro ao salvar.'); }
   };
 
+  const handleSalvarHorarios = async ({ diasAtendimento, horariosAtendimento }) => {
+    if (!user?.id) { warning('Erro ao identificar usuário.'); return; }
+    try {
+      await axios.patch(`http://localhost:3000/usuarios/${user.id}/informacoes`, { diasAtendimento, horariosAtendimento });
+      success('Horários salvos! Os pacientes já podem ver os novos horários.');
+    } catch { showError('Erro ao salvar horários.'); }
+  };
+
   const handleEditDiaChange = (e) => {
     const dia = e.target.value;
     if (dia === 'Todos os dias') {
@@ -366,7 +379,17 @@ const AdminDashboard = () => {
   // ── badge counts ─────────────────────────────────────────────
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const pendentes = reservas.filter(r => !r.is_urgente && r.status === 'pendente' && r.dia && (() => { const raw = String(r.dia).includes('T') ? String(r.dia).split('T')[0] : String(r.dia); const p = raw.split('-'); const d = p.length===3 ? new Date(+p[0],+p[1]-1,+p[2]) : new Date(raw); d.setHours(0,0,0,0); return d >= hoje; })()).length;
-  const urgentes = reservas.filter(r => r.is_urgente).length;
+  const urgentes = reservas.filter(r => {
+    if (!r.is_urgente) return false;
+    if (r.dia) {
+      const raw = String(r.dia).includes('T') ? String(r.dia).split('T')[0] : String(r.dia);
+      const p = raw.split('-');
+      const d = p.length === 3 ? new Date(+p[0], +p[1]-1, +p[2]) : new Date(raw);
+      d.setHours(0,0,0,0);
+      if (d < hoje) return false;
+    }
+    return true;
+  }).length;
 
   // ── avatar ───────────────────────────────────────────────────
   const nomeCompleto = `${user?.nome||''} ${user?.sobrenome||''}`.trim();
@@ -374,14 +397,15 @@ const AdminDashboard = () => {
   const initials = getInitials(nomeCompleto);
 
   const navItems = [
-    { key: 'home',         icon: '⌂',  label: 'Início' },
-    { key: 'agenda',       icon: '📅', label: 'Agenda' },
-    { key: 'criar',        icon: '+',  label: 'Criar Consulta' },
-    { key: 'solicitacoes', icon: '≡',  label: 'Solicitações', badge: pendentes || null, badgeColor: '#1B4D3E' },
-    { key: 'urgencias',    icon: '⚡', label: 'Urgências',    badge: urgentes || null,  badgeColor: '#E8611A' },
-    { key: 'historico',    icon: '🕐', label: 'Histórico' },
-    { key: 'mapa',         icon: '🗺', label: 'Editar Mapa' },
-    { key: 'informacoes',  icon: '👤', label: 'Informações' },
+    { key: 'home',         icon: <Home size={16} />,          label: 'Início' },
+    { key: 'agenda',       icon: <Calendar size={16} />,      label: 'Agenda' },
+    { key: 'horarios',     icon: <CalendarDays size={16} />,  label: 'Editar Horários' },
+    { key: 'criar',        icon: <CalendarPlus size={16} />,  label: 'Criar Consulta' },
+    { key: 'solicitacoes', icon: <ClipboardList size={16} />, label: 'Solicitações', badge: pendentes || null, badgeColor: '#1B4D3E' },
+    { key: 'urgencias',    icon: <Zap size={16} />,           label: 'Urgências',    badge: urgentes || null,  badgeColor: '#E8611A' },
+    { key: 'historico',    icon: <Clock size={16} />,         label: 'Histórico' },
+    { key: 'mapa',         icon: <MapPin size={16} />,        label: 'Editar Mapa' },
+    { key: 'informacoes',  icon: <User size={16} />,          label: 'Informações' },
   ];
 
   // ── sidebar style helpers ────────────────────────────────────
@@ -401,9 +425,24 @@ const AdminDashboard = () => {
         return <Inicio reservas={reservas} reservasPorData={reservasPorData} formatarHorarioBrasil={formatarHorarioBrasil} formatarDataExibicao={formatarDataExibicao} irPara={irPara} user={user} />;
       case 'agenda':
         return <Inicio reservas={reservas} reservasPorData={reservasPorData} formatarHorarioBrasil={formatarHorarioBrasil} formatarDataExibicao={formatarDataExibicao} irPara={irPara} user={user} modoAgenda />;
+      case 'horarios':
+        return (
+          <CriarConsulta
+            modo="horarios"
+            cpfUsuario={cpfUsuario} setCpfUsuario={setCpfUsuario} userId={userId}
+            nomeReserva={nomeReserva} sobrenomeReserva={sobrenomeReserva}
+            emailReserva={emailReserva} telefoneReserva={telefoneReserva}
+            dataReserva={dataReserva} setDataReserva={setDataReserva}
+            horarioReserva={horarioReserva} setHorarioReserva={setHorarioReserva}
+            formatarHorarioBrasil={formatarHorarioBrasil}
+            handleCreateReserva={handleCreateReserva}
+            onSalvarHorarios={handleSalvarHorarios}
+          />
+        );
       case 'criar':
         return (
           <CriarConsulta
+            modo="paciente"
             cpfUsuario={cpfUsuario} setCpfUsuario={setCpfUsuario} userId={userId}
             nomeReserva={nomeReserva} sobrenomeReserva={sobrenomeReserva}
             emailReserva={emailReserva} telefoneReserva={telefoneReserva}
@@ -454,6 +493,8 @@ const AdminDashboard = () => {
       case 'informacoes':
         return (
           <EditarInformacoes
+            editTipoProfissional={editTipoProfissional}
+            editNumeroConselho={editNumeroConselho}
             editDescricao={editDescricao} setEditDescricao={setEditDescricao}
             editPublicoAtendido={editPublicoAtendido} setEditPublicoAtendido={setEditPublicoAtendido}
             editModalidade={editModalidade} setEditModalidade={setEditModalidade}
@@ -511,7 +552,7 @@ const AdminDashboard = () => {
         <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto' }}>
           {navItems.map(item => (
             <button key={item.key} onClick={() => irPara(item.key)} style={navBtn(item.key)}>
-              <span style={{ fontSize: '15px', width: '20px', textAlign: 'center', flexShrink: 0 }}>{item.icon}</span>
+              <span style={{ width: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.icon}</span>
               <span style={{ flex: 1 }}>{item.label}</span>
               {item.badge ? (
                 <span style={{ background: item.badgeColor, color: 'white', borderRadius: '10px', padding: '2px 7px', fontSize: '11px', fontWeight: '700' }}>{item.badge}</span>
@@ -523,11 +564,11 @@ const AdminDashboard = () => {
         {/* Bottom */}
         <div style={{ padding: '12px 8px', borderTop: '1px solid #F0EFE9', display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <button onClick={() => navigate('/EmpresasProfissionais')} style={{ ...navBtn('_'), color: '#555' }}>
-            <span style={{ fontSize: '15px', width: '20px', textAlign: 'center' }}>👤</span>
+            <span style={{ width: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><UserCircle size={16} /></span>
             <span>Modo paciente</span>
           </button>
           <button onClick={() => { logout(); navigate('/Entrar'); }} style={{ ...navBtn('_'), color: '#EF4444' }}>
-            <span style={{ fontSize: '15px', width: '20px', textAlign: 'center' }}>→</span>
+            <span style={{ width: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><LogOut size={16} /></span>
             <span>Sair</span>
           </button>
         </div>

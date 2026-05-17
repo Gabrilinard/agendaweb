@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Clock, Download, Search } from 'lucide-react';
 
 const CARD = { background: 'white', borderRadius: '14px', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' };
 
@@ -106,14 +107,14 @@ const VerHistorico = ({ reservas, searchHistory, setSearchHistory, formatarDataE
           border: '1.5px solid #E0DFD9', borderRadius: '8px', background: 'white',
           fontSize: '13px', fontWeight: '600', color: '#333', cursor: 'pointer', fontFamily: 'Figtree, sans-serif',
         }}>
-          ↓ Exportar CSV
+          <Download size={14} /> Exportar CSV
         </button>
       </div>
 
       {/* Filters */}
       <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
         <div style={{ flex: 1, minWidth: '240px', position: 'relative' }}>
-          <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#aaa', fontSize: '14px', pointerEvents: 'none' }}>🔍</span>
+          <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#aaa', pointerEvents: 'none', display: 'flex' }}><Search size={14} /></span>
           <input
             type="text" placeholder="Buscar paciente ou desfecho..."
             value={searchHistory} onChange={e => setSearchHistory(e.target.value)}
@@ -142,7 +143,7 @@ const VerHistorico = ({ reservas, searchHistory, setSearchHistory, formatarDataE
       {/* Table */}
       {filtradas.length === 0 ? (
         <div style={{ ...CARD, padding: '64px', textAlign: 'center', color: '#888' }}>
-          <div style={{ fontSize: '32px', marginBottom: '12px' }}>🕐</div>
+          <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'center' }}><Clock size={32} color="#bbb" /></div>
           <p style={{ margin: 0, fontSize: '15px', fontWeight: '500' }}>Nenhum registro encontrado</p>
           <p style={{ margin: '6px 0 0', fontSize: '13px' }}>O histórico mostra consultas de datas anteriores</p>
         </div>

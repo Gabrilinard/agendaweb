@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CalendarDays, CalendarPlus, CheckCircle, ClipboardList, MapPin, Zap } from 'lucide-react';
 
 const HOUR_HEIGHT = 72;
 const START_HOUR = 7;
@@ -218,16 +219,16 @@ const HomeView = ({ reservas, reservasPorData, formatarHorarioBrasil, formatarDa
   const hojeConfirmadas = (reservasPorData[hojeKey] || []).filter(r => r.status === 'confirmado');
 
   const statCards = [
-    { label: 'Consultas hoje', value: hojeConfirmadas.length, icon: '📅', color: '#1B4D3E', bg: '#E8F5EF' },
-    { label: 'Novas solicitações', value: pendentes.length, icon: '≡', color: '#92400E', bg: '#FEF3C7', action: () => irPara('solicitacoes') },
-    { label: 'Urgências ativas', value: urgentes.length, icon: '⚡', color: '#E8611A', bg: '#FFF3EE', action: () => irPara('urgencias') },
-    { label: 'Total confirmadas', value: confirmadas.length, icon: '✓', color: '#1D4ED8', bg: '#DBEAFE' },
+    { label: 'Consultas hoje', value: hojeConfirmadas.length, icon: <CalendarDays size={16} color="#1B4D3E" />, color: '#1B4D3E', bg: '#E8F5EF' },
+    { label: 'Novas solicitações', value: pendentes.length, icon: <ClipboardList size={16} color="#92400E" />, color: '#92400E', bg: '#FEF3C7', action: () => irPara('solicitacoes') },
+    { label: 'Urgências ativas', value: urgentes.length, icon: <Zap size={16} color="#E8611A" />, color: '#E8611A', bg: '#FFF3EE', action: () => irPara('urgencias') },
+    { label: 'Total confirmadas', value: confirmadas.length, icon: <CheckCircle size={16} color="#1D4ED8" />, color: '#1D4ED8', bg: '#DBEAFE' },
   ];
 
   return (
     <div style={{ padding: '28px 32px', fontFamily: 'Figtree, sans-serif' }}>
       <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', margin: 0 }}>Olá, {user?.nome || 'Profissional'} 👋</h1>
+        <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', margin: 0 }}>Olá, {user?.nome || 'Profissional'}</h1>
         <p style={{ color: '#888', fontSize: '13px', margin: '4px 0 0' }}>
           {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
@@ -276,7 +277,7 @@ const HomeView = ({ reservas, reservasPorData, formatarHorarioBrasil, formatarDa
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div style={CARD}>
             <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid #F0EFE9', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>⚡</span>
+              <Zap size={16} color="#E8611A" />
               <h3 style={{ margin: 0, fontSize: '14px', fontWeight: '700', color: '#1a1a1a' }}>Urgências</h3>
               {urgentes.length > 0 && <span style={{ marginLeft: 'auto', background: '#E8611A', color: 'white', borderRadius: '10px', padding: '2px 7px', fontSize: '11px', fontWeight: '700' }}>{urgentes.length}</span>}
             </div>
@@ -297,12 +298,12 @@ const HomeView = ({ reservas, reservasPorData, formatarHorarioBrasil, formatarDa
             </div>
             <div style={{ padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {[
-                { icon: '+', label: 'Nova consulta', screen: 'criar', color: '#1B4D3E', bg: '#E8F5EF' },
-                { icon: '≡', label: 'Ver solicitações', screen: 'solicitacoes', color: '#92400E', bg: '#FEF3C7' },
-                { icon: '🗺', label: 'Editar localização', screen: 'mapa', color: '#1D4ED8', bg: '#DBEAFE' },
+                { icon: <CalendarPlus size={14} color="#1B4D3E" />, label: 'Nova consulta', screen: 'criar', color: '#1B4D3E', bg: '#E8F5EF' },
+                { icon: <ClipboardList size={14} color="#92400E" />, label: 'Ver solicitações', screen: 'solicitacoes', color: '#92400E', bg: '#FEF3C7' },
+                { icon: <MapPin size={14} color="#1D4ED8" />, label: 'Editar localização', screen: 'mapa', color: '#1D4ED8', bg: '#DBEAFE' },
               ].map((a, i) => (
                 <button key={i} onClick={() => irPara(a.screen)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: '8px', border: 'none', background: '#F7F7F4', cursor: 'pointer', textAlign: 'left', fontFamily: 'Figtree, sans-serif', fontSize: '13px', color: '#333' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: a.bg, color: a.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '13px', flexShrink: 0 }}>{a.icon}</div>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: a.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{a.icon}</div>
                   <span style={{ fontWeight: '500' }}>{a.label}</span>
                 </button>
               ))}

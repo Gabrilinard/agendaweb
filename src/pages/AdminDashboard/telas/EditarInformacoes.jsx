@@ -49,6 +49,8 @@ const ModalIcon = ({ type, active }) => {
 };
 
 const EditarInformacoes = ({
+  editTipoProfissional,
+  editNumeroConselho,
   editDescricao, setEditDescricao,
   editPublicoAtendido, setEditPublicoAtendido,
   editModalidade, setEditModalidade,
@@ -62,7 +64,7 @@ const EditarInformacoes = ({
 
   // ── Local state ───────────────────────────────────────────
   const [nomeCompleto, setNomeCompleto] = useState(`${user?.nome || ''} ${user?.sobrenome || ''}`.trim());
-  const [especialidade, setEspecialidade] = useState(user?.tipoProfissional || '');
+  const [especialidade, setEspecialidade] = useState(editTipoProfissional || user?.tipoProfissional || '');
   const [registro, setRegistro] = useState(user?.registroProfissional || '');
   const [sobre, setSobre] = useState(editDescricao || '');
   const [aceitarEmergentes, setAceitarEmergentes] = useState(true);
@@ -88,6 +90,7 @@ const EditarInformacoes = ({
     { id: 1, titulo: '', instituicao: '', periodo: '', editing: false },
   ]);
 
+  useEffect(() => { if (editTipoProfissional) setEspecialidade(editTipoProfissional); }, [editTipoProfissional]);
   useEffect(() => { setSobre(editDescricao || ''); }, [editDescricao]);
 
   const togglePublico = (p) =>
@@ -111,6 +114,7 @@ const EditarInformacoes = ({
 
     try {
       await axios.patch(`http://localhost:3000/usuarios/${user?.id}/informacoes`, {
+        tipoProfissional: especialidade,
         descricao: sobre,
         publicoAtendido: publicoSel.join(','),
         modalidade: modalStr,
@@ -119,7 +123,7 @@ const EditarInformacoes = ({
         horariosAtendimento: editHorariosAtendimento,
       });
       success('Informações salvas com sucesso!');
-    } catch { showError('Erro ao salvar informações.'); }
+    } catch (e) { showError(e?.response?.data?.error || 'Erro ao salvar informações.'); }
   };
 
   const handleDescartar = () => {
@@ -178,14 +182,29 @@ const EditarInformacoes = ({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
               <div>
                 <label style={labelS}>Especialidade</label>
+                {editTipoProfissional && editTipoProfissional !== especialidade && (
+                  <p style={{ margin: '0 0 6px', fontSize: '12px', color: '#888' }}>
+                    Salvo: <strong style={{ color: '#1B4D3E' }}>{editTipoProfissional}</strong>
+                  </p>
+                )}
                 <select value={especialidade} onChange={e => setEspecialidade(e.target.value)} style={{ ...inputS, cursor: 'pointer' }}>
                   <option value="">Selecione...</option>
                   {ESPECIALIDADES.map(e => <option key={e} value={e}>{e}</option>)}
                 </select>
               </div>
               <div>
-                <label style={labelS}>Registro profissional</label>
-                <input type="text" value={registro} onChange={e => setRegistro(e.target.value)} placeholder="CRM SP 12345" style={inputS} />
+                <label style={labelS}>Número do conselho</label>
+                {editNumeroConselho ? (
+                  <div style={{ padding: '10px 14px', background: '#F7F7F4', border: '1.5px solid #E0DFD9', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ color: '#1B4D3E', fontSize: '13px' }}>✓</span>
+                    {editNumeroConselho}
+                    <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#aaa', fontWeight: '400' }}>cadastrado no registro</span>
+                  </div>
+                ) : (
+                  <div style={{ padding: '10px 14px', background: '#F7F7F4', border: '1.5px solid #E0DFD9', borderRadius: '8px', fontSize: '13px', color: '#aaa' }}>
+                    Não informado no cadastro
+                  </div>
+                )}
               </div>
             </div>
 
