@@ -102,7 +102,7 @@ const VerSolicitacoes = ({
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ marginBottom: '20px' }}>
           <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', margin: 0 }}>Solicitações</h1>
-          <p style={{ color: '#888', fontSize: '13px', margin: '4px 0 0' }}>{lista.length} solicitação{lista.length !== 1 ? 'ões' : ''} ativa{lista.length !== 1 ? 's' : ''}</p>
+          <p style={{ color: '#888', fontSize: '13px', margin: '4px 0 0' }}>{lista.length} {lista.length !== 1 ? 'solicitações ativas' : 'solicitação ativa'}</p>
         </div>
 
         {lista.length === 0 ? (

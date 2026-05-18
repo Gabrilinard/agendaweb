@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { BsActivity, BsVolumeUpFill } from 'react-icons/bs';
 import { FaAppleAlt, FaBolt, FaClipboardList, FaStethoscope, FaTooth, FaUsers } from 'react-icons/fa';
-import { Search } from 'lucide-react';
+import { CalendarDays, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../../components/Footer';
 import Header from '../../components/Header';
@@ -239,7 +239,7 @@ const Home = () => {
                                 </AppointmentInfoWrap>
                                 <AppointmentConf>✓ Confirmado</AppointmentConf>
                                 <AppointmentDate>
-                                    📅&nbsp;
+                                    <CalendarDays size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
                                     {nextDia
                                         ? nextDia.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' })
                                         : ''} · {nextConsulta.horario}

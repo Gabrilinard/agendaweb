@@ -194,9 +194,11 @@ const VerHistorico = ({ reservas, searchHistory, setSearchHistory, formatarDataE
                 <span style={{ fontSize: '13px', color: '#555' }}>{dataFmt}</span>
 
                 {/* Tipo */}
-                <span style={{ background: tipo.bg, color: tipo.color, borderRadius: '20px', padding: '4px 10px', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap', display: 'inline-block' }}>
-                  {tipo.label}
-                </span>
+                <div style={{ display: 'flex' }}>
+                  <span style={{ background: tipo.bg, color: tipo.color, borderRadius: '20px', padding: '4px 10px', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                    {tipo.label}
+                  </span>
+                </div>
 
                 {/* Desfecho */}
                 <span style={{ fontSize: '13px', color: '#555' }}>{desfecho}</span>
