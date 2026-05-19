@@ -532,13 +532,25 @@ const MinhasConsultas = () => {
   const [editDrawerOpen, setEditDrawerOpen] = useState(false);
   const [consultaEditando, setConsultaEditando] = useState(null);
   const [confirmingId, setConfirmingId] = useState(null);
+  const [liberandoId, setLiberandoId] = useState(null);
   const [novaData, setNovaData] = useState(new Date());
   const [novoHorario, setNovoHorario] = useState('');
+  const [vagasPendentes, setVagasPendentes] = useState([]);
+  const [aceitandoVaga, setAceitandoVaga] = useState(null);
 
   useEffect(() => {
     if (!user?.id) { navigate('/Entrar'); return; }
     buscarConsultas();
+    buscarVagasPendentes();
   }, [user]);
+
+  const buscarVagasPendentes = async () => {
+    if (!user?.id) return;
+    try {
+      const { data } = await axios.get(`http://localhost:3000/vagas/pendentes/${user.id}`);
+      setVagasPendentes(data || []);
+    } catch { /* silently ignore */ }
+  };
 
   const buscarConsultas = async () => {
     try {
@@ -589,7 +601,34 @@ const MinhasConsultas = () => {
     } catch { showError('Erro ao cancelar.'); }
   };
 
-  const handleLiberarHorario = (id) => setConfirmingId(id);
+  const handleLiberarHorario = (id) => { setConfirmingId(null); setLiberandoId(id); };
+
+  const handleConfirmarLiberacao = async () => {
+    try {
+      await axios.post(`http://localhost:3000/vagas/liberar/${liberandoId}`);
+      success('Horário liberado! O profissional será notificado.');
+      setLiberandoId(null);
+      buscarConsultas();
+    } catch { showError('Erro ao liberar horário.'); }
+  };
+
+  const handleAceitarVaga = async (notif) => {
+    setAceitandoVaga(notif.id);
+    try {
+      await axios.post(`http://localhost:3000/vagas/aceitar/${notif.id}`, { token: notif.token });
+      success('Vaga aceita! Sua consulta foi atualizada.');
+      buscarVagasPendentes();
+      buscarConsultas();
+    } catch { showError('Erro ao aceitar vaga.'); }
+    finally { setAceitandoVaga(null); }
+  };
+
+  const handleRecusarVaga = async (notif) => {
+    try {
+      await axios.post(`http://localhost:3000/vagas/recusar/${notif.id}`);
+      setVagasPendentes(prev => prev.filter(v => v.id !== notif.id));
+    } catch { /* silently ignore */ }
+  };
 
   const handleEditar = (c) => {
     setConsultaEditando(c);
@@ -677,6 +716,14 @@ const MinhasConsultas = () => {
                 <ConfirmYes onClick={handleConfirmarCancelamento}>Sim, cancelar</ConfirmYes>
               </ConfirmBtns>
             </ConfirmBar>
+          ) : isActive && liberandoId === c.id ? (
+            <ConfirmBar style={{ background: '#FFF7F0', borderColor: '#FED7B0' }}>
+              Liberar abre seu horário para outro paciente ser atendido. Deseja confirmar?
+              <ConfirmBtns>
+                <ConfirmNo onClick={() => setLiberandoId(null)}>Voltar</ConfirmNo>
+                <ConfirmYes style={{ background: '#E8611A' }} onClick={handleConfirmarLiberacao}>Sim, liberar</ConfirmYes>
+              </ConfirmBtns>
+            </ConfirmBar>
           ) : isActive && (
             <CardFooter>
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -696,6 +743,42 @@ const MinhasConsultas = () => {
     <PageWrapper>
       <Header />
       <Content>
+        {/* Vagas pendentes banner */}
+        {vagasPendentes.map(notif => (
+          <div key={notif.id} style={{
+            background: '#FFF7F0', border: '1.5px solid #FED7B0', borderRadius: '12px',
+            padding: '16px 20px', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '14px',
+            fontFamily: 'Figtree, sans-serif',
+          }}>
+            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#FFF3EE', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Calendar size={20} color="#E8611A" />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ margin: 0, fontWeight: '700', fontSize: '14px', color: '#C2410C' }}>
+                Uma vaga se abriu!
+              </p>
+              <p style={{ margin: '2px 0 0', fontSize: '13px', color: '#7C2D12' }}>
+                Dr. {notif.prof_nome} {notif.prof_sobrenome} · {notif.dia} às {notif.horario}
+              </p>
+            </div>
+            <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+              <button
+                onClick={() => handleRecusarVaga(notif)}
+                style={{ padding: '8px 14px', background: 'none', border: '1.5px solid #FED7B0', borderRadius: '8px', fontSize: '13px', fontWeight: '600', color: '#7C2D12', cursor: 'pointer', fontFamily: 'Figtree, sans-serif' }}
+              >
+                Não, obrigado
+              </button>
+              <button
+                onClick={() => handleAceitarVaga(notif)}
+                disabled={aceitandoVaga === notif.id}
+                style={{ padding: '8px 18px', background: '#E8611A', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: '700', color: 'white', cursor: 'pointer', fontFamily: 'Figtree, sans-serif', opacity: aceitandoVaga === notif.id ? 0.7 : 1 }}
+              >
+                {aceitandoVaga === notif.id ? 'Aceitando…' : 'Aceitar vaga'}
+              </button>
+            </div>
+          </div>
+        ))}
+
         <PageTop>
           <TitleArea>
             <SectionLabel>AGENDA</SectionLabel>

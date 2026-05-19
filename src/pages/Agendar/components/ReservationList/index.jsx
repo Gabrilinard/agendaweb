@@ -1,4 +1,5 @@
 import React from 'react';
+import { CalendarDays } from 'lucide-react';
 import { ptBR } from 'date-fns/locale';
 import DatePicker from 'react-datepicker';
 import {
@@ -70,7 +71,7 @@ const ReservationItem = ({ reserva, actions }) => {
       flexWrap: 'wrap', gap: '10px', fontFamily: 'Figtree, sans-serif',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <span style={{ fontSize: '18px', color: '#888' }}>📅</span>
+        <CalendarDays size={18} color="#888" />
         <span style={{ fontSize: '14px', color: '#1a1a1a' }}>
           <strong>{formatarDataExibicao(reserva.dia)}</strong>
           {' às '}

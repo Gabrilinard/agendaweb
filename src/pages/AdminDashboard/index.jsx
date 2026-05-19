@@ -2,7 +2,7 @@ import axios from 'axios';
 import { ptBR } from 'date-fns/locale';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Calendar, CalendarDays, CalendarPlus, ClipboardList, Clock, Home, LogOut, MapPin, User, UserCircle, Zap } from 'lucide-react';
+import { Calendar, CalendarDays, CalendarPlus, ClipboardList, Clock, Home, LogOut, MapPin, Unlock, User, UserCircle, Zap } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -17,6 +17,7 @@ import Inicio from './telas/VerConsultas';
 import VerHistorico from './telas/VerHistorico';
 import VerSolicitacoes from './telas/VerSolicitacoes';
 import VerUrgencias from './telas/VerUrgencias';
+import VerVagas from './telas/VerVagas';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -379,6 +380,8 @@ const AdminDashboard = () => {
   // ── badge counts ─────────────────────────────────────────────
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const pendentes = reservas.filter(r => !r.is_urgente && r.status === 'pendente' && r.dia && (() => { const raw = String(r.dia).includes('T') ? String(r.dia).split('T')[0] : String(r.dia); const p = raw.split('-'); const d = p.length===3 ? new Date(+p[0],+p[1]-1,+p[2]) : new Date(raw); d.setHours(0,0,0,0); return d >= hoje; })()).length;
+  const vagasCount = reservas.filter(r => r.status === 'liberado').length;
+
   const urgentes = reservas.filter(r => {
     if (!r.is_urgente) return false;
     if (r.dia) {
@@ -401,8 +404,9 @@ const AdminDashboard = () => {
     { key: 'agenda',       icon: <Calendar size={16} />,      label: 'Agenda' },
     { key: 'horarios',     icon: <CalendarDays size={16} />,  label: 'Editar Horários' },
     { key: 'criar',        icon: <CalendarPlus size={16} />,  label: 'Criar Consulta' },
-    { key: 'solicitacoes', icon: <ClipboardList size={16} />, label: 'Solicitações', badge: pendentes || null, badgeColor: '#1B4D3E' },
-    { key: 'urgencias',    icon: <Zap size={16} />,           label: 'Urgências',    badge: urgentes || null,  badgeColor: '#E8611A' },
+    { key: 'solicitacoes', icon: <ClipboardList size={16} />, label: 'Solicitações', badge: pendentes || null,  badgeColor: '#1B4D3E' },
+    { key: 'urgencias',    icon: <Zap size={16} />,           label: 'Urgências',    badge: urgentes || null,   badgeColor: '#E8611A' },
+    { key: 'vagas',        icon: <Unlock size={16} />,        label: 'Vagas',        badge: vagasCount || null, badgeColor: '#7C3AED' },
     { key: 'historico',    icon: <Clock size={16} />,         label: 'Histórico' },
     { key: 'mapa',         icon: <MapPin size={16} />,        label: 'Editar Mapa' },
     { key: 'informacoes',  icon: <User size={16} />,          label: 'Informações' },
@@ -471,6 +475,13 @@ const AdminDashboard = () => {
             reservas={reservas} formatarDataExibicao={formatarDataExibicao} formatarHorarioBrasil={formatarHorarioBrasil}
             success={success} showError={showError} buscarReservas={buscarReservas}
             onEditarReserva={abrirEdicaoReserva} removerReserva={removerReserva}
+          />
+        );
+      case 'vagas':
+        return (
+          <VerVagas
+            reservas={reservas} formatarDataExibicao={formatarDataExibicao} formatarHorarioBrasil={formatarHorarioBrasil}
+            user={user} success={success} showError={showError} buscarReservas={buscarReservas}
           />
         );
       case 'historico':
