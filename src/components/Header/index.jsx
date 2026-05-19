@@ -1,11 +1,10 @@
-import { Bell, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import pngLogoAgende from '../../assets/pnglogoagende.png';
 import { useAuth } from '../../contexts/AuthContext';
 import {
     Avatar,
-    BellBtn,
     BrandArea,
     BrandName,
     BrandTagline,
@@ -22,7 +21,6 @@ import {
     MobileNavLink,
     NavArea,
     NavLink,
-    NotifBadge,
     RightArea,
     UserChip,
     UserDetails,
@@ -78,10 +76,6 @@ const Header = () => {
                 </NavArea>
 
                 <RightArea>
-                    <BellBtn>
-                        <Bell size={18} />
-                        {user && <NotifBadge />}
-                    </BellBtn>
                     {user ? (
                         <UserChip onClick={() => go('/Conta')}>
                             <Avatar>{initials || 'U'}</Avatar>
