@@ -1,3 +1,5 @@
+import axios from 'axios';
+import { useEffect, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { MapContainer, Marker, TileLayer } from 'react-leaflet';
@@ -46,8 +48,30 @@ const divider = {
   margin: '16px 0',
 };
 
+const StarRating = ({ media }) => {
+  const stars = [1,2,3,4,5];
+  return (
+    <span style={{ display: 'inline-flex', gap: '1px' }}>
+      {stars.map(n => (
+        <span key={n} style={{ color: n <= Math.round(media) ? '#F59E0B' : '#D1D5DB', fontSize: '14px' }}>★</span>
+      ))}
+    </span>
+  );
+};
+
 const ProfessionalInfo = ({ profissionalInfo, location, endereco }) => {
   if (!profissionalInfo) return null;
+
+  const [avalMedia, setAvalMedia] = useState({ media: 0, total: 0 });
+  const [avaliacoes, setAvaliacoes] = useState([]);
+
+  useEffect(() => {
+    if (!profissionalInfo?.id) return;
+    axios.get(`http://localhost:3000/avaliacoes/media/${profissionalInfo.id}`)
+      .then(r => setAvalMedia(r.data)).catch(() => {});
+    axios.get(`http://localhost:3000/avaliacoes?profissional_id=${profissionalInfo.id}`)
+      .then(r => setAvaliacoes(r.data || [])).catch(() => {});
+  }, [profissionalInfo?.id]);
 
   const nomeCompleto = `${profissionalInfo.nome || ''} ${profissionalInfo.sobrenome || ''}`.trim();
   const av = getAvatarColor(nomeCompleto);
@@ -98,7 +122,10 @@ const ProfessionalInfo = ({ profissionalInfo, location, endereco }) => {
               {profissionalInfo.tipoProfissional}
             </p>
           )}
-          <p style={{ color: '#888', fontSize: '12px', margin: '3px 0 0' }}>★ 5 · 210 avaliações</p>
+          <p style={{ color: '#888', fontSize: '12px', margin: '3px 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <StarRating media={avalMedia.media} />
+            <span>{avalMedia.media > 0 ? avalMedia.media.toFixed(1) : '—'} · {avalMedia.total} avalia{avalMedia.total !== 1 ? 'ções' : 'ção'}</span>
+          </p>
         </div>
       </div>
 
@@ -123,14 +150,18 @@ const ProfessionalInfo = ({ profissionalInfo, location, endereco }) => {
             </div>
           </div>
         )}
-        {profissionalInfo.valorConsulta && Number(profissionalInfo.valorConsulta) > 0 && (
-          <div style={{ background: '#F7F7F4', borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minWidth: '90px' }}>
-            <p style={{ ...sectionLabel, textAlign: 'center' }}>Valor</p>
+        <div style={{ background: '#F7F7F4', borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minWidth: '90px' }}>
+          <p style={{ ...sectionLabel, textAlign: 'center' }}>Valor</p>
+          {profissionalInfo.valorConsulta && Number(profissionalInfo.valorConsulta) > 0 ? (
             <p style={{ fontWeight: '800', fontSize: '22px', color: '#1a1a1a', margin: 0, whiteSpace: 'nowrap' }}>
               R$ {Number(profissionalInfo.valorConsulta).toFixed(0)}
             </p>
-          </div>
-        )}
+          ) : (
+            <p style={{ fontWeight: '600', fontSize: '13px', color: '#666', margin: 0, textAlign: 'center' }}>
+              A negociar
+            </p>
+          )}
+        </div>
       </div>
 
       {/* Sobre */}
@@ -173,6 +204,32 @@ const ProfessionalInfo = ({ profissionalInfo, location, endereco }) => {
               <span>📍</span> {endereco}
             </p>
           )}
+        </>
+      )}
+
+      {avaliacoes.length > 0 && (
+        <>
+          <div style={divider} />
+          <p style={sectionLabel}>Avaliações ({avalMedia.total})</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '220px', overflowY: 'auto' }}>
+            {avaliacoes.map(av => (
+              <div key={av.id} style={{ background: '#F7F7F4', borderRadius: '8px', padding: '10px 12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <span style={{ fontWeight: 700, fontSize: '13px', color: '#1a1a1a' }}>
+                    {av.paciente_nome} {av.paciente_sobrenome}
+                  </span>
+                  <span style={{ display: 'flex', gap: '1px' }}>
+                    {[1,2,3,4,5].map(n => (
+                      <span key={n} style={{ color: n <= av.nota ? '#F59E0B' : '#D1D5DB', fontSize: '13px' }}>★</span>
+                    ))}
+                  </span>
+                </div>
+                {av.comentario && (
+                  <p style={{ margin: 0, fontSize: '12px', color: '#555', lineHeight: 1.5 }}>{av.comentario}</p>
+                )}
+              </div>
+            ))}
+          </div>
         </>
       )}
     </div>

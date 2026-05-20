@@ -576,11 +576,51 @@ const MinhasConsultas = () => {
   const [formData, setFormData] = useState(null);
   const [loadingForm, setLoadingForm] = useState(false);
 
+  const [avaliandoId, setAvaliandoId] = useState(null);
+  const [notaAvaliacao, setNotaAvaliacao] = useState(0);
+  const [comentarioAvaliacao, setComentarioAvaliacao] = useState('');
+  const [avaliacoesFeitas, setAvaliacoesFeitas] = useState(new Set());
+  const [enviandoAvaliacao, setEnviandoAvaliacao] = useState(false);
+
   useEffect(() => {
     if (!user?.id) { navigate('/Entrar'); return; }
     buscarConsultas();
     buscarVagasPendentes();
   }, []);
+
+  const verificarAvaliacoes = async (lista) => {
+    const passadas = lista.filter(c =>
+      c.status === 'confirmado' && parseDia(c.dia) < today && c.profissional_id
+    );
+    const results = await Promise.all(passadas.map(async c => {
+      try {
+        const { data } = await axios.get(`http://localhost:3000/avaliacoes/reserva/${c.id}`);
+        return data.avaliado ? c.id : null;
+      } catch { return null; }
+    }));
+    setAvaliacoesFeitas(new Set(results.filter(Boolean)));
+  };
+
+  const handleEnviarAvaliacao = async (c) => {
+    if (!notaAvaliacao) { showError('Selecione uma nota.'); return; }
+    setEnviandoAvaliacao(true);
+    try {
+      await axios.post('http://localhost:3000/avaliacoes', {
+        reserva_id: c.id,
+        usuario_id: user.id,
+        profissional_id: c.profissional_id,
+        nota: notaAvaliacao,
+        comentario: comentarioAvaliacao,
+      });
+      success('Avaliação enviada!');
+      setAvaliacoesFeitas(prev => new Set([...prev, c.id]));
+      setAvaliandoId(null);
+      setNotaAvaliacao(0);
+      setComentarioAvaliacao('');
+    } catch (e) {
+      showError(e.response?.data?.error || 'Erro ao enviar avaliação.');
+    } finally { setEnviandoAvaliacao(false); }
+  };
 
   const buscarVagasPendentes = async () => {
     if (!user?.id) return;
@@ -601,6 +641,7 @@ const MinhasConsultas = () => {
       const { data } = await axios.get(url);
 
       const enriched = await Promise.all((data || []).map(async (c) => {
+
         const otherId = isProfissional ? c.usuario_id : c.profissional_id;
         if (!otherId) return c;
         try {
@@ -616,6 +657,7 @@ const MinhasConsultas = () => {
       }));
 
       setConsultas(enriched);
+      verificarAvaliacoes(enriched);
     } catch { showError('Erro ao carregar consultas.'); }
     finally { setLoading(false); }
   };
@@ -750,6 +792,10 @@ const MinhasConsultas = () => {
     const isRescheduled = c.status === 'aguardando_confirmacao_paciente';
     const isUrgente = Number(c.is_urgente) === 1;
     const valor = c.valorConsulta ? `· R$ ${Number(c.valorConsulta).toFixed(0)}` : '';
+    const isPast = c.status === 'confirmado' && dia && dia < today;
+    const isPaciente = user?.tipoUsuario !== 'profissional';
+    const jaAvaliou = avaliacoesFeitas.has(c.id);
+    const isAvaliando = avaliandoId === c.id;
 
     return (
       <CardWrapper key={c.id}>
@@ -834,6 +880,57 @@ const MinhasConsultas = () => {
                 &nbsp;— outro paciente pode aproveitá-lo.
               </span>
             </CardFooter>
+          )}
+
+          {isPast && isPaciente && !isAvaliando && (
+            <CardFooter style={{ justifyContent: 'space-between', background: jaAvaliou ? '#F0FDF4' : '#FAFAF8' }}>
+              {jaAvaliou ? (
+                <span style={{ color: '#1A5C3C', fontWeight: 600 }}>✓ Você já avaliou esta consulta</span>
+              ) : (
+                <>
+                  <span>Como foi sua consulta com <strong>{c.nomeOutro}</strong>?</span>
+                  <LibeLink onClick={() => { setAvaliandoId(c.id); setNotaAvaliacao(0); setComentarioAvaliacao(''); }}>
+                    Avaliar agora
+                  </LibeLink>
+                </>
+              )}
+            </CardFooter>
+          )}
+
+          {isAvaliando && (
+            <div style={{ borderTop: `1px solid ${BORDER}`, padding: '16px 24px', background: '#FAFAF8', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: TEXT }}>Avaliar consulta com {c.nomeOutro}</span>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {[1,2,3,4,5].map(n => (
+                  <button key={n} onClick={() => setNotaAvaliacao(n)} style={{
+                    fontSize: '24px', background: 'none', border: 'none', cursor: 'pointer',
+                    color: n <= notaAvaliacao ? '#F59E0B' : '#D1D5DB', lineHeight: 1, padding: '2px'
+                  }}>★</button>
+                ))}
+                {notaAvaliacao > 0 && (
+                  <span style={{ alignSelf: 'center', fontSize: '0.82rem', color: MUTED, marginLeft: 4 }}>
+                    {['','Ruim','Regular','Bom','Muito bom','Excelente'][notaAvaliacao]}
+                  </span>
+                )}
+              </div>
+              <textarea
+                placeholder="Deixe um comentário (opcional)..."
+                value={comentarioAvaliacao}
+                onChange={e => setComentarioAvaliacao(e.target.value)}
+                rows={3}
+                style={{ width: '100%', padding: '10px', border: `1.5px solid ${BORDER}`, borderRadius: '8px', fontSize: '0.85rem', fontFamily: 'Figtree, sans-serif', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
+              />
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <ConfirmNo onClick={() => setAvaliandoId(null)}>Cancelar</ConfirmNo>
+                <ConfirmYes
+                  style={{ background: DARK_GREEN, opacity: enviandoAvaliacao ? 0.6 : 1 }}
+                  onClick={() => handleEnviarAvaliacao(c)}
+                  disabled={enviandoAvaliacao}
+                >
+                  {enviandoAvaliacao ? 'Enviando...' : 'Enviar avaliação'}
+                </ConfirmYes>
+              </div>
+            </div>
           )}
         </ConsultaCard>
       </CardWrapper>

@@ -426,6 +426,7 @@ const EmpresasProfissionais = () => {
   const [busca, setBusca] = useState('');
   const [filtroModalidade, setFiltroModalidade] = useState('');
   const [filtroPublico, setFiltroPublico] = useState('');
+  const [filtroAvaliacao, setFiltroAvaliacao] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -457,7 +458,10 @@ const EmpresasProfissionais = () => {
     const matchPublico = !filtroPublico ||
       p.publicoAtendido?.toLowerCase().includes(filtroPublico.toLowerCase());
 
-    return matchBusca && matchModal && matchPublico;
+    const media = Number(p.mediaAvaliacao) || 0;
+    const matchAvaliacao = !filtroAvaliacao || media >= filtroAvaliacao;
+
+    return matchBusca && matchModal && matchPublico && matchAvaliacao;
   });
 
   const handleAgendar = (p) => {
@@ -488,7 +492,7 @@ const EmpresasProfissionais = () => {
             <SpecTab
               key={c.key}
               $active={categoriaAtiva === c.key}
-              onClick={() => { setCategoriaAtiva(c.key); setBusca(''); setFiltroModalidade(''); setFiltroPublico(''); }}
+              onClick={() => { setCategoriaAtiva(c.key); setBusca(''); setFiltroModalidade(''); setFiltroPublico(''); setFiltroAvaliacao(0); }}
             >
               {c.icon}
               {c.label}
@@ -513,6 +517,16 @@ const EmpresasProfissionais = () => {
               <option value="">Todas as modalidades</option>
               <option value="online">Online</option>
               <option value="presencial">Presencial</option>
+            </StyledSelect>
+            <SelectArrow><ChevronDown size={15} /></SelectArrow>
+          </SelectWrap>
+
+          <SelectWrap>
+            <StyledSelect value={filtroAvaliacao} onChange={e => setFiltroAvaliacao(Number(e.target.value))}>
+              <option value={0}>Qualquer avaliação</option>
+              <option value={4}>★★★★ 4+ estrelas</option>
+              <option value={3}>★★★ 3+ estrelas</option>
+              <option value={2}>★★ 2+ estrelas</option>
             </StyledSelect>
             <SelectArrow><ChevronDown size={15} /></SelectArrow>
           </SelectWrap>
@@ -563,6 +577,9 @@ const EmpresasProfissionais = () => {
                 }
               })();
 
+              const media = Number(p.mediaAvaliacao) || 0;
+              const total = Number(p.totalAvaliacoes) || 0;
+
               return (
                 <ProfCard key={p.id}>
                   <CardBody>
@@ -574,6 +591,14 @@ const EmpresasProfissionais = () => {
                           <VerifiedIcon><CheckCircle size={16} /></VerifiedIcon>
                         </NameRow>
                         <ProfSpec>{p.tipoProfissional}</ProfSpec>
+                        {total > 0 && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                            {[1,2,3,4,5].map(n => (
+                              <span key={n} style={{ color: n <= Math.round(media) ? '#F59E0B' : '#D1D5DB', fontSize: '12px', lineHeight: 1 }}>★</span>
+                            ))}
+                            <span style={{ fontSize: '11px', color: '#888', marginLeft: '2px' }}>{media.toFixed(1)} ({total})</span>
+                          </div>
+                        )}
                         {hasLocation && (
                           <LocationRow>
                             <MapPin size={12} />
