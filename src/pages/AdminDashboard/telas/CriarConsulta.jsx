@@ -74,6 +74,9 @@ const CriarConsulta = ({
     () => firstSavedSlots ? [...firstSavedSlots] : gerarSlots('08:00', '17:00', '30', true)
   );
   const [slotsManualmenteTocados, setSlotsManualmenteTocados] = useState(false);
+  const [slotsOriginais, setSlotsOriginais] = useState(
+    () => firstSavedSlots ? [...firstSavedSlots] : gerarSlots('08:00', '17:00', '30', true)
+  );
 
   const toggleDay = (d) => setSelectedDays(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]);
   const toggleAvulsoDay = (d) => setAvulsoDays(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]);
@@ -83,6 +86,7 @@ const CriarConsulta = ({
     const entries = Object.entries(horariosAtendimentoAtual);
     if (entries.length > 0 && Array.isArray(entries[0][1]) && entries[0][1].length > 0) {
       setSlotsEditaveis([...entries[0][1]]);
+      setSlotsOriginais([...entries[0][1]]);
       setSlotsManualmenteTocados(false);
     }
     if (Array.isArray(diasAtendimentoAtual) && diasAtendimentoAtual.length > 0) {
@@ -93,7 +97,9 @@ const CriarConsulta = ({
 
   useEffect(() => {
     if (!slotsManualmenteTocados) return;
-    setSlotsEditaveis(gerarSlots(inicio, fim, duracao, pausaAlmoco));
+    const novos = gerarSlots(inicio, fim, duracao, pausaAlmoco);
+    setSlotsEditaveis(novos);
+    setSlotsOriginais(novos);
   }, [inicio, fim, duracao, pausaAlmoco]);
 
   const removerSlotIntervalo = (slot) => { setSlotsManualmenteTocados(true); setSlotsEditaveis(prev => prev.filter(s => s !== slot)); };
@@ -376,24 +382,52 @@ const CriarConsulta = ({
                     </label>
 
                     {/* Preview inline com remoção */}
-                    {slotsEditaveis.length > 0 && (
-                      <div>
-                        <label style={{ ...labelS, marginBottom: '10px' }}>
-                          Horários que serão gerados ({slotsEditaveis.length} slots) — clique × para remover
-                        </label>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                          {slotsEditaveis.map(s => (
-                            <span key={s} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#E8F5EF', color: '#1B4D3E', borderRadius: '6px', padding: '4px 6px 4px 10px', fontSize: '13px', fontWeight: '600' }}>
-                              {s}
+                    {slotsEditaveis.length > 0 && (() => {
+                      const removidos = slotsOriginais.filter(s => !slotsEditaveis.includes(s));
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+                              <label style={{ ...labelS, marginBottom: 0 }}>
+                                Horários ativos ({slotsEditaveis.length}) — clique × para remover
+                              </label>
                               <button
-                                onClick={() => removerSlotIntervalo(s)}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1B4D3E', fontSize: '14px', lineHeight: 1, padding: '0 2px', opacity: 0.6 }}
-                              >×</button>
-                            </span>
-                          ))}
+                                onClick={() => { const r = gerarSlots(inicio, fim, duracao, pausaAlmoco); setSlotsEditaveis(r); setSlotsOriginais(r); }}
+                                style={{ padding: '5px 12px', background: 'none', border: '1.5px solid #1B4D3E', color: '#1B4D3E', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', fontFamily: 'Figtree, sans-serif', whiteSpace: 'nowrap' }}
+                              >
+                                ↺ Restaurar horários
+                              </button>
+                            </div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                              {slotsEditaveis.map(s => (
+                                <span key={s} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#E8F5EF', color: '#1B4D3E', borderRadius: '6px', padding: '4px 6px 4px 10px', fontSize: '13px', fontWeight: '600' }}>
+                                  {s}
+                                  <button onClick={() => removerSlotIntervalo(s)}
+                                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1B4D3E', fontSize: '14px', lineHeight: 1, padding: '0 2px', opacity: 0.6 }}>×</button>
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          {removidos.length > 0 && (
+                            <div style={{ background: '#F7F7F4', borderRadius: '8px', padding: '12px' }}>
+                              <label style={{ ...labelS, marginBottom: '8px', color: '#888' }}>
+                                Horários removidos ({removidos.length}) — clique + para readicionar
+                              </label>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                {removidos.map(s => (
+                                  <span key={s} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'white', color: '#888', border: '1px dashed #ccc', borderRadius: '6px', padding: '4px 6px 4px 10px', fontSize: '13px', fontWeight: '600' }}>
+                                    {s}
+                                    <button onClick={() => setSlotsEditaveis(prev => [...prev, s].sort())}
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1B4D3E', fontSize: '15px', lineHeight: 1, padding: '0 2px', fontWeight: '700' }}>+</button>
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </>
                 )}
 
