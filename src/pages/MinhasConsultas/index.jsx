@@ -583,9 +583,10 @@ const MinhasConsultas = () => {
 
   const today = new Date(); today.setHours(0, 0, 0, 0);
 
+  const ocultos = new Set(['liberado', 'transferido']);
   const proximas  = consultas.filter(c => (c.status === 'pendente' || c.status === 'confirmado') && parseDia(c.dia) >= today);
   const concluidas = consultas.filter(c => (c.status === 'pendente' || c.status === 'confirmado') && parseDia(c.dia) < today);
-  const canceladas = consultas.filter(c => c.status === 'negado' || c.status === 'ausente');
+  const canceladas = consultas.filter(c => (c.status === 'negado' || c.status === 'ausente') && !ocultos.has(c.status));
 
   const tabList = { proximas, concluidas, canceladas };
   const shown = tabList[activeTab] || [];
