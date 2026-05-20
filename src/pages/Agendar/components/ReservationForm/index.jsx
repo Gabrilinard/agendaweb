@@ -278,8 +278,8 @@ const ReservationForm = ({
             onClick={enviarReservas}
             style={{
               padding: '9px 18px', borderRadius: '8px', fontSize: '13px',
-              fontWeight: '600', cursor: 'pointer', background: 'white',
-              border: '1.5px solid #1a1a1a', color: '#1a1a1a',
+              fontWeight: '600', cursor: 'pointer', background: '#1C5C40',
+              border: 'none', color: 'white',
               fontFamily: 'Figtree, sans-serif',
             }}
           >

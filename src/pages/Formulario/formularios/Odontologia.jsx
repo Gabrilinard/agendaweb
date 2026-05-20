@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { AlertCircle, ClipboardList, Smile } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -115,7 +116,7 @@ const Odontologia = ({ nomeProfissional, reservaIds }) => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <SectionTitle>😬 Saúde bucal</SectionTitle>
+      <SectionTitle><Smile size={18} /> Saúde bucal</SectionTitle>
       <Grid>
         <Field>
           <Label>Motivo da consulta</Label>
@@ -172,7 +173,7 @@ const Odontologia = ({ nomeProfissional, reservaIds }) => {
         </Field>
       </Grid>
 
-      <SectionTitle>🪥 Histórico odontológico</SectionTitle>
+      <SectionTitle><ClipboardList size={18} /> Histórico odontológico</SectionTitle>
       <Grid>
         <Field>
           <Label>Última consulta ao dentista</Label>
@@ -209,7 +210,7 @@ const Odontologia = ({ nomeProfissional, reservaIds }) => {
         </Field>
       </Grid>
 
-      <SectionTitle>💉 Informações importantes</SectionTitle>
+      <SectionTitle><AlertCircle size={18} /> Informações importantes</SectionTitle>
       <Grid>
         <Field>
           <Label>Alergia a anestesia?</Label>
@@ -258,9 +259,6 @@ const Odontologia = ({ nomeProfissional, reservaIds }) => {
       </Grid>
 
       <Actions>
-        <Button type="button" color="#6c757d" onClick={() => navigate('/minhas-consultas')} disabled={isSubmitting}>
-          Pular
-        </Button>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Enviando...' : 'Enviar'}
         </Button>

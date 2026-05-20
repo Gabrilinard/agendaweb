@@ -9,12 +9,14 @@ export const useReservas = (user, profissionalId) => {
 
   const fetchReservas = useCallback(async () => {
     if (!user || !user.id) return;
-    
+
     try {
       setLoading(true);
-      
-      const response = await agendarService.getReservasUsuario(user.id);
-      
+
+      const response = profissionalId
+        ? await agendarService.getReservasUsuarioProfissional(user.id, profissionalId)
+        : await agendarService.getReservasUsuario(user.id);
+
       setReservas(response.data);
     } catch (err) {
       console.error('Erro ao buscar reservas:', err);

@@ -53,9 +53,13 @@ const ProfessionalInfo = ({ profissionalInfo, location, endereco }) => {
   const av = getAvatarColor(nomeCompleto);
   const initials = getInitials(nomeCompleto);
 
-  const modalidades = profissionalInfo.modalidade
-    ? (Array.isArray(profissionalInfo.modalidade) ? profissionalInfo.modalidade : [profissionalInfo.modalidade])
-    : [];
+  const modalidades = (() => {
+    const raw = profissionalInfo.modalidade;
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw.filter(Boolean);
+    try { const parsed = JSON.parse(raw); if (Array.isArray(parsed)) return parsed.filter(Boolean); } catch {}
+    return String(raw).split(',').map(s => s.trim()).filter(Boolean);
+  })();
 
   return (
     <div style={{
@@ -101,16 +105,16 @@ const ProfessionalInfo = ({ profissionalInfo, location, endereco }) => {
       <div style={divider} />
 
       {/* Modalidade + Valor */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '4px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px', marginBottom: '4px' }}>
         {modalidades.length > 0 && (
           <div style={{ background: '#F7F7F4', borderRadius: '10px', padding: '12px' }}>
-            <p style={sectionLabel}>Modalidade</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <p style={{ ...sectionLabel, textAlign: 'center' }}>Modalidade</p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
               {modalidades.map((mod, i) => (
                 <span key={i} style={{
                   display: 'inline-block', background: 'white',
                   border: '1px solid #D1FAE5', color: '#065F46',
-                  borderRadius: '6px', padding: '3px 10px',
+                  borderRadius: '6px', padding: '4px 10px',
                   fontSize: '13px', fontWeight: '500', width: 'fit-content',
                 }}>
                   {mod}
@@ -120,9 +124,9 @@ const ProfessionalInfo = ({ profissionalInfo, location, endereco }) => {
           </div>
         )}
         {profissionalInfo.valorConsulta && Number(profissionalInfo.valorConsulta) > 0 && (
-          <div style={{ background: '#F7F7F4', borderRadius: '10px', padding: '12px' }}>
-            <p style={sectionLabel}>Valor</p>
-            <p style={{ fontWeight: '700', fontSize: '20px', color: '#1a1a1a', margin: 0 }}>
+          <div style={{ background: '#F7F7F4', borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minWidth: '90px' }}>
+            <p style={{ ...sectionLabel, textAlign: 'center' }}>Valor</p>
+            <p style={{ fontWeight: '800', fontSize: '22px', color: '#1a1a1a', margin: 0, whiteSpace: 'nowrap' }}>
               R$ {Number(profissionalInfo.valorConsulta).toFixed(0)}
             </p>
           </div>
@@ -148,6 +152,7 @@ const ProfessionalInfo = ({ profissionalInfo, location, endereco }) => {
           <div style={{
             borderRadius: '10px', overflow: 'hidden',
             height: '160px', marginBottom: '8px',
+            position: 'relative', zIndex: 0,
           }}>
             <MapContainer
               center={[location.lat, location.lng]}

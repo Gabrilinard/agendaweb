@@ -1,7 +1,7 @@
 import { ptBR } from 'date-fns/locale';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const CARD = { background: 'white', borderRadius: '14px', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' };
 const inputS = {
@@ -33,6 +33,8 @@ const gerarSlots = (inicio, fim, duracao, pausaAlmoco) => {
   return slots;
 };
 
+const DIA_ABREV_MAP = { Domingo: 'Dom', Segunda: 'Seg', Terça: 'Ter', Quarta: 'Qua', Quinta: 'Qui', Sexta: 'Sex', Sábado: 'Sáb' };
+
 const CriarConsulta = ({
   modo = 'horarios',
   cpfUsuario, setCpfUsuario, userId,
@@ -42,28 +44,59 @@ const CriarConsulta = ({
   formatarHorarioBrasil,
   handleCreateReserva,
   onSalvarHorarios,
+  horariosAtendimentoAtual,
+  diasAtendimentoAtual,
 }) => {
   const [tab, setTab] = useState('recorrente');
   const [modoHorario, setModoHorario] = useState('intervalo');
 
+  const savedEntries = horariosAtendimentoAtual ? Object.entries(horariosAtendimentoAtual) : [];
+  const firstSavedSlots = savedEntries.length > 0 && Array.isArray(savedEntries[0][1]) ? savedEntries[0][1] : null;
+
+  const savedDayAbrevs = Array.isArray(diasAtendimentoAtual)
+    ? diasAtendimentoAtual.map(d => DIA_ABREV_MAP[d] || d).filter(a => DIAS_ABREV.includes(a))
+    : ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
+
   // Intervalo
-  const [selectedDays, setSelectedDays] = useState(['Seg', 'Ter', 'Qua', 'Qui', 'Sex']);
+  const [selectedDays, setSelectedDays] = useState(savedDayAbrevs.length ? savedDayAbrevs : ['Seg', 'Ter', 'Qua', 'Qui', 'Sex']);
   const [inicio, setInicio] = useState('08:00');
   const [fim, setFim] = useState('17:00');
   const [duracao, setDuracao] = useState('30');
   const [pausaAlmoco, setPausaAlmoco] = useState(true);
 
   // Avulso
-  const [avulsoDays, setAvulsoDays] = useState(['Seg', 'Ter', 'Qua', 'Qui', 'Sex']);
+  const [avulsoDays, setAvulsoDays] = useState(savedDayAbrevs.length ? savedDayAbrevs : ['Seg', 'Ter', 'Qua', 'Qui', 'Sex']);
   const [avulsoSlots, setAvulsoSlots] = useState(['08:00']);
   const [avulsoInput, setAvulsoInput] = useState('');
 
   const [localSuccess, setLocalSuccess] = useState('');
+  const [slotsEditaveis, setSlotsEditaveis] = useState(
+    () => firstSavedSlots ? [...firstSavedSlots] : gerarSlots('08:00', '17:00', '30', true)
+  );
+  const [slotsManualmenteTocados, setSlotsManualmenteTocados] = useState(false);
 
   const toggleDay = (d) => setSelectedDays(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]);
   const toggleAvulsoDay = (d) => setAvulsoDays(prev => prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]);
 
-  const slotsGerados = useMemo(() => gerarSlots(inicio, fim, duracao, pausaAlmoco), [inicio, fim, duracao, pausaAlmoco]);
+  useEffect(() => {
+    if (!horariosAtendimentoAtual) return;
+    const entries = Object.entries(horariosAtendimentoAtual);
+    if (entries.length > 0 && Array.isArray(entries[0][1]) && entries[0][1].length > 0) {
+      setSlotsEditaveis([...entries[0][1]]);
+      setSlotsManualmenteTocados(false);
+    }
+    if (Array.isArray(diasAtendimentoAtual) && diasAtendimentoAtual.length > 0) {
+      const abrevs = diasAtendimentoAtual.map(d => DIA_ABREV_MAP[d] || d).filter(a => DIAS_ABREV.includes(a));
+      if (abrevs.length > 0) { setSelectedDays(abrevs); setAvulsoDays(abrevs); }
+    }
+  }, [horariosAtendimentoAtual, diasAtendimentoAtual]);
+
+  useEffect(() => {
+    if (!slotsManualmenteTocados) return;
+    setSlotsEditaveis(gerarSlots(inicio, fim, duracao, pausaAlmoco));
+  }, [inicio, fim, duracao, pausaAlmoco]);
+
+  const removerSlotIntervalo = (slot) => { setSlotsManualmenteTocados(true); setSlotsEditaveis(prev => prev.filter(s => s !== slot)); };
 
   const formatCPF = (val) => {
     const d = val.replace(/\D/g, '').slice(0, 11);
@@ -96,11 +129,10 @@ const CriarConsulta = ({
     let dias, horarios;
     if (modoHorario === 'intervalo') {
       if (selectedDays.length === 0) return;
-      const slots = gerarSlots(inicio, fim, duracao, pausaAlmoco);
-      if (slots.length === 0) return;
+      if (slotsEditaveis.length === 0) return;
       dias = selectedDays.map(d => DIA_FULL[d] || d);
       horarios = {};
-      dias.forEach(d => { horarios[d] = slots; });
+      dias.forEach(d => { horarios[d] = [...slotsEditaveis]; });
     } else {
       if (avulsoDays.length === 0 || avulsoSlots.length === 0) return;
       dias = avulsoDays.map(d => DIA_FULL[d] || d);
@@ -211,6 +243,33 @@ const CriarConsulta = ({
         </div>
       )}
 
+      <div style={{ ...CARD, padding: '20px 24px', marginBottom: '20px' }}>
+        <p style={{ margin: '0 0 12px', fontSize: '13px', fontWeight: '700', color: '#888', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+          Horários cadastrados atualmente
+        </p>
+        {savedEntries.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {savedEntries.map(([dia, horas]) => {
+              const arr = Array.isArray(horas) ? horas : [];
+              return (
+                <div key={dia} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  <span style={{ minWidth: '80px', fontSize: '13px', fontWeight: '700', color: '#1B4D3E', paddingTop: '3px' }}>{dia}</span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                    {arr.map(h => (
+                      <span key={h} style={{ background: '#E8F5EF', color: '#1B4D3E', borderRadius: '5px', padding: '2px 8px', fontSize: '12px', fontWeight: '600' }}>{h}</span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p style={{ margin: 0, fontSize: '13px', color: '#aaa', fontStyle: 'italic' }}>
+            Nenhum horário configurado ainda. Use o formulário abaixo para configurar pela primeira vez.
+          </p>
+        )}
+      </div>
+
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '20px', alignItems: 'start' }}>
         {/* Main form */}
         <div style={CARD}>
@@ -288,15 +347,15 @@ const CriarConsulta = ({
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
                       <div>
                         <label style={labelS}>Início</label>
-                        <input type="time" value={inicio} onChange={e => setInicio(e.target.value)} style={inputS} />
+                        <input type="time" value={inicio} onChange={e => { setSlotsManualmenteTocados(true); setInicio(e.target.value); }} style={inputS} />
                       </div>
                       <div>
                         <label style={labelS}>Fim</label>
-                        <input type="time" value={fim} onChange={e => setFim(e.target.value)} style={inputS} />
+                        <input type="time" value={fim} onChange={e => { setSlotsManualmenteTocados(true); setFim(e.target.value); }} style={inputS} />
                       </div>
                       <div>
                         <label style={labelS}>Duração</label>
-                        <select value={duracao} onChange={e => setDuracao(e.target.value)} style={{ ...inputS, cursor: 'pointer' }}>
+                        <select value={duracao} onChange={e => { setSlotsManualmenteTocados(true); setDuracao(e.target.value); }} style={{ ...inputS, cursor: 'pointer' }}>
                           {DURACOES.map(d => <option key={d.v} value={d.v}>{d.l}</option>)}
                         </select>
                       </div>
@@ -310,19 +369,27 @@ const CriarConsulta = ({
                       border: `1.5px solid ${pausaAlmoco ? '#9DD8CC' : '#E0DFD9'}`,
                       cursor: 'pointer',
                     }}>
-                      <input type="checkbox" checked={pausaAlmoco} onChange={e => setPausaAlmoco(e.target.checked)}
+                      <input type="checkbox" checked={pausaAlmoco} onChange={e => { setSlotsManualmenteTocados(true); setPausaAlmoco(e.target.checked); }}
                         style={{ width: '16px', height: '16px', accentColor: '#1B4D3E', cursor: 'pointer', flexShrink: 0 }}
                       />
                       <span style={{ fontSize: '14px', fontWeight: '600', color: '#333' }}>Pausa para almoço (12:00 – 13:30)</span>
                     </label>
 
-                    {/* Preview inline */}
-                    {slotsGerados.length > 0 && (
+                    {/* Preview inline com remoção */}
+                    {slotsEditaveis.length > 0 && (
                       <div>
-                        <label style={{ ...labelS, marginBottom: '10px' }}>Horários que serão gerados ({slotsGerados.length} slots)</label>
+                        <label style={{ ...labelS, marginBottom: '10px' }}>
+                          Horários que serão gerados ({slotsEditaveis.length} slots) — clique × para remover
+                        </label>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                          {slotsGerados.map(s => (
-                            <span key={s} style={{ background: '#E8F5EF', color: '#1B4D3E', borderRadius: '6px', padding: '4px 10px', fontSize: '13px', fontWeight: '600' }}>{s}</span>
+                          {slotsEditaveis.map(s => (
+                            <span key={s} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: '#E8F5EF', color: '#1B4D3E', borderRadius: '6px', padding: '4px 6px 4px 10px', fontSize: '13px', fontWeight: '600' }}>
+                              {s}
+                              <button
+                                onClick={() => removerSlotIntervalo(s)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#1B4D3E', fontSize: '14px', lineHeight: 1, padding: '0 2px', opacity: 0.6 }}
+                              >×</button>
+                            </span>
                           ))}
                         </div>
                       </div>
@@ -449,7 +516,7 @@ const CriarConsulta = ({
                 <>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                     <div style={{ background: '#E8F5EF', borderRadius: '10px', padding: '14px' }}>
-                      <p style={{ margin: 0, fontSize: '28px', fontWeight: '800', color: '#1B4D3E' }}>{slotsGerados.length}</p>
+                      <p style={{ margin: 0, fontSize: '28px', fontWeight: '800', color: '#1B4D3E' }}>{slotsEditaveis.length}</p>
                       <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#1B4D3E', fontWeight: '500' }}>slots por dia</p>
                     </div>
                     <div style={{ background: '#F7F7F4', borderRadius: '10px', padding: '14px' }}>
@@ -459,7 +526,7 @@ const CriarConsulta = ({
                   </div>
                   <div style={{ background: '#F0F9F6', borderRadius: '8px', padding: '10px 14px' }}>
                     <span style={{ fontSize: '13px', color: '#1B4D3E', fontWeight: '600' }}>
-                      Total: ~{slotsGerados.length * selectedDays.length} consultas/semana
+                      Total: ~{slotsEditaveis.length * selectedDays.length} consultas/semana
                     </span>
                   </div>
                   {selectedDays.length > 0 && (

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Activity, AlertTriangle, Brain, Building2, FileText, Heart, ListFilter, MessageCircle, Pill, Stethoscope } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -320,7 +321,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <SectionTitle>🩺 1. Motivo da Consulta</SectionTitle>
+      <SectionTitle><Stethoscope size={18} /> 1. Motivo da Consulta</SectionTitle>
       <Grid>
         <Field style={{ gridColumn: '1 / -1' }}>
           <Label>Qual o principal motivo da consulta?</Label>
@@ -350,7 +351,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
         </Field>
       </Grid>
 
-      <SectionTitle>🏥 2. Histórico de Saúde</SectionTitle>
+      <SectionTitle><Building2 size={18} /> 2. Histórico de Saúde</SectionTitle>
       <Grid>
         <Field>
           <Label>Possui alguma doença diagnosticada?</Label>
@@ -387,7 +388,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
         </Field>
       </Grid>
 
-      <SectionTitle>💊 3. Medicamentos e Alergias</SectionTitle>
+      <SectionTitle><Pill size={18} /> 3. Medicamentos e Alergias</SectionTitle>
       <Grid>
         <Field>
           <Label>Usa algum medicamento atualmente?</Label>
@@ -429,7 +430,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
         </Field>
       </Grid>
 
-      <SectionTitle>🧬 4. Hábitos de Vida</SectionTitle>
+      <SectionTitle><Heart size={18} /> 4. Hábitos de Vida</SectionTitle>
       <Grid>
         <Field>
           <Label>Alimentação</Label>
@@ -471,7 +472,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
         </Field>
       </Grid>
 
-      <SectionTitle>🧠 5. Saúde Emocional</SectionTitle>
+      <SectionTitle><Brain size={18} /> 5. Saúde Emocional</SectionTitle>
       <Grid>
         <Field>
           <Label>Nível de estresse</Label>
@@ -500,7 +501,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
         </Field>
       </Grid>
 
-      <SectionTitle>🔽 6. Selecione o tipo de atendimento</SectionTitle>
+      <SectionTitle><ListFilter size={18} /> 6. Selecione o tipo de atendimento</SectionTitle>
       <Grid>
         <Field style={{ gridColumn: '1 / -1' }}>
           <Label>Tipo</Label>
@@ -514,7 +515,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
 
       {atendimentoTipo === 'medico' && (
         <>
-          <SectionTitle>🩻 7. BLOCO ESPECÍFICO – MÉDICO</SectionTitle>
+          <SectionTitle><Stethoscope size={18} /> 7. BLOCO ESPECÍFICO – MÉDICO</SectionTitle>
           <Grid>
             <Field>
               <Label>Já passou por esse problema antes?</Label>
@@ -558,7 +559,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
 
       {atendimentoTipo === 'fisioterapia' && (
         <>
-          <SectionTitle>🏃‍♂️ 7. BLOCO ESPECÍFICO – FISIOTERAPIA</SectionTitle>
+          <SectionTitle><Activity size={18} /> 7. BLOCO ESPECÍFICO – FISIOTERAPIA</SectionTitle>
           <Grid>
             <Field style={{ gridColumn: '1 / -1' }}>
               <Label>Queixa principal</Label>
@@ -617,7 +618,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
 
       {atendimentoTipo === 'fonoaudiologia' && (
         <>
-          <SectionTitle>🗣️ 7. BLOCO ESPECÍFICO – FONOAUDIOLOGIA</SectionTitle>
+          <SectionTitle><MessageCircle size={18} /> 7. BLOCO ESPECÍFICO – FONOAUDIOLOGIA</SectionTitle>
           <Grid>
             <Field>
               <Label>Dificuldade na fala?</Label>
@@ -708,7 +709,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
         </>
       )}
 
-      <SectionTitle>⚠️ 8. Outros Sintomas</SectionTitle>
+      <SectionTitle><AlertTriangle size={18} /> 8. Outros Sintomas</SectionTitle>
       <Grid>
         <Field>
           <label>
@@ -737,7 +738,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
         </Field>
       </Grid>
 
-      <SectionTitle>📎 9. Observações</SectionTitle>
+      <SectionTitle><FileText size={18} /> 9. Observações</SectionTitle>
       <Grid>
         <Field style={{ gridColumn: '1 / -1' }}>
           <Label>Informações adicionais</Label>
@@ -746,9 +747,6 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
       </Grid>
 
       <Actions>
-        <Button type="button" color="#6c757d" onClick={() => navigate('/minhas-consultas')} disabled={isSubmitting}>
-          Pular
-        </Button>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Enviando...' : 'Enviar'}
         </Button>

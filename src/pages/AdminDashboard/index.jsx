@@ -176,23 +176,27 @@ const AdminDashboard = () => {
         if (data.ufRegiao) setEditUfRegiao(data.ufRegiao);
       } catch { setEditingUserId(user.id); }
     }
-    if (screen === 'informacoes') {
+    if (screen === 'informacoes' || screen === 'horarios') {
       try {
         const { data } = await axios.get(`http://localhost:3000/usuarios/solicitarDados/${user.id}`);
         setEditingUserId(user.id);
-        setEditTipoProfissional(data.tipoProfissional || '');
-        setEditNumeroConselho(data.numeroConselho || '');
-        setEditDescricao(data.descricao || '');
-        setEditPublicoAtendido(data.publicoAtendido || '');
-        setEditModalidade(data.modalidade || '');
-        setEditValorConsulta(data.valorConsulta || '');
+        if (screen === 'informacoes') {
+          setEditTipoProfissional(data.tipoProfissional || '');
+          setEditNumeroConselho(data.numeroConselho || '');
+          setEditDescricao(data.descricao || '');
+          setEditPublicoAtendido(data.publicoAtendido || '');
+          setEditModalidade(data.modalidade || '');
+          setEditValorConsulta(data.valorConsulta || '');
+        }
         let dias = data.diasAtendimento;
         if (typeof dias === 'string') { try { dias = JSON.parse(dias); } catch { dias = dias.split(',').map(d=>d.trim()).filter(Boolean); } }
         setEditDiasAtendimento(Array.isArray(dias) ? dias : []);
         let hors = data.horariosAtendimento;
         if (typeof hors === 'string') { try { hors = JSON.parse(hors); } catch { hors = {}; } }
         setEditHorariosAtendimento(typeof hors === 'object' && hors ? hors : {});
+        setActiveScreen(screen);
       } catch { showError('Erro ao carregar informações.'); }
+      return;
     }
     setActiveScreen(screen);
   };
@@ -334,6 +338,8 @@ const AdminDashboard = () => {
     if (!user?.id) { warning('Erro ao identificar usuário.'); return; }
     try {
       await axios.patch(`http://localhost:3000/usuarios/${user.id}/informacoes`, { diasAtendimento, horariosAtendimento });
+      setEditDiasAtendimento(diasAtendimento);
+      setEditHorariosAtendimento(horariosAtendimento);
       success('Horários salvos! Os pacientes já podem ver os novos horários.');
     } catch { showError('Erro ao salvar horários.'); }
   };
@@ -441,6 +447,8 @@ const AdminDashboard = () => {
             formatarHorarioBrasil={formatarHorarioBrasil}
             handleCreateReserva={handleCreateReserva}
             onSalvarHorarios={handleSalvarHorarios}
+            horariosAtendimentoAtual={editHorariosAtendimento}
+            diasAtendimentoAtual={editDiasAtendimento}
           />
         );
       case 'criar':

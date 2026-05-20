@@ -340,12 +340,26 @@ const NextLabel = styled.div`
   font-weight: 700;
   color: ${MUTED};
   letter-spacing: 0.08em;
-  margin-bottom: 2px;
+  margin-bottom: 6px;
 `;
 const NextTime = styled.div`
   font-size: 0.88rem;
   font-weight: 700;
   color: ${TEXT};
+`;
+const HorariosGrid = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+`;
+const HorarioChip = styled.div`
+  background: #f0f4f2;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: ${TEXT};
+  white-space: nowrap;
 `;
 
 const PriceArea = styled.div`
@@ -528,16 +542,24 @@ const EmpresasProfissionais = () => {
               const modalTags = getModalidadeTags(p.modalidade);
               const hasLocation = p.cidade || p.ufRegiao;
               const hasValor = p.valorConsulta && Number(p.valorConsulta) > 0;
-              const hasHorario = p.horariosAtendimento;
-              const firstHorario = (() => {
-                if (!hasHorario) return null;
+              const horarioEntries = (() => {
+                if (!p.horariosAtendimento) return [];
                 try {
-                  const obj = typeof hasHorario === 'string' ? JSON.parse(hasHorario) : hasHorario;
-                  const [dia, horas] = Object.entries(obj)[0];
-                  const hora = Array.isArray(horas) ? horas[0] : horas;
-                  return `${dia} ${hora}`;
+                  const obj = typeof p.horariosAtendimento === 'string'
+                    ? JSON.parse(p.horariosAtendimento)
+                    : p.horariosAtendimento;
+                  return Object.entries(obj)
+                    .map(([dia, horas]) => {
+                      const arr = Array.isArray(horas) ? horas.filter(Boolean) : [];
+                      if (!arr.length) return null;
+                      const abrev = dia.slice(0, 3);
+                      return arr.length === 1
+                        ? `${abrev}: ${arr[0]}`
+                        : `${abrev}: ${arr[0]} – ${arr[arr.length - 1]}`;
+                    })
+                    .filter(Boolean);
                 } catch {
-                  return hasHorario.split(',')[0].trim();
+                  return [];
                 }
               })();
 
@@ -571,16 +593,20 @@ const EmpresasProfissionais = () => {
 
                   <CardDivider />
 
-                  <CardFooterSection>
-                    {firstHorario ? (
-                      <NextSlot>
-                        <NextLabel>PRÓXIMO HORÁRIO</NextLabel>
-                        <NextTime>{firstHorario}</NextTime>
-                      </NextSlot>
+                  <CardFooterSection style={{ alignItems: 'flex-start', paddingTop: '14px' }}>
+                    {horarioEntries.length > 0 ? (
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <NextLabel>HORÁRIOS DE ATENDIMENTO</NextLabel>
+                        <HorariosGrid>
+                          {horarioEntries.map(entry => (
+                            <HorarioChip key={entry}>{entry}</HorarioChip>
+                          ))}
+                        </HorariosGrid>
+                      </div>
                     ) : <div />}
 
                     {hasValor && (
-                      <PriceArea>
+                      <PriceArea style={{ marginLeft: '16px', flexShrink: 0 }}>
                         <PriceLabel>A PARTIR DE</PriceLabel>
                         <PriceValue>R$ {Number(p.valorConsulta).toFixed(0)}</PriceValue>
                       </PriceArea>

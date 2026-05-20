@@ -361,6 +361,19 @@ const ConfirmBar = styled.div`
   font-weight: 500;
 `;
 
+const RescheduleBar = styled.div`
+  border-top: 1px solid #FED7B0;
+  background: #FFF7F0;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: #7C2D12;
+  font-weight: 500;
+  flex-wrap: wrap;
+`;
+
 const ConfirmBtns = styled.div`
   display: flex;
   gap: 8px;
@@ -507,15 +520,37 @@ const DPWrapper = styled.div`
   }
 `;
 
+const humanize = (key) =>
+  key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+
+const SKIP_KEYS = new Set(['createdAt', 'profissional', 'tipoProfissional', 'tipoAtendimento', 'reservaIds', 'paciente']);
+
+const flattenConteudo = (obj, prefix = '') => {
+  const entries = [];
+  for (const [key, val] of Object.entries(obj || {})) {
+    if (SKIP_KEYS.has(key)) continue;
+    const label = prefix ? `${prefix} › ${humanize(key)}` : humanize(key);
+    if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
+      entries.push(...flattenConteudo(val, humanize(key)));
+    } else if (typeof val === 'boolean') {
+      if (val) entries.push({ label, value: 'Sim' });
+    } else if (val !== '' && val !== null && val !== undefined) {
+      entries.push({ label, value: String(val) });
+    }
+  }
+  return entries;
+};
+
 // ── Status helpers ─────────────────────────────────────────────────────────────
 
 const statusStyle = (status) => {
   switch (status) {
-    case 'confirmado': return { bg: '#D4F0DE', color: '#1A5C3C', label: 'Confirmada' };
-    case 'pendente':   return { bg: '#FEF0CC', color: '#A05800', label: 'Aguardando confirmação' };
-    case 'negado':     return { bg: '#FDDEDE', color: '#C53030', label: 'Cancelada' };
-    case 'ausente':    return { bg: '#FDDEDE', color: '#C53030', label: 'Não compareceu' };
-    default:           return { bg: '#EDEAE4', color: MUTED, label: status };
+    case 'confirmado':                    return { bg: '#D4F0DE', color: '#1A5C3C', label: 'Confirmada' };
+    case 'pendente':                      return { bg: '#FEF0CC', color: '#A05800', label: 'Aguardando confirmação' };
+    case 'aguardando_confirmacao_paciente': return { bg: '#FEE2CC', color: '#C2410C', label: 'Novo horário proposto' };
+    case 'negado':                        return { bg: '#FDDEDE', color: '#C53030', label: 'Cancelada' };
+    case 'ausente':                       return { bg: '#FDDEDE', color: '#C53030', label: 'Não compareceu' };
+    default:                              return { bg: '#EDEAE4', color: MUTED, label: status };
   }
 };
 
@@ -537,12 +572,15 @@ const MinhasConsultas = () => {
   const [novoHorario, setNovoHorario] = useState('');
   const [vagasPendentes, setVagasPendentes] = useState([]);
   const [aceitandoVaga, setAceitandoVaga] = useState(null);
+  const [formDrawerOpen, setFormDrawerOpen] = useState(false);
+  const [formData, setFormData] = useState(null);
+  const [loadingForm, setLoadingForm] = useState(false);
 
   useEffect(() => {
     if (!user?.id) { navigate('/Entrar'); return; }
     buscarConsultas();
     buscarVagasPendentes();
-  }, [user]);
+  }, []);
 
   const buscarVagasPendentes = async () => {
     if (!user?.id) return;
@@ -571,6 +609,7 @@ const MinhasConsultas = () => {
             ...c,
             nomeOutro: `${p.nome} ${p.sobrenome}`,
             especialidade: p.tipoProfissional || p.especialidadeMedica || p.profissaoCustomizada || 'Especialista',
+            tipoProfissionalRaw: p.tipoProfissional || p.especialidadeMedica || p.profissaoCustomizada || '',
             valorConsulta: p.valorConsulta,
           };
         } catch { return c; }
@@ -584,8 +623,9 @@ const MinhasConsultas = () => {
   const today = new Date(); today.setHours(0, 0, 0, 0);
 
   const ocultos = new Set(['liberado', 'transferido']);
-  const proximas  = consultas.filter(c => (c.status === 'pendente' || c.status === 'confirmado') && parseDia(c.dia) >= today);
-  const concluidas = consultas.filter(c => (c.status === 'pendente' || c.status === 'confirmado') && parseDia(c.dia) < today);
+  const ativas = new Set(['pendente', 'confirmado', 'aguardando_confirmacao_paciente']);
+  const proximas  = consultas.filter(c => ativas.has(c.status) && parseDia(c.dia) >= today);
+  const concluidas = consultas.filter(c => ativas.has(c.status) && parseDia(c.dia) < today);
   const canceladas = consultas.filter(c => (c.status === 'negado' || c.status === 'ausente') && !ocultos.has(c.status));
 
   const tabList = { proximas, concluidas, canceladas };
@@ -631,6 +671,47 @@ const MinhasConsultas = () => {
     } catch { /* silently ignore */ }
   };
 
+  const handleVerFormulario = async (c) => {
+    setFormData(null);
+    setLoadingForm(true);
+    setFormDrawerOpen(true);
+    try {
+      const { data } = await axios.get(`http://localhost:3000/formularios/reserva/${c.id}`);
+      setFormData(data);
+    } catch (err) {
+      setFormDrawerOpen(false);
+      if (err.response?.status === 404) {
+        navigate('/Formulario', {
+          state: {
+            reservaIds: [c.id],
+            tipoProfissional: c.tipoProfissionalRaw,
+            nomeProfissional: c.nomeOutro,
+          }
+        });
+      } else {
+        showError('Erro ao carregar formulário.');
+      }
+    } finally {
+      setLoadingForm(false);
+    }
+  };
+
+  const handleAceitarRemarcacao = async (c) => {
+    try {
+      await axios.patch(`http://localhost:3000/reservas/${c.id}`, { status: 'confirmado', dia: c.dia, horario: c.horario });
+      success('Novo horário confirmado!');
+      buscarConsultas();
+    } catch { showError('Erro ao confirmar.'); }
+  };
+
+  const handleRecusarRemarcacao = async (c) => {
+    try {
+      await axios.patch(`http://localhost:3000/reservas/${c.id}`, { status: 'negado' });
+      success('Remarcação recusada.');
+      buscarConsultas();
+    } catch { showError('Erro ao recusar.'); }
+  };
+
   const handleEditar = (c) => {
     setConsultaEditando(c);
     const d = parseDia(c.dia) || new Date();
@@ -665,7 +746,9 @@ const MinhasConsultas = () => {
     const { bg, color, label } = statusStyle(c.status);
     const av = getAvatarColor(c.nomeOutro || '');
     const initials = getInitials(c.nomeOutro || '');
-    const isActive = c.status === 'pendente' || c.status === 'confirmado';
+    const isActive = c.status === 'pendente' || c.status === 'confirmado' || c.status === 'aguardando_confirmacao_paciente';
+    const isRescheduled = c.status === 'aguardando_confirmacao_paciente';
+    const isUrgente = Number(c.is_urgente) === 1;
     const valor = c.valorConsulta ? `· R$ ${Number(c.valorConsulta).toFixed(0)}` : '';
 
     return (
@@ -683,6 +766,9 @@ const MinhasConsultas = () => {
             <CardInfoArea>
               <BadgesRow>
                 <StatusBadge $bg={bg} $color={color}>{label}</StatusBadge>
+                {isUrgente && (
+                  <StatusBadge $bg="#FFF0E6" $color="#C2410C">⚡ Emergente</StatusBadge>
+                )}
                 <ModalityBadge>Online</ModalityBadge>
               </BadgesRow>
               <ProfRow>
@@ -696,12 +782,14 @@ const MinhasConsultas = () => {
 
             {isActive && (
               <ActionsRow>
-                <ActionBtn onClick={() => navigate('/Formulario')}>
+                <ActionBtn onClick={() => handleVerFormulario(c)}>
                   <FileText size={14} /> Formulário
                 </ActionBtn>
-                <ActionBtn onClick={() => handleEditar(c)}>
-                  <Edit2 size={14} /> Editar
-                </ActionBtn>
+                {!isRescheduled && (
+                  <ActionBtn onClick={() => handleEditar(c)}>
+                    <Edit2 size={14} /> Editar
+                  </ActionBtn>
+                )}
                 <ActionBtn $danger onClick={() => handleCancelar(c.id)}>
                   <X size={14} /> Cancelar
                 </ActionBtn>
@@ -725,6 +813,18 @@ const MinhasConsultas = () => {
                 <ConfirmYes style={{ background: '#E8611A' }} onClick={handleConfirmarLiberacao}>Sim, liberar</ConfirmYes>
               </ConfirmBtns>
             </ConfirmBar>
+          ) : isRescheduled ? (
+            <RescheduleBar>
+              <span style={{ flex: 1 }}>
+                O profissional propôs este novo horário. Deseja confirmar?
+              </span>
+              <ConfirmBtns>
+                <ConfirmNo onClick={() => handleRecusarRemarcacao(c)}>Recusar</ConfirmNo>
+                <ConfirmYes style={{ background: '#1C5C40' }} onClick={() => handleAceitarRemarcacao(c)}>
+                  Confirmar
+                </ConfirmYes>
+              </ConfirmBtns>
+            </RescheduleBar>
           ) : isActive && (
             <CardFooter>
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -814,6 +914,29 @@ const MinhasConsultas = () => {
           shown.map(renderCard)
         )}
       </Content>
+
+      {/* Form View Drawer */}
+      <Overlay $open={formDrawerOpen} onClick={() => setFormDrawerOpen(false)} />
+      <Drawer $open={formDrawerOpen} style={{ width: '420px' }}>
+        <DrawerHeader>
+          <DrawerTitle>Formulário preenchido</DrawerTitle>
+          <CloseBtn onClick={() => setFormDrawerOpen(false)}><X size={20} /></CloseBtn>
+        </DrawerHeader>
+        <div style={{ overflowY: 'auto', flex: 1 }}>
+          {loadingForm ? (
+            <div style={{ color: MUTED, fontSize: '0.9rem' }}>Carregando...</div>
+          ) : formData?.conteudo ? (
+            flattenConteudo(formData.conteudo).map(({ label, value }, i) => (
+              <div key={i} style={{ borderBottom: `1px solid ${BORDER}`, padding: '10px 0' }}>
+                <div style={{ fontSize: '0.73rem', fontWeight: 700, color: MUTED, marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+                <div style={{ fontSize: '0.88rem', color: TEXT }}>{value}</div>
+              </div>
+            ))
+          ) : (
+            <div style={{ color: MUTED, fontSize: '0.9rem' }}>Formulário não encontrado.</div>
+          )}
+        </div>
+      </Drawer>
 
       {/* Edit Drawer */}
       <Overlay $open={editDrawerOpen} onClick={() => setEditDrawerOpen(false)} />

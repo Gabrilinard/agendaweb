@@ -63,6 +63,14 @@ const Agendar = () => {
         setUrgenciaHorario,
         urgenciaArquivo,
         setUrgenciaArquivo,
+        urgenciaModalidade,
+        setUrgenciaModalidade,
+        urgenciaDia,
+        setUrgenciaDia,
+        urgenciaTurno,
+        urgenciaDias,
+        toggleTurno,
+        toggleDia,
         handleEmergencySubmit
     } = useEmergencia(user, nomeProfissional);
 
@@ -197,7 +205,7 @@ const Agendar = () => {
                 </div>
             </Container>
             
-            <EmergencyModal 
+            <EmergencyModal
                 show={showEmergencyModal}
                 onClose={() => setShowEmergencyModal(false)}
                 onSubmit={handleEmergencySubmit}
@@ -208,6 +216,14 @@ const Agendar = () => {
                 setUrgenciaHorario={setUrgenciaHorario}
                 urgenciaArquivo={urgenciaArquivo}
                 setUrgenciaArquivo={setUrgenciaArquivo}
+                urgenciaModalidade={urgenciaModalidade}
+                setUrgenciaModalidade={setUrgenciaModalidade}
+                urgenciaDia={urgenciaDia}
+                setUrgenciaDia={setUrgenciaDia}
+                urgenciaTurno={urgenciaTurno}
+                urgenciaDias={urgenciaDias}
+                toggleTurno={toggleTurno}
+                toggleDia={toggleDia}
             />
             
             <Footer />

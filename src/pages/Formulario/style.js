@@ -43,6 +43,9 @@ export const SectionTitle = styled.h3`
   font-family: 'Figtree', sans-serif;
   border-bottom: 2px solid #4caf50;
   padding-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;
 
 export const Grid = styled.div`

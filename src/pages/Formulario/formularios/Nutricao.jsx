@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { Activity, Dna, Scale, Utensils } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -111,7 +112,7 @@ const Nutricao = ({ nomeProfissional, reservaIds }) => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <SectionTitle>⚖️ Objetivo</SectionTitle>
+      <SectionTitle><Scale size={18} /> Objetivo</SectionTitle>
       <Grid>
         <Field style={{ gridColumn: '1 / -1' }}>
           <Label>Qual seu objetivo?</Label>
@@ -124,7 +125,7 @@ const Nutricao = ({ nomeProfissional, reservaIds }) => {
         </Field>
       </Grid>
 
-      <SectionTitle>🍽️ Alimentação</SectionTitle>
+      <SectionTitle><Utensils size={18} /> Alimentação</SectionTitle>
       <Grid>
         <Field>
           <Label>Quantas refeições faz por dia?</Label>
@@ -169,7 +170,7 @@ const Nutricao = ({ nomeProfissional, reservaIds }) => {
         </Field>
       </Grid>
 
-      <SectionTitle>🏋️‍♂️ Estilo de vida</SectionTitle>
+      <SectionTitle><Activity size={18} /> Estilo de vida</SectionTitle>
       <Grid>
         <Field>
           <Label>Prática de atividade física</Label>
@@ -201,7 +202,7 @@ const Nutricao = ({ nomeProfissional, reservaIds }) => {
         </Field>
       </Grid>
 
-      <SectionTitle>🧬 Saúde e metabolismo</SectionTitle>
+      <SectionTitle><Dna size={18} /> Saúde e metabolismo</SectionTitle>
       <Grid>
         <Field style={{ gridColumn: '1 / -1' }}>
           <Label>Problemas como diabetes, colesterol alto</Label>
@@ -230,9 +231,6 @@ const Nutricao = ({ nomeProfissional, reservaIds }) => {
       </Grid>
 
       <Actions>
-        <Button type="button" color="#6c757d" onClick={() => navigate('/minhas-consultas')} disabled={isSubmitting}>
-          Pular
-        </Button>
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Enviando...' : 'Enviar'}
         </Button>

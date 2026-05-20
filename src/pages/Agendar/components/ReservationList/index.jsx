@@ -88,6 +88,16 @@ const ReservationItem = ({ reserva, actions }) => {
           {status.label}
         </span>
 
+        {Number(reserva.is_urgente) === 1 && (
+          <span style={{
+            background: '#FFF0E6', color: '#C2410C',
+            borderRadius: '20px', padding: '4px 12px',
+            fontSize: '12px', fontWeight: '600',
+          }}>
+            ⚡ Emergente
+          </span>
+        )}
+
         {reserva.status === 'aguardando_confirmacao_paciente' && (
           <>
             <button

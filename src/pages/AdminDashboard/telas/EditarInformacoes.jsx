@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { MapPin, MonitorPlay, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNotification } from '../../../contexts/NotificationContext';
 
@@ -34,16 +35,22 @@ const Toggle = ({ checked, onChange }) => (
   </div>
 );
 
+const MOD_ICONS = {
+  presencial: Users,
+  online: MonitorPlay,
+  domiciliar: MapPin,
+};
+
 const ModalIcon = ({ type, active }) => {
-  const icons = { presencial: '👥', online: '▶', domiciliar: '📍' };
+  const Icon = MOD_ICONS[type] || Users;
   return (
     <div style={{
       width: '38px', height: '38px', borderRadius: '10px', flexShrink: 0,
       background: active ? '#1B4D3E' : '#E8E8E2',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: '15px', color: active ? 'white' : '#888',
+      color: active ? 'white' : '#888',
     }}>
-      {icons[type]}
+      <Icon size={17} />
     </div>
   );
 };
