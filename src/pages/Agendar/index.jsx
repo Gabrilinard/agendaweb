@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Footer from '../../components/Footer';
 import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
+import { formatarDataBrasil } from './utils/formatters';
 import EmergencyModal from './components/EmergencyModal';
 import ProfessionalInfo from './components/ProfessionalInfo';
 import ReservationForm from './components/ReservationForm';
@@ -138,20 +139,32 @@ const Agendar = () => {
 
     const tipoProfissional = normalizarTipoProfissional(categoria || tipo || profissionalInfo?.tipoProfissional);
 
+    const TIPOS_COM_FORMULARIO = new Set(['dentista', 'nutricionista', 'medico', 'fisioterapeuta', 'fonoaudiologo']);
+
+    const calcHorarioFinal = (h) => {
+        if (!h) return '';
+        const [hr, min] = h.split(':').map(Number);
+        return `${String((hr + 1) % 24).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+    };
+
     const handleSolicitarConsulta = async () => {
-        await enviarReservasEmLote({
-            onSuccess: ({ reservaIds }) => {
-                if (
-                    tipoProfissional === 'dentista' ||
-                    tipoProfissional === 'nutricionista' ||
-                    tipoProfissional === 'medico' ||
-                    tipoProfissional === 'fisioterapeuta' ||
-                    tipoProfissional === 'fonoaudiologo'
-                ) {
-                    navigate('/Formulario', { state: { nomeProfissional, tipoProfissional, reservaIds } });
-                }
+        if (TIPOS_COM_FORMULARIO.has(tipoProfissional)) {
+            const pendingReservas = reservasTemporarias.length > 0
+                ? reservasTemporarias
+                : dataSelecionada && horario
+                    ? [{ dia: formatarDataBrasil(dataSelecionada), horario, horarioFinal: calcHorarioFinal(horario) }]
+                    : null;
+
+            if (!pendingReservas) {
+                return;
             }
-        });
+
+            navigate('/Formulario', {
+                state: { nomeProfissional, tipoProfissional, pendingReservas }
+            });
+        } else {
+            await enviarReservasEmLote();
+        }
     };
 
     return (

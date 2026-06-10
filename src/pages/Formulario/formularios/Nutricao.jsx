@@ -16,7 +16,7 @@ import {
   TextArea
 } from '../style';
 
-const Nutricao = ({ nomeProfissional, reservaIds }) => {
+const Nutricao = ({ nomeProfissional, reservaIds, pendingReservas }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { success, error: showError } = useNotification();
@@ -72,7 +72,22 @@ const Nutricao = ({ nomeProfissional, reservaIds }) => {
 
     setIsSubmitting(true);
     try {
-      if (!reservaIdsNormalizados.length) {
+      let idsParaUsar = [...reservaIdsNormalizados];
+
+      if (!idsParaUsar.length && pendingReservas?.length) {
+        const criadas = await Promise.all(pendingReservas.map(r =>
+          axios.post('http://localhost:3000/reservas', {
+            nome: user.nome, sobrenome: user.sobrenome,
+            email: user.email, telefone: user.telefone || '',
+            dia: r.dia, horario: r.horario, horarioFinal: r.horarioFinal,
+            qntd_pessoa: 1, usuario_id: user.id,
+            nomeProfissional: nomeProfissional || null,
+          })
+        ));
+        idsParaUsar = criadas.map(r => r.data?.id).filter(Boolean);
+      }
+
+      if (!idsParaUsar.length) {
         showError('Não foi possível identificar a reserva vinculada a este formulário.');
         return;
       }
@@ -80,7 +95,7 @@ const Nutricao = ({ nomeProfissional, reservaIds }) => {
       const payload = {
         profissional: nomeProfissional || null,
         tipoProfissional: 'nutricionista',
-        reservaIds: reservaIdsNormalizados,
+        reservaIds: idsParaUsar,
         paciente: {
           id: user.id,
           nome: user.nome,
@@ -93,7 +108,7 @@ const Nutricao = ({ nomeProfissional, reservaIds }) => {
       };
 
       await axios.post('http://localhost:3000/formularios', {
-        reservaIds: reservaIdsNormalizados,
+        reservaIds: idsParaUsar,
         tipoFormulario: 'nutricionista',
         tipoAtendimento: null,
         usuarioId: user.id,

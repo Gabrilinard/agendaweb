@@ -84,7 +84,7 @@ const mapTipoAtendimento = (tipoProfissional) => {
   return '';
 };
 
-const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
+const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds, pendingReservas }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { success, error: showError } = useNotification();
@@ -207,7 +207,22 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
 
     setIsSubmitting(true);
     try {
-      if (!reservaIdsNormalizados.length) {
+      let idsParaUsar = [...reservaIdsNormalizados];
+
+      if (!idsParaUsar.length && pendingReservas?.length) {
+        const criadas = await Promise.all(pendingReservas.map(r =>
+          axios.post('http://localhost:3000/reservas', {
+            nome: user.nome, sobrenome: user.sobrenome,
+            email: user.email, telefone: user.telefone || '',
+            dia: r.dia, horario: r.horario, horarioFinal: r.horarioFinal,
+            qntd_pessoa: 1, usuario_id: user.id,
+            nomeProfissional: nomeProfissional || null,
+          })
+        ));
+        idsParaUsar = criadas.map(r => r.data?.id).filter(Boolean);
+      }
+
+      if (!idsParaUsar.length) {
         showError('Não foi possível identificar a reserva vinculada a este formulário.');
         return;
       }
@@ -216,7 +231,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
         profissional: nomeProfissional || null,
         tipoProfissional: (tipoProfissional || '').toLowerCase(),
         tipoAtendimento: atendimentoTipo,
-        reservaIds: reservaIdsNormalizados,
+        reservaIds: idsParaUsar,
         paciente: {
           id: user.id,
           nome: user.nome,
@@ -302,7 +317,7 @@ const SaudeGeral = ({ nomeProfissional, tipoProfissional, reservaIds }) => {
       };
 
       await axios.post('http://localhost:3000/formularios', {
-        reservaIds: reservaIdsNormalizados,
+        reservaIds: idsParaUsar,
         tipoFormulario: 'saude_geral',
         tipoAtendimento: atendimentoTipo,
         usuarioId: user.id,

@@ -14,7 +14,7 @@ const Formulario = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { nomeProfissional, tipoProfissional, reservaIds } = location.state || {};
+  const { nomeProfissional, tipoProfissional, reservaIds, pendingReservas } = location.state || {};
 
   if (!user) {
     warning('Você precisa estar logado.');
@@ -97,14 +97,15 @@ const Formulario = () => {
           </Subtitle>
 
           {tipo === 'dentista' ? (
-            <Odontologia nomeProfissional={nomeProfissional} reservaIds={reservaIds} />
+            <Odontologia nomeProfissional={nomeProfissional} reservaIds={reservaIds} pendingReservas={pendingReservas} />
           ) : tipo === 'nutricionista' ? (
-            <Nutricao nomeProfissional={nomeProfissional} reservaIds={reservaIds} />
+            <Nutricao nomeProfissional={nomeProfissional} reservaIds={reservaIds} pendingReservas={pendingReservas} />
           ) : tipo === 'medico' || tipo === 'fisioterapeuta' || tipo === 'fonoaudiologo' ? (
             <SaudeGeral
               nomeProfissional={nomeProfissional}
               tipoProfissional={tipo}
               reservaIds={reservaIds}
+              pendingReservas={pendingReservas}
             />
           ) : (
             <>
