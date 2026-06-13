@@ -1,5 +1,6 @@
-import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { getProfissionais, getReservas, solicitarDados } from './api';
+import { parseDia } from '../../utils/formatters';
 import { BsActivity, BsVolumeUpFill } from 'react-icons/bs';
 import { FaAppleAlt, FaBolt, FaBrain, FaClipboardList, FaStethoscope, FaTooth, FaUsers } from 'react-icons/fa';
 import { CalendarDays, Search } from 'lucide-react';
@@ -112,15 +113,6 @@ const generateCalendarDays = (year, month) => {
     return days;
 };
 
-// Parse date string as local midnight to avoid UTC offset issues
-const parseDia = (dia) => {
-    if (!dia) return null;
-    const str = String(dia).split('T')[0];
-    const parts = str.split('-');
-    if (parts.length !== 3) return null;
-    return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-};
-
 const Home = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
@@ -133,14 +125,14 @@ const Home = () => {
     const [calMonth, setCalMonth] = useState(now.getMonth());
 
     useEffect(() => {
-        axios.get('http://localhost:3000/profissionais')
+        getProfissionais()
             .then(res => setProfessionalCount(res.data.length))
             .catch(() => {});
     }, []);
 
     useEffect(() => {
         if (!user?.id) return;
-        axios.get(`http://localhost:3000/reservas?usuario_id=${user.id}`)
+        getReservas({ usuario_id: user.id })
             .then(async res => {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
@@ -151,7 +143,7 @@ const Home = () => {
                 setNextConsulta(upcoming);
                 if (upcoming.profissional_id) {
                     try {
-                        const pr = await axios.get(`http://localhost:3000/usuarios/solicitarDados/${upcoming.profissional_id}`);
+                        const pr = await solicitarDados(upcoming.profissional_id);
                         setNextProfName(`${pr.data.nome} ${pr.data.sobrenome}`);
                         setNextProfSpec(pr.data.tipoProfissional || pr.data.especialidadeMedica || 'Especialista');
                     } catch (_) {}
