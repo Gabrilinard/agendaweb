@@ -30,7 +30,8 @@ const normalizarTipoProfissional = (value) => {
   const pluralMap = {
     medicos: 'medico',
     fisioterapeutas: 'fisioterapeuta',
-    fonoaudiologos: 'fonoaudiologo'
+    fonoaudiologos: 'fonoaudiologo',
+    psicologos: 'psicologo'
   };
 
   const possivelTipo = pluralMap[base] || base;

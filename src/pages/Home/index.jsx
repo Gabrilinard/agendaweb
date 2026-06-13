@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { BsActivity, BsVolumeUpFill } from 'react-icons/bs';
-import { FaAppleAlt, FaBolt, FaClipboardList, FaStethoscope, FaTooth, FaUsers } from 'react-icons/fa';
+import { FaAppleAlt, FaBolt, FaBrain, FaClipboardList, FaStethoscope, FaTooth, FaUsers } from 'react-icons/fa';
 import { CalendarDays, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../../components/Footer';
@@ -76,6 +76,7 @@ const specialties = [
     { icon: <FaAppleAlt />, name: 'Nutricionistas', desc: 'Plano alimentar e acompanhamento' },
     { icon: <BsActivity />, name: 'Fisioterapeutas', desc: 'Reabilitação e RPG' },
     { icon: <BsVolumeUpFill />, name: 'Fonoaudiólogos', desc: 'Voz, fala e audição' },
+    { icon: <FaBrain />, name: 'Psicólogos', desc: 'Saúde mental e bem-estar emocional' },
 ];
 
 const differentials = [

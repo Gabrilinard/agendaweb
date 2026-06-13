@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import { BsActivity, BsVolumeUpFill } from 'react-icons/bs';
-import { FaAppleAlt, FaStethoscope, FaTooth } from 'react-icons/fa';
+import { FaAppleAlt, FaBrain, FaStethoscope, FaTooth } from 'react-icons/fa';
 import { CheckCircle, ChevronDown, MapPin, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -39,6 +39,7 @@ const CATEGORIAS = [
   { key: 'nutricionista', label: 'Nutricionistas',   icon: <FaAppleAlt /> },
   { key: 'fisioterapeuta',label: 'Fisioterapeutas',  icon: <BsActivity /> },
   { key: 'fonoaudiologo', label: 'Fonoaudiólogos',   icon: <BsVolumeUpFill /> },
+  { key: 'psicologo',     label: 'Psicólogos',       icon: <FaBrain /> },
 ];
 
 // ── Styled ──────────────────────────────────────────────────────────────────

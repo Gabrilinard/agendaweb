@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import Nutricao from './formularios/Nutricao';
 import Odontologia from './formularios/Odontologia';
+import Psicologia from './formularios/Psicologia';
 import SaudeGeral from './formularios/SaudeGeral';
 import { Card, Content, PageWrapper, Subtitle, Title } from './style';
 
@@ -38,7 +39,8 @@ const Formulario = () => {
       dentistas: 'dentista',
       nutricionistas: 'nutricionista',
       fisioterapeutas: 'fisioterapeuta',
-      fonoaudiologos: 'fonoaudiologo'
+      fonoaudiologos: 'fonoaudiologo',
+      psicologos: 'psicologo'
     };
 
     const possivelTipo = pluralMap[base] || base;
@@ -100,6 +102,8 @@ const Formulario = () => {
             <Odontologia nomeProfissional={nomeProfissional} reservaIds={reservaIds} pendingReservas={pendingReservas} />
           ) : tipo === 'nutricionista' ? (
             <Nutricao nomeProfissional={nomeProfissional} reservaIds={reservaIds} pendingReservas={pendingReservas} />
+          ) : tipo === 'psicologo' ? (
+            <Psicologia nomeProfissional={nomeProfissional} reservaIds={reservaIds} pendingReservas={pendingReservas} />
           ) : tipo === 'medico' || tipo === 'fisioterapeuta' || tipo === 'fonoaudiologo' ? (
             <SaudeGeral
               nomeProfissional={nomeProfissional}

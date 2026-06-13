@@ -91,7 +91,8 @@ const Agendar = () => {
             dentistas: 'dentista',
             nutricionistas: 'nutricionista',
             fisioterapeutas: 'fisioterapeuta',
-            fonoaudiologos: 'fonoaudiologo'
+            fonoaudiologos: 'fonoaudiologo',
+            psicologos: 'psicologo'
         };
 
         const possivelTipo = pluralMap[base] || base;
@@ -139,7 +140,7 @@ const Agendar = () => {
 
     const tipoProfissional = normalizarTipoProfissional(categoria || tipo || profissionalInfo?.tipoProfissional);
 
-    const TIPOS_COM_FORMULARIO = new Set(['dentista', 'nutricionista', 'medico', 'fisioterapeuta', 'fonoaudiologo']);
+    const TIPOS_COM_FORMULARIO = new Set(['dentista', 'nutricionista', 'medico', 'fisioterapeuta', 'fonoaudiologo', 'psicologo']);
 
     const calcHorarioFinal = (h) => {
         if (!h) return '';

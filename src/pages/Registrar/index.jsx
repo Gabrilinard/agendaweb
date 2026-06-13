@@ -488,6 +488,8 @@ const Registro = () => {
   const [diasAtendimento, setDiasAtendimento] = useState([]);
   const [horariosAtendimento, setHorariosAtendimento] = useState({});
   const [cpf, setCpf] = useState('');
+  const [abordagemTerapeutica, setAbordagemTerapeutica] = useState('');
+  const [areaAtuacaoPsi, setAreaAtuacaoPsi] = useState('');
   const [fieldErrors, setFieldErrors] = useState({ cpf: '', email: '', senha: '' });
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -611,6 +613,12 @@ const Registro = () => {
       case 'fonoaudiologo':
         if (apenasNumeros.length > 5) apenasNumeros = apenasNumeros.slice(0, 5);
         return `CRFa ${apenasNumeros}`;
+      case 'psicologo': {
+        const regiao = apenasNumeros.slice(0, Math.min(2, apenasNumeros.length));
+        const numero = apenasNumeros.slice(2, Math.min(8, apenasNumeros.length));
+        if (!numero) return `CRP ${regiao}`;
+        return `CRP ${regiao}/${numero}`;
+      }
       default:
         if (apenasNumeros.length > 10) apenasNumeros = apenasNumeros.slice(0, 10);
         return apenasNumeros;
@@ -633,6 +641,8 @@ const Registro = () => {
         return /^CREFITO\s?\d{4,6}$/i.test(valor.trim()) && apenasNumeros.length >= 4 && apenasNumeros.length <= 6;
       case 'fonoaudiologo':
         return /^CRFa\s?\d{4,5}$/i.test(valor.trim()) && apenasNumeros.length >= 4 && apenasNumeros.length <= 5;
+      case 'psicologo':
+        return /^CRP\s?\d{1,2}\/\d{4,6}$/i.test(valor.trim());
       default:
         return apenasNumeros.length >= 3 && apenasNumeros.length <= 10;
     }
@@ -958,6 +968,10 @@ const Registro = () => {
         tipoUsuario: tipoUsuarioFinal,
         ...(tipoUsuarioFinal === 'profissional' && {
           tipoProfissional: tipoProfissional === 'outros' ? profissaoCustomizada : tipoProfissional,
+          ...(tipoProfissional === 'psicologo' && {
+            abordagemTerapeutica: abordagemTerapeutica.trim(),
+            areaAtuacaoPsi: areaAtuacaoPsi.trim(),
+          }),
           especialidadeMedica: tipoProfissional === 'medico' ? especialidadeMedica : null,
           profissaoCustomizada: tipoProfissional === 'outros' ? profissaoCustomizada : null,
           numeroConselho: numeroConselho.trim(),
@@ -1155,6 +1169,7 @@ const Registro = () => {
                   <option value="nutricionista">Nutricionista</option>
                   <option value="fisioterapeuta">Fisioterapeuta</option>
                   <option value="fonoaudiologo">Fonoaudiólogo</option>
+                  <option value="psicologo">Psicólogo</option>
                   <option value="outros">Outros</option>
                 </Select>
               </div>
@@ -1187,6 +1202,59 @@ const Registro = () => {
                 />
               )}
 
+              {tipoProfissional === 'psicologo' && (
+                <>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', textAlign: 'left', fontWeight: 'bold' }}>
+                      Abordagem Terapêutica:
+                    </label>
+                    <Select
+                      value={abordagemTerapeutica}
+                      onChange={(e) => setAbordagemTerapeutica(e.target.value)}
+                      required
+                    >
+                      <option value="">Selecione sua abordagem...</option>
+                      <option value="Cognitivo-Comportamental (TCC)">Cognitivo-Comportamental (TCC)</option>
+                      <option value="Psicanálise">Psicanálise</option>
+                      <option value="Psicodinâmica">Psicodinâmica</option>
+                      <option value="Humanista / Centrada na Pessoa">Humanista / Centrada na Pessoa</option>
+                      <option value="Gestalt">Gestalt</option>
+                      <option value="Sistêmica">Sistêmica</option>
+                      <option value="EMDR">EMDR</option>
+                      <option value="Terapia de Aceitação e Compromisso (ACT)">Terapia de Aceitação e Compromisso (ACT)</option>
+                      <option value="Terapia Comportamental Dialética (DBT)">Terapia Comportamental Dialética (DBT)</option>
+                      <option value="Análise do Comportamento (ABA)">Análise do Comportamento (ABA)</option>
+                      <option value="Outras">Outras</option>
+                    </Select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', marginBottom: '6px', textAlign: 'left', fontWeight: 'bold' }}>
+                      Área de Atuação:
+                    </label>
+                    <Select
+                      value={areaAtuacaoPsi}
+                      onChange={(e) => setAreaAtuacaoPsi(e.target.value)}
+                      required
+                    >
+                      <option value="">Selecione a área principal...</option>
+                      <option value="Clínica Geral">Clínica Geral</option>
+                      <option value="Ansiedade e Depressão">Ansiedade e Depressão</option>
+                      <option value="Transtornos Alimentares">Transtornos Alimentares</option>
+                      <option value="Dependência Química">Dependência Química</option>
+                      <option value="Relacionamentos e Família">Relacionamentos e Família</option>
+                      <option value="Trauma e TEPT">Trauma e TEPT</option>
+                      <option value="Psicologia Infantil e Adolescente">Psicologia Infantil e Adolescente</option>
+                      <option value="Neuropsicologia">Neuropsicologia</option>
+                      <option value="Psicologia do Trabalho">Psicologia do Trabalho</option>
+                      <option value="Psicologia Escolar">Psicologia Escolar</option>
+                      <option value="Saúde da Mulher">Saúde da Mulher</option>
+                      <option value="LGBTQIA+">LGBTQIA+</option>
+                      <option value="Luto e Perdas">Luto e Perdas</option>
+                    </Select>
+                  </div>
+                </>
+              )}
+
               <Input
                 type="text"
                 placeholder={
@@ -1195,6 +1263,7 @@ const Registro = () => {
                   tipoProfissional === 'nutricionista' ? 'CRN 12345' :
                   tipoProfissional === 'fisioterapeuta' ? 'CREFITO 123456' :
                   tipoProfissional === 'fonoaudiologo' ? 'CRFa 12345' :
+                  tipoProfissional === 'psicologo' ? 'CRP 06/12345' :
                   'Número do Conselho'
                 }
                 value={numeroConselho}
@@ -1205,6 +1274,7 @@ const Registro = () => {
                   tipoProfissional === 'nutricionista' ? 10 :
                   tipoProfissional === 'fisioterapeuta' ? 14 :
                   tipoProfissional === 'fonoaudiologo' ? 10 :
+                  tipoProfissional === 'psicologo' ? 12 :
                   15
                 }
                 required
