@@ -53,13 +53,12 @@ const ResetPassword = () => {
   const handleResetPassword = async (e) => {
     e.preventDefault();
   
-    // Verifica se as senhas coincidem
     if (senha !== confirmarSenha) {
       warning('As senhas não coincidem.');
       return;
     }
   
-    console.log(`ID: ${id}, Senha: ${senha}`); // Verifique no console se os valores estão corretos
+    console.log(`ID: ${id}, Senha: ${senha}`);
   
     const response = await fetch(`http://localhost:3000/api/reset-password/${id}`, {
       method: 'PATCH',
