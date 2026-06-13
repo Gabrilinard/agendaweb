@@ -50,7 +50,6 @@ const AdminDashboard = () => {
   const [reservas, setReservas] = useState([]);
   const [reservasPorData, setReservasPorData] = useState({});
 
-  // Criar consulta state
   const [nomeReserva, setNomeReserva] = useState('');
   const [sobrenomeReserva, setSobrenomeReserva] = useState('');
   const [emailReserva, setEmailReserva] = useState('');
@@ -60,13 +59,11 @@ const AdminDashboard = () => {
   const [userId, setUserId] = useState(null);
   const [cpfUsuario, setCpfUsuario] = useState('');
 
-  // Editar reserva
   const [showReservaEdit, setShowReservaEdit] = useState(false);
   const [editReservaId, setEditReservaId] = useState(null);
   const [editReservaData, setEditReservaData] = useState(new Date());
   const [editReservaHorario, setEditReservaHorario] = useState('');
 
-  // Solicitações
   const [motivo, setMotivo] = useState('');
   const [mostrarMotivo, setMostrarMotivo] = useState(null);
   const [reservaSelecionada, setReservaSelecionada] = useState(null);
@@ -75,14 +72,12 @@ const AdminDashboard = () => {
   const [erroFormulario, setErroFormulario] = useState('');
   const [searchHistory, setSearchHistory] = useState('');
 
-  // Mapa
   const [editLatitude, setEditLatitude] = useState(null);
   const [editLongitude, setEditLongitude] = useState(null);
   const [editCidade, setEditCidade] = useState('');
   const [editUfRegiao, setEditUfRegiao] = useState('');
   const [editingUserId, setEditingUserId] = useState(null);
 
-  // Informações
   const [editDescricao, setEditDescricao] = useState('');
   const [editPublicoAtendido, setEditPublicoAtendido] = useState('');
   const [editModalidade, setEditModalidade] = useState('');
@@ -97,7 +92,6 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const diasSemana = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
-  // ── formatters ──────────────────────────────────────────────
   const formatarHorarioBrasil = (horario) => {
     if (!horario) return '';
     const h = typeof horario !== 'string' ? String(horario) : horario;
@@ -128,7 +122,6 @@ const AdminDashboard = () => {
     return `${dias[d.getDay()]}, ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
   };
 
-  // ── data fetching ────────────────────────────────────────────
   const buscarReservas = async () => {
     if (!user?.id) return;
     const isProfissional = user.tipoUsuario === 'profissional';
@@ -164,7 +157,6 @@ const AdminDashboard = () => {
     else if (cpfUsuario === '') { setNomeReserva(''); setSobrenomeReserva(''); setEmailReserva(''); setTelefoneReserva(''); setUserId(null); }
   }, [cpfUsuario]);
 
-  // ── screen navigation ────────────────────────────────────────
   const irPara = async (screen) => {
     if (screen === 'mapa') {
       try {
@@ -201,7 +193,6 @@ const AdminDashboard = () => {
     setActiveScreen(screen);
   };
 
-  // ── actions ──────────────────────────────────────────────────
   const buscarUsuarioPorCPF = async (cpf) => {
     try {
       const { data } = await axios.get(`http://localhost:3000/usuarios/buscarPorCPF/${cpf.replace(/\D/g,'')}`);
@@ -367,7 +358,6 @@ const AdminDashboard = () => {
   const handleEditRemoveHorario = (dia, i) => setEditHorariosAtendimento(p => { const h=[...p[dia]]; h.splice(i,1); return {...p,[dia]:h}; });
   const handleEditHorarioChange = (dia, i, v) => setEditHorariosAtendimento(p => { const h=[...p[dia]]; h[i]=v; return {...p,[dia]:h}; });
 
-  // LocationPicker (passed to EditarMapa)
   const LocationPickerEdit = ({ onLocationSelect, initialLat, initialLng }) => {
     const [pos, setPos] = useState(initialLat && initialLng ? [initialLat, initialLng] : [-14.235, -51.925]);
     useEffect(() => { if (initialLat && initialLng) setPos([initialLat, initialLng]); }, [initialLat, initialLng]);
@@ -383,7 +373,6 @@ const AdminDashboard = () => {
     );
   };
 
-  // ── badge counts ─────────────────────────────────────────────
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const pendentes = reservas.filter(r => !r.is_urgente && r.status === 'pendente' && r.dia && (() => { const raw = String(r.dia).includes('T') ? String(r.dia).split('T')[0] : String(r.dia); const p = raw.split('-'); const d = p.length===3 ? new Date(+p[0],+p[1]-1,+p[2]) : new Date(raw); d.setHours(0,0,0,0); return d >= hoje; })()).length;
   const vagasCount = reservas.filter(r => r.status === 'liberado').length;
@@ -400,7 +389,6 @@ const AdminDashboard = () => {
     return true;
   }).length;
 
-  // ── avatar ───────────────────────────────────────────────────
   const nomeCompleto = `${user?.nome||''} ${user?.sobrenome||''}`.trim();
   const av = getAvatarColor(nomeCompleto);
   const initials = getInitials(nomeCompleto);
@@ -418,7 +406,6 @@ const AdminDashboard = () => {
     { key: 'informacoes',  icon: <User size={16} />,          label: 'Informações' },
   ];
 
-  // ── sidebar style helpers ────────────────────────────────────
   const navBtn = (key) => ({
     width: 'calc(100% - 16px)', margin: '1px 8px', padding: '10px 12px',
     background: activeScreen === key ? '#E8F5EF' : 'none',
@@ -532,13 +519,11 @@ const AdminDashboard = () => {
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Figtree, sans-serif' }}>
-      {/* ── Sidebar ── */}
       <aside style={{
         width: '260px', background: 'white', height: '100vh', position: 'fixed',
         left: 0, top: 0, display: 'flex', flexDirection: 'column',
         borderRight: '1px solid #F0EFE9', zIndex: 100,
       }}>
-        {/* Logo */}
         <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid #F0EFE9' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{ width: '36px', height: '36px', background: '#1B4D3E', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700', fontSize: '13px', flexShrink: 0 }}>Aa</div>
@@ -549,7 +534,6 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Profile */}
         <div style={{ padding: '14px 16px', borderBottom: '1px solid #F0EFE9' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
             <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: av.bg, color: av.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '14px', flexShrink: 0 }}>{initials}</div>
@@ -567,7 +551,6 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Nav */}
         <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto' }}>
           {navItems.map(item => (
             <button key={item.key} onClick={() => irPara(item.key)} style={navBtn(item.key)}>
@@ -580,7 +563,6 @@ const AdminDashboard = () => {
           ))}
         </nav>
 
-        {/* Bottom */}
         <div style={{ padding: '12px 8px', borderTop: '1px solid #F0EFE9', display: 'flex', flexDirection: 'column', gap: '2px' }}>
           <button onClick={() => navigate('/EmpresasProfissionais')} style={{ ...navBtn('_'), color: '#555' }}>
             <span style={{ width: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><UserCircle size={16} /></span>
@@ -593,11 +575,9 @@ const AdminDashboard = () => {
         </div>
       </aside>
 
-      {/* ── Main content ── */}
       <main style={{ marginLeft: '260px', flex: 1, minHeight: '100vh', background: '#F0EFE9' }}>
         {renderScreen()}
 
-        {/* Edit reservation modal */}
         {showReservaEdit && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200 }}>
             <div style={{ background: 'white', borderRadius: '14px', padding: '28px', width: '360px', boxShadow: '0 8px 32px rgba(0,0,0,0.15)' }}>
