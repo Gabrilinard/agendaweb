@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import { agendarService } from '../services/api';
 
 export const useProfissional = (nomeProfissional) => {
@@ -81,10 +80,10 @@ export const useProfissional = (nomeProfissional) => {
             });
 
             try {
-              const geoResponse = await axios.get(
+              const geoRaw = await fetch(
                 `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=pt-BR`
               );
-              const data = geoResponse.data;
+              const data = geoRaw.ok ? await geoRaw.json() : null;
               if (data && data.address) {
                 const endereco = [];
                 if (data.address.road) endereco.push(data.address.road);

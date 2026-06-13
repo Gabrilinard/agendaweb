@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { getAvaliacoesByProfissional, getMediaByProfissional } from '../../api';
 import { useEffect, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -67,9 +67,9 @@ const ProfessionalInfo = ({ profissionalInfo, location, endereco }) => {
 
   useEffect(() => {
     if (!profissionalInfo?.id) return;
-    axios.get(`http://localhost:3000/avaliacoes/media/${profissionalInfo.id}`)
-      .then(r => setAvalMedia(r.data)).catch(() => {});
-    axios.get(`http://localhost:3000/avaliacoes?profissional_id=${profissionalInfo.id}`)
+    getMediaByProfissional(profissionalInfo.id)
+      .then(r => setAvalMedia({ ...r.data, media: parseFloat(r.data.media) || 0 })).catch(() => {});
+    getAvaliacoesByProfissional(profissionalInfo.id)
       .then(r => setAvaliacoes(r.data || [])).catch(() => {});
   }, [profissionalInfo?.id]);
 

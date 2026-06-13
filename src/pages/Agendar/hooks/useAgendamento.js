@@ -10,7 +10,6 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
   const [horarioFinal, setHorarioFinal] = useState('');
   const [horariosDisponiveis, setHorariosDisponiveis] = useState([]);
   
-  // States for temporary reservations (multiple selection)
   const [reservasTemporarias, setReservasTemporarias] = useState([]);
   const [datasSelecionadas, setDatasSelecionadas] = useState([]);
 
