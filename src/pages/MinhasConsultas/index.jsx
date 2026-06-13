@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { ptBR } from 'date-fns/locale';
 import { Calendar, Edit2, FileText, Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -10,6 +9,9 @@ import Footer from '../../components/Footer';
 import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
+import { getAvatarColor, getInitials } from '../../utils/avatar';
+import { parseDia } from '../../utils/formatters';
+import { aceitarVaga, createAvaliacao, editReserva, getAvaliacaoByReserva, getFormularioByReserva, getReservas, getVagasPendentes, liberarVaga, recusarVaga, solicitarDados, updateReserva } from './api';
 
 const DARK_GREEN = '#1C5C40';
 const MID_GREEN = '#2D8A62';
@@ -20,35 +22,6 @@ const MUTED = '#666';
 
 const MONTH_SHORT = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
 
-const AVATAR_COLORS = [
-  { bg: '#D4EDE1', color: '#1A5C3C' },
-  { bg: '#FDE8CC', color: '#8B4A00' },
-  { bg: '#D6E8F5', color: '#1A4A7A' },
-  { bg: '#F5D6E8', color: '#7A1A5A' },
-  { bg: '#E8E0F5', color: '#4A1A7A' },
-  { bg: '#F5E8D6', color: '#7A4A1A' },
-];
-
-const parseDia = (dia) => {
-  if (!dia) return null;
-  const str = String(dia).split('T')[0];
-  const parts = str.split('-');
-  if (parts.length !== 3) return null;
-  return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-};
-
-const getAvatarColor = (name = '') => {
-  const idx = (name.charCodeAt(0) || 0) % AVATAR_COLORS.length;
-  return AVATAR_COLORS[idx];
-};
-
-const getInitials = (name = '') => {
-  const parts = name.trim().split(' ');
-  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  return name.slice(0, 2).toUpperCase();
-};
-
-// ── Styled Components ──────────────────────────────────────────────────────────
 
 const PageWrapper = styled.div`
   display: flex;
@@ -123,7 +96,6 @@ const NewBtn = styled.button`
   &:hover { background: ${MID_GREEN}; }
 `;
 
-// Tabs
 const TabsRow = styled.div`
   display: flex;
   gap: 4px;
@@ -160,7 +132,6 @@ const TabCount = styled.span`
   border-radius: 99px;
 `;
 
-// Card
 const CardWrapper = styled.div`
   display: flex;
   flex-direction: column;
@@ -413,7 +384,6 @@ const EmptyMsg = styled.div`
   font-size: 0.95rem;
 `;
 
-// Drawer
 const Overlay = styled.div`
   position: fixed;
   inset: 0;
@@ -541,8 +511,6 @@ const flattenConteudo = (obj, prefix = '') => {
   return entries;
 };
 
-// ── Status helpers ─────────────────────────────────────────────────────────────
-
 const statusStyle = (status) => {
   switch (status) {
     case 'confirmado':                    return { bg: '#D4F0DE', color: '#1A5C3C', label: 'Confirmada' };
@@ -553,8 +521,6 @@ const statusStyle = (status) => {
     default:                              return { bg: '#EDEAE4', color: MUTED, label: status };
   }
 };
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 const MinhasConsultas = () => {
   const { user } = useAuth();
@@ -594,7 +560,7 @@ const MinhasConsultas = () => {
     );
     const results = await Promise.all(passadas.map(async c => {
       try {
-        const { data } = await axios.get(`http://localhost:3000/avaliacoes/reserva/${c.id}`);
+        const { data } = await getAvaliacaoByReserva(c.id);
         return data.avaliado ? c.id : null;
       } catch { return null; }
     }));
@@ -605,7 +571,7 @@ const MinhasConsultas = () => {
     if (!notaAvaliacao) { showError('Selecione uma nota.'); return; }
     setEnviandoAvaliacao(true);
     try {
-      await axios.post('http://localhost:3000/avaliacoes', {
+      await createAvaliacao({
         reserva_id: c.id,
         usuario_id: user.id,
         profissional_id: c.profissional_id,
@@ -625,27 +591,26 @@ const MinhasConsultas = () => {
   const buscarVagasPendentes = async () => {
     if (!user?.id) return;
     try {
-      const { data } = await axios.get(`http://localhost:3000/vagas/pendentes/${user.id}`);
+      const { data } = await getVagasPendentes(user.id);
       setVagasPendentes(data || []);
-    } catch { /* silently ignore */ }
+    } catch { }
   };
 
   const buscarConsultas = async () => {
     try {
       setLoading(true);
       const isProfissional = user.tipoUsuario === 'profissional';
-      const url = isProfissional
-        ? `http://localhost:3000/reservas?profissional_id=${user.id}`
-        : `http://localhost:3000/reservas?usuario_id=${user.id}`;
+      const params = isProfissional
+        ? { profissional_id: user.id }
+        : { usuario_id: user.id };
 
-      const { data } = await axios.get(url);
+      const { data } = await getReservas(params);
 
       const enriched = await Promise.all((data || []).map(async (c) => {
-
         const otherId = isProfissional ? c.usuario_id : c.profissional_id;
         if (!otherId) return c;
         try {
-          const { data: p } = await axios.get(`http://localhost:3000/usuarios/solicitarDados/${otherId}`);
+          const { data: p } = await solicitarDados(otherId);
           return {
             ...c,
             nomeOutro: `${p.nome} ${p.sobrenome}`,
@@ -677,7 +642,7 @@ const MinhasConsultas = () => {
 
   const handleConfirmarCancelamento = async () => {
     try {
-      await axios.patch(`http://localhost:3000/reservas/${confirmingId}`, { status: 'negado' });
+      await updateReserva(confirmingId, { status: 'negado' });
       success('Consulta cancelada.');
       setConfirmingId(null);
       buscarConsultas();
@@ -688,7 +653,7 @@ const MinhasConsultas = () => {
 
   const handleConfirmarLiberacao = async () => {
     try {
-      await axios.post(`http://localhost:3000/vagas/liberar/${liberandoId}`);
+      await liberarVaga(liberandoId);
       success('Horário liberado! O profissional será notificado.');
       setLiberandoId(null);
       buscarConsultas();
@@ -698,7 +663,7 @@ const MinhasConsultas = () => {
   const handleAceitarVaga = async (notif) => {
     setAceitandoVaga(notif.id);
     try {
-      await axios.post(`http://localhost:3000/vagas/aceitar/${notif.id}`, { token: notif.token });
+      await aceitarVaga(notif.id, notif.token);
       success('Vaga aceita! Sua consulta foi atualizada.');
       buscarVagasPendentes();
       buscarConsultas();
@@ -708,9 +673,9 @@ const MinhasConsultas = () => {
 
   const handleRecusarVaga = async (notif) => {
     try {
-      await axios.post(`http://localhost:3000/vagas/recusar/${notif.id}`);
+      await recusarVaga(notif.id);
       setVagasPendentes(prev => prev.filter(v => v.id !== notif.id));
-    } catch { /* silently ignore */ }
+    } catch { }
   };
 
   const handleVerFormulario = async (c) => {
@@ -718,7 +683,7 @@ const MinhasConsultas = () => {
     setLoadingForm(true);
     setFormDrawerOpen(true);
     try {
-      const { data } = await axios.get(`http://localhost:3000/formularios/reserva/${c.id}`);
+      const { data } = await getFormularioByReserva(c.id);
       setFormData(data);
     } catch (err) {
       setFormDrawerOpen(false);
@@ -740,7 +705,7 @@ const MinhasConsultas = () => {
 
   const handleAceitarRemarcacao = async (c) => {
     try {
-      await axios.patch(`http://localhost:3000/reservas/${c.id}`, { status: 'confirmado', dia: c.dia, horario: c.horario });
+      await updateReserva(c.id, { status: 'confirmado', dia: c.dia, horario: c.horario });
       success('Novo horário confirmado!');
       buscarConsultas();
     } catch { showError('Erro ao confirmar.'); }
@@ -748,7 +713,7 @@ const MinhasConsultas = () => {
 
   const handleRecusarRemarcacao = async (c) => {
     try {
-      await axios.patch(`http://localhost:3000/reservas/${c.id}`, { status: 'negado' });
+      await updateReserva(c.id, { status: 'negado' });
       success('Remarcação recusada.');
       buscarConsultas();
     } catch { showError('Erro ao recusar.'); }
@@ -770,7 +735,7 @@ const MinhasConsultas = () => {
     const [hh, mm] = novoHorario.split(':').map(Number);
     const hFinal = new Date(0, 0, 0, hh + 1, mm).toTimeString().slice(0, 5);
     try {
-      await axios.patch(`http://localhost:3000/reservas/editar/${consultaEditando.id}`, {
+      await editReserva(consultaEditando.id, {
         dia: `${y}-${m}-${d}`,
         horario: novoHorario,
         horarioFinal: hFinal,
@@ -941,7 +906,6 @@ const MinhasConsultas = () => {
     <PageWrapper>
       <Header />
       <Content>
-        {/* Vagas pendentes banner */}
         {vagasPendentes.map(notif => (
           <div key={notif.id} style={{
             background: '#FFF7F0', border: '1.5px solid #FED7B0', borderRadius: '12px',
@@ -1012,7 +976,6 @@ const MinhasConsultas = () => {
         )}
       </Content>
 
-      {/* Form View Drawer */}
       <Overlay $open={formDrawerOpen} onClick={() => setFormDrawerOpen(false)} />
       <Drawer $open={formDrawerOpen} style={{ width: '420px' }}>
         <DrawerHeader>
@@ -1035,7 +998,6 @@ const MinhasConsultas = () => {
         </div>
       </Drawer>
 
-      {/* Edit Drawer */}
       <Overlay $open={editDrawerOpen} onClick={() => setEditDrawerOpen(false)} />
       <Drawer $open={editDrawerOpen}>
         <DrawerHeader>
