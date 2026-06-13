@@ -1,38 +1,34 @@
-import axios from 'axios';
-
-const API_URL = 'http://localhost:3000';
+import client from '../../../api/client';
 
 export const agendarService = {
-  getProfissionais: () => axios.get(`${API_URL}/profissionais`),
-  
-  getProfissionalById: (id) => axios.get(`${API_URL}/usuarios/solicitarDados/${id}`),
-  
-  getReservasProfissional: (profissionalId) => 
-    axios.get(`${API_URL}/reservas?profissional_id=${profissionalId}`),
-  
-  getReservasUsuario: (userId) => 
-    axios.get(`${API_URL}/reservas/${userId}`),
-    
-  getReservasUsuarioProfissional: (userId, profissionalId) => 
-    axios.get(`${API_URL}/reservas?usuario_id=${userId}&profissional_id=${profissionalId}`),
-  
-  createReserva: (data) => axios.post(`${API_URL}/reservas`, data),
-  
-  createEmergencia: (formData) => axios.post(`${API_URL}/reservas`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
+  getProfissionais: () => client.get('/profissionais'),
+
+  getProfissionalById: (id) => client.get(`/usuarios/solicitarDados/${id}`),
+
+  getReservasProfissional: (profissionalId) =>
+    client.get('/reservas', { params: { profissional_id: profissionalId } }),
+
+  getReservasUsuario: (userId) =>
+    client.get(`/reservas/${userId}`),
+
+  getReservasUsuarioProfissional: (userId, profissionalId) =>
+    client.get('/reservas', { params: { usuario_id: userId, profissional_id: profissionalId } }),
+
+  createReserva: (data) => client.post('/reservas', data),
+
+  createEmergencia: (formData) => client.post('/reservas', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
   }),
-  
-  updateReservaStatus: (id, status) => 
-    axios.patch(`${API_URL}/reservas/${id}`, { status }),
-    
-  solicitarFalta: (id, data) => 
-    axios.put(`${API_URL}/reservas/solicitar/${id}`, data),
-    
-  editReserva: (id, data) => 
-    axios.patch(`${API_URL}/reservas/editar/${id}`, data),
-    
-  deleteReserva: (id) => 
-    axios.delete(`${API_URL}/reservas/${id}`),
+
+  updateReservaStatus: (id, status) =>
+    client.patch(`/reservas/${id}`, { status }),
+
+  solicitarFalta: (id, data) =>
+    client.put(`/reservas/solicitar/${id}`, data),
+
+  editReserva: (id, data) =>
+    client.patch(`/reservas/editar/${id}`, data),
+
+  deleteReserva: (id) =>
+    client.delete(`/reservas/${id}`),
 };
