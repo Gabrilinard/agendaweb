@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { createFormulario, createReserva } from '../api';
 import { Activity, Dna, Scale, Send, Utensils } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -78,7 +78,7 @@ const Nutricao = ({ nomeProfissional, reservaIds, pendingReservas }) => {
       if (!idsParaUsar.length && pendingReservas?.length) {
         const criadas = await Promise.all(
           pendingReservas.map((r) =>
-            axios.post('http://localhost:3000/reservas', {
+            createReserva({
               nome: user.nome, sobrenome: user.sobrenome,
               email: user.email, telefone: user.telefone || '',
               dia: r.dia, horario: r.horario, horarioFinal: r.horarioFinal,
@@ -107,7 +107,7 @@ const Nutricao = ({ nomeProfissional, reservaIds, pendingReservas }) => {
         createdAt: new Date().toISOString(),
       };
 
-      await axios.post('http://localhost:3000/formularios', {
+      await createFormulario({
         reservaIds: idsParaUsar,
         tipoFormulario: 'nutricionista',
         tipoAtendimento: null,
