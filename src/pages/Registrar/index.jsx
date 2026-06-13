@@ -94,6 +94,23 @@ const EyeIcon = styled.div`
   cursor: pointer;
 `;
 
+const FieldError = styled.p`
+  color: #dc3545;
+  font-size: 12px;
+  margin: 4px 0 0;
+  text-align: left;
+`;
+
+const PasswordHint = styled.p`
+  font-size: 12px;
+  margin: 4px 0 0;
+  text-align: left;
+  color: ${({ $forca }) =>
+    $forca === 'forte' ? '#28a745' :
+    $forca === 'media' ? '#e67e22' :
+    '#dc3545'};
+`;
+
 const Button = styled.button`
   padding: 12px;
   background-color: #28a745;
@@ -471,9 +488,23 @@ const Registro = () => {
   const [diasAtendimento, setDiasAtendimento] = useState([]);
   const [horariosAtendimento, setHorariosAtendimento] = useState({});
   const [cpf, setCpf] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({ cpf: '', email: '', senha: '' });
   const navigate = useNavigate();
   const { login } = useAuth();
   const { success, error: showError } = useNotification();
+
+  const setFieldError = (field, msg) => setFieldErrors(prev => ({ ...prev, [field]: msg }));
+  const clearFieldError = (field) => setFieldErrors(prev => ({ ...prev, [field]: '' }));
+
+  const getSenhaForca = (s) => {
+    if (!s) return null;
+    const temMaiuscula = /[A-Z]/.test(s);
+    const temNumero = /\d/.test(s);
+    const temTamanho = s.length >= 8;
+    if (temTamanho && temMaiuscula && temNumero) return 'forte';
+    if (s.length >= 6) return 'media';
+    return 'fraca';
+  };
 
   const converterEstadoParaSigla = (estadoNome) => {
     const estadosMap = {
@@ -825,26 +856,27 @@ const Registro = () => {
     e.preventDefault();
   
     const senhaValida = /^(?=.*[A-Z])(?=.*\d).{8,}$/;
-  
+    let hasErrors = false;
+
     if (!senhaValida.test(senha)) {
-      showError('A senha deve ter no mínimo 8 caracteres, incluindo pelo menos um número e uma letra maiúscula.');
-      return;
+      setFieldError('senha', 'Mínimo 8 caracteres, pelo menos 1 maiúscula e 1 número.');
+      hasErrors = true;
     }
-  
+
     if (senha !== confirmarSenha) {
       showError('As senhas não coincidem!');
-      return;
+      hasErrors = true;
     }
 
     if (!cpf || !cpf.trim()) {
-      showError('Por favor, informe o CPF.');
-      return;
+      setFieldError('cpf', 'Por favor, informe o CPF.');
+      hasErrors = true;
+    } else if (!validarCPF(cpf)) {
+      setFieldError('cpf', 'CPF inválido. Verifique o número informado.');
+      hasErrors = true;
     }
 
-    if (!validarCPF(cpf)) {
-      showError('CPF inválido. Por favor, verifique o CPF informado.');
-      return;
-    }
+    if (hasErrors) return;
 
     if (tipoUsuario === 'profissional') {
       if (!tipoProfissional) {
@@ -953,9 +985,14 @@ const Registro = () => {
       } else {
         navigate('/Entrar');
       }
-    } catch (error) {
-      console.error(error);
-      showError(error.response?.data?.error || 'Erro ao registrar. Tente novamente.');
+    } catch (err) {
+      console.error(err);
+      const data = err.response?.data;
+      if (data?.field) {
+        setFieldError(data.field, data.error);
+      } else {
+        showError(data?.error || 'Erro ao registrar. Tente novamente.');
+      }
     }
   };
   
@@ -1022,14 +1059,18 @@ const Registro = () => {
 
           <Input type="text" placeholder="Nome" value={nome} onChange={(e) => setNome(e.target.value)} required />
           <Input type="text" placeholder="Sobrenome" value={sobrenome} onChange={(e) => setSobrenome(e.target.value)} required />
-          <Input 
-            type="text" 
-            placeholder="CPF" 
-            value={cpf} 
-            onChange={handleCPFChange}
-            maxLength={14}
-            required 
-          />
+          <div style={{ width: '100%' }}>
+            <Input
+              type="text"
+              placeholder="CPF"
+              value={cpf}
+              onChange={(e) => { handleCPFChange(e); clearFieldError('cpf'); }}
+              maxLength={14}
+              required
+              style={fieldErrors.cpf ? { borderColor: '#dc3545' } : {}}
+            />
+            {fieldErrors.cpf && <FieldError>{fieldErrors.cpf}</FieldError>}
+          </div>
           <Input
             type="text"
             placeholder="Telefone"
@@ -1037,21 +1078,44 @@ const Registro = () => {
             onChange={handleTelefoneChange}
             maxLength="15"
             required
-            />
-          <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-
-          <InputWrapper>
+          />
+          <div style={{ width: '100%' }}>
             <Input
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Senha"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); clearFieldError('email'); }}
               required
+              style={fieldErrors.email ? { borderColor: '#dc3545' } : {}}
             />
-            <EyeIcon onClick={togglePasswordVisibility}>
-              {showPassword ? <FaEyeSlash /> : <FaEye />}
-            </EyeIcon>
-          </InputWrapper>
+            {fieldErrors.email && <FieldError>{fieldErrors.email}</FieldError>}
+          </div>
+
+          <div style={{ width: '100%' }}>
+            <InputWrapper>
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="Senha"
+                value={senha}
+                onChange={(e) => { setSenha(e.target.value); clearFieldError('senha'); }}
+                required
+                style={fieldErrors.senha ? { borderColor: '#dc3545' } : {}}
+              />
+              <EyeIcon onClick={togglePasswordVisibility}>
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </EyeIcon>
+            </InputWrapper>
+            {senha && (() => {
+              const forca = getSenhaForca(senha);
+              const msgs = {
+                forte: '✓ Senha forte',
+                media: 'Adicione pelo menos 1 maiúscula e 1 número',
+                fraca: 'Mín. 8 caracteres, 1 maiúscula e 1 número',
+              };
+              return <PasswordHint $forca={forca}>{msgs[forca]}</PasswordHint>;
+            })()}
+            {fieldErrors.senha && <FieldError>{fieldErrors.senha}</FieldError>}
+          </div>
 
           <InputWrapper>
             <Input
