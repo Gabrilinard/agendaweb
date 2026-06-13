@@ -68,8 +68,7 @@ const ForgotPassword = () => {
         console.log('E-mail de redefinição de senha enviado com sucesso:', response.status, response.text);
         success('E-mail de redefinição de senha enviado! Verifique sua caixa de entrada.');
 
-        // Redirecionar após o envio do e-mail
-        navigate('/ResetPassword');  // Redireciona para a página /ResetPassword
+        navigate('/ResetPassword');
       })
       .catch((error) => {
         console.error('Erro ao enviar e-mail de redefinição de senha:', error);
@@ -86,7 +85,6 @@ const ForgotPassword = () => {
     }
     console.log("E-mail digitado:", email);
 
-    // Chamada para o back-end para obter a ID do usuário com o e-mail fornecido
     const response = await fetch('http://localhost:3000/api/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -95,9 +93,7 @@ const ForgotPassword = () => {
 
     if (response.ok) {
       const data = await response.json();
-      const userId = data.userId; // Recebe a ID do usuário do back-end
-
-      // Enviar o e-mail com o link de redefinição
+      const userId = data.userId;
       sendPasswordResetEmail(email, userId);
     } else {
       showError('Usuário não encontrado.');
