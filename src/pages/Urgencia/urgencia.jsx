@@ -1,5 +1,6 @@
-import axios from 'axios';
 import { useEffect, useState } from 'react';
+import { getReservas, negarReserva, updateReserva } from './api';
+import { formatarDataExibicao, formatarHorarioBrasil, parseDia } from '../../utils/formatters';
 import Footer from '../../components/Footer';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -35,7 +36,6 @@ const Urgencia = () => {
   const [editDate, setEditDate] = useState('');
   const [editTime, setEditTime] = useState('');
 
-  // States for Deny Modal
   const [showDenyModal, setShowDenyModal] = useState(false);
   const [denyingId, setDenyingId] = useState(null);
   const [denyReason, setDenyReason] = useState('');
@@ -49,31 +49,17 @@ const Urgencia = () => {
 
     try {
       const isProfissional = user.tipoUsuario === 'profissional';
-      const url = isProfissional
-        ? `http://localhost:3000/reservas?profissional_id=${user.id}`
-        : 'http://localhost:3000/reservas';
+      const params = isProfissional ? { profissional_id: user.id } : {};
 
-      const response = await axios.get(url);
-      const urgentRequests = response.data.filter(reserva => 
-        reserva.is_urgente && 
+      const response = await getReservas(params);
+      const urgentRequests = response.data.filter(reserva =>
+        reserva.is_urgente &&
         (reserva.status === 'pendente' || reserva.status === 'aguardando_confirmacao_paciente')
       );
-      
-      urgentRequests.sort((a, b) => {
-        const toDateObj = (value) => {
-          if (!value) return new Date(0);
-          if (value instanceof Date) return value;
-          const raw = String(value).includes('T') ? String(value).split('T')[0] : String(value);
-          const parts = raw.split('-');
-          if (parts.length >= 3) {
-            const [ano, mes, dia] = parts;
-            return new Date(parseInt(ano), parseInt(mes) - 1, parseInt(dia));
-          }
-          return new Date(raw);
-        };
 
-        const dateA = toDateObj(a.dia);
-        const dateB = toDateObj(b.dia);
+      urgentRequests.sort((a, b) => {
+        const dateA = parseDia(a.dia) || new Date(0);
+        const dateB = parseDia(b.dia) || new Date(0);
         if (dateA - dateB !== 0) return dateA - dateB;
         return (a.horario || '').localeCompare(b.horario || '');
       });
@@ -87,36 +73,9 @@ const Urgencia = () => {
     }
   };
 
-  const formatarData = (dataString) => {
-    if (!dataString) return '';
-    if (dataString instanceof Date) {
-      const dia = String(dataString.getDate()).padStart(2, '0');
-      const mes = String(dataString.getMonth() + 1).padStart(2, '0');
-      const ano = dataString.getFullYear();
-      return `${dia}/${mes}/${ano}`;
-    }
-    if (typeof dataString === 'string') {
-      let dataParaFormatar = dataString;
-      if (dataParaFormatar.includes('T')) {
-        dataParaFormatar = dataParaFormatar.split('T')[0];
-      }
-      const parts = dataParaFormatar.split('-');
-      if (parts.length >= 3) {
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
-      }
-    }
-    return String(dataString);
-  };
-
-  const formatarHorario = (horario) => {
-    if (!horario) return '';
-    if (horario.length > 5) return horario.substring(0, 5);
-    return horario;
-  };
-
   const handleAccept = async (id) => {
     try {
-      await axios.patch(`http://localhost:3000/reservas/${id}`, { status: 'confirmado' });
+      await updateReserva(id, { status: 'confirmado' });
       success('Solicitação de urgência aceita com sucesso!');
       fetchUrgencias();
     } catch (error) {
@@ -132,10 +91,7 @@ const Urgencia = () => {
     }
 
     try {
-      await axios.patch(`http://localhost:3000/reservas/negado/${denyingId}`, { 
-        status: 'negado',
-        motivoNegacao: denyReason 
-      });
+      await negarReserva(denyingId, { status: 'negado', motivoNegacao: denyReason });
       success('Solicitação negada com sucesso.');
       setShowDenyModal(false);
       setDenyReason('');
@@ -171,11 +127,11 @@ const Urgencia = () => {
         horarioObj.setHours(horarioObj.getHours() + 1);
         const horarioFinal = horarioObj.toTimeString().slice(0, 5);
 
-        await axios.patch(`http://localhost:3000/reservas/${editingId}`, {
+        await updateReserva(editingId, {
             dia: editDate,
             horario: editTime,
             horarioFinal: horarioFinal,
-            status: 'aguardando_confirmacao_paciente' // Reset status to pending confirmation if changed
+            status: 'aguardando_confirmacao_paciente'
         });
 
         success('Agendamento atualizado com sucesso!');
@@ -209,9 +165,9 @@ const Urgencia = () => {
                 
                 <InfoGroup>
                   <InfoLabel>Data Preferencial</InfoLabel>
-                  <InfoValue>{formatarData(reserva.dia)}</InfoValue>
+                  <InfoValue>{formatarDataExibicao(reserva.dia)}</InfoValue>
                   <InfoLabel>Horário</InfoLabel>
-                  <InfoValue>{formatarHorario(reserva.horario)}</InfoValue>
+                  <InfoValue>{formatarHorarioBrasil(reserva.horario)}</InfoValue>
                 </InfoGroup>
 
                 <InfoGroup style={{flex: 2}}>
