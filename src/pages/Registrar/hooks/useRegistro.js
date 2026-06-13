@@ -41,7 +41,7 @@ const useRegistro = () => {
   const [cpf, setCpf] = useState('');
   const [abordagemTerapeutica, setAbordagemTerapeutica] = useState('');
   const [areaAtuacaoPsi, setAreaAtuacaoPsi] = useState('');
-  const [fieldErrors, setFieldErrors] = useState({ cpf: '', email: '', senha: '' });
+  const [fieldErrors, setFieldErrors] = useState({ cpf: '', email: '', senha: '', numeroConselho: '' });
 
   const setFieldError = (field, msg) => setFieldErrors(prev => ({ ...prev, [field]: msg }));
   const clearFieldError = (field) => setFieldErrors(prev => ({ ...prev, [field]: '' }));
@@ -74,7 +74,10 @@ const useRegistro = () => {
   const handleMapClick = (lat, lng) => { setLatitude(lat); setLongitude(lng); buscarLocalizacao(lat, lng); };
 
   const handleCPFChange = (e) => setCpf(formatarCPF(e.target.value));
-  const handleNumeroConselhoChange = (e) => setNumeroConselho(formatarNumeroConselho(e.target.value, tipoProfissional));
+  const handleNumeroConselhoChange = (e) => {
+    clearFieldError('numeroConselho');
+    setNumeroConselho(formatarNumeroConselho(e.target.value, tipoProfissional));
+  };
 
   const handleDiaChange = (e) => {
     const dia = e.target.value;
@@ -144,8 +147,15 @@ const useRegistro = () => {
       if (tipoProfissional === 'outros' && !profissaoCustomizada.trim()) { showError('Por favor, informe sua profissão.'); return; }
       if (!numeroConselho?.trim()) { showError('Por favor, informe o número do conselho.'); return; }
       if (!validarNumeroConselho(numeroConselho, tipoProfissional)) {
-        const msgs = { medico: 'CRM 123456 (4 a 6 dígitos)', dentista: 'CRO 123456 (4 a 6 dígitos)', nutricionista: 'CRN 12345 (4 a 5 dígitos)', fisioterapeuta: 'CREFITO 123456 (4 a 6 dígitos)', fonoaudiologo: 'CRFa 12345 (4 a 5 dígitos)' };
-        showError(`Número do conselho inválido. Formato esperado: ${msgs[tipoProfissional] || '3 a 10 dígitos'}`);
+        const msgs = {
+          medico:         'CRM/PI 425041',
+          dentista:       'CRO/SP 12345',
+          nutricionista:  'CRN-3 12345',
+          fisioterapeuta: 'CREFITO-8/123456-F (ou -T para Terapia Ocupacional)',
+          fonoaudiologo:  'CRFa/SP 12345',
+          psicologo:      'CRP 06/12345',
+        };
+        showError(`Número do conselho inválido. Formato esperado: ${msgs[tipoProfissional] || 'entre 3 e 20 caracteres'}`);
         return;
       }
       if (!latitude || !longitude) { showError('Por favor, selecione sua localização no mapa.'); return; }
@@ -179,7 +189,7 @@ const useRegistro = () => {
       navigate(userData && tipoUsuario === 'profissional' ? '/AdminDashboard' : userData ? '/' : '/Entrar');
     } catch (err) {
       const data = err.response?.data;
-      if (data?.field) setFieldError(data.field, data.error);
+      if (data?.field) { setFieldError(data.field, data.error); showError(data.error); }
       else showError(data?.error || 'Erro ao registrar. Tente novamente.');
     }
   };

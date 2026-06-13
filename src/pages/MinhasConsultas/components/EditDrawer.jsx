@@ -1,4 +1,3 @@
-import { ptBR } from 'date-fns/locale';
 import { X } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -38,7 +37,7 @@ const EditDrawer = ({ open, onClose, novaData, setNovaData, novoHorario, setNovo
               onChange={d => d && setNovaData(d)}
               minDate={new Date()}
               dateFormat="dd/MM/yyyy"
-              locale={ptBR}
+              locale="pt-BR"
               showPopperArrow={false}
             />
           </DPWrapper>

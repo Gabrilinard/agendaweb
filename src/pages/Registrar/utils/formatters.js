@@ -39,34 +39,84 @@ export const validarCPF = (cpf) => {
 
 export const formatarNumeroConselho = (valor, tipo) => {
   if (!valor) return '';
-  let nums = valor.replace(/\D/g, '');
-  if (!nums) return '';
+
   switch (tipo) {
-    case 'medico':       nums = nums.slice(0,6); return `CRM ${nums}`;
-    case 'dentista':     nums = nums.slice(0,6); return `CRO ${nums}`;
-    case 'nutricionista':nums = nums.slice(0,5); return `CRN ${nums}`;
-    case 'fisioterapeuta':nums = nums.slice(0,6); return `CREFITO ${nums}`;
-    case 'fonoaudiologo':nums = nums.slice(0,5); return `CRFa ${nums}`;
-    case 'psicologo': {
-      const reg = nums.slice(0, Math.min(2, nums.length));
-      const num = nums.slice(2, Math.min(8, nums.length));
-      return num ? `CRP ${reg}/${num}` : `CRP ${reg}`;
+    case 'medico': {
+      // CRM/PI 425041
+      const upper = valor.toUpperCase();
+      if (!upper.startsWith('CRM')) return upper.slice(0, 3);
+      const after = upper.slice(3).replace(/^\//, '');
+      const uf = after.replace(/[^A-Z]/g, '').slice(0, 2);
+      const num = after.replace(/\D/g, '').slice(0, 6);
+      const hasContent = upper.length > 3;
+      return `CRM${hasContent ? '/' : ''}${uf}${num ? ' ' + num : ''}`.trimEnd().slice(0, 14);
     }
-    default: return nums.slice(0,10);
+    case 'dentista': {
+      // CRO/SP 12345
+      const upper = valor.toUpperCase();
+      if (!upper.startsWith('CRO')) return upper.slice(0, 3);
+      const after = upper.slice(3).replace(/^\//, '');
+      const uf = after.replace(/[^A-Z]/g, '').slice(0, 2);
+      const num = after.replace(/\D/g, '').slice(0, 6);
+      const hasContent = upper.length > 3;
+      return `CRO${hasContent ? '/' : ''}${uf}${num ? ' ' + num : ''}`.trimEnd().slice(0, 13);
+    }
+    case 'nutricionista': {
+      // CRN-3 12345
+      const upper = valor.toUpperCase();
+      if (!upper.startsWith('CRN')) return upper.slice(0, 3);
+      const after = upper.slice(3).replace(/^[-\s]/, '');
+      const digits = after.replace(/\D/g, '');
+      const regional = digits.slice(0, 1);
+      const num = digits.slice(1, 6);
+      return `CRN${regional ? '-' + regional : ''}${num ? ' ' + num : ''}`.trimEnd().slice(0, 11);
+    }
+    case 'fisioterapeuta': {
+      // CREFITO-8/123456-F
+      const upper = valor.toUpperCase();
+      if (!upper.startsWith('CREFITO')) return upper.slice(0, 7);
+      const after = upper.slice(7).replace(/^[-\s]/, '');
+      const digits = after.replace(/\D/g, '');
+      const regional = digits.slice(0, 1);
+      const num = digits.slice(1, 7);
+      const sufMatch = upper.match(/([FT])(?:\s*$|-)/);
+      const suf = sufMatch ? sufMatch[1] : '';
+      let result = `CREFITO${regional ? '-' + regional : ''}${num ? '/' + num : ''}`;
+      if (suf && num) result += `-${suf}`;
+      return result.slice(0, 18);
+    }
+    case 'fonoaudiologo': {
+      // CRFa/SP 12345
+      if (!/^CRFa/i.test(valor)) return valor.slice(0, 4);
+      const after = valor.slice(4).replace(/^\//, '').toUpperCase();
+      const uf = after.replace(/[^A-Z]/g, '').slice(0, 2);
+      const num = after.replace(/\D/g, '').slice(0, 5);
+      const hasContent = valor.length > 4;
+      return `CRFa${hasContent ? '/' : ''}${uf}${num ? ' ' + num : ''}`.trimEnd().slice(0, 13);
+    }
+    case 'psicologo': {
+      // CRP 06/12345
+      const raw = valor.replace(/^CRP\s?/i, '');
+      const digits = raw.replace(/\D/g, '');
+      const reg = digits.slice(0, 2);
+      const num = digits.slice(2, 8);
+      return `CRP${reg ? ' ' + reg : ''}${num ? '/' + num : ''}`;
+    }
+    default: return valor.slice(0, 20);
   }
 };
 
 export const validarNumeroConselho = (valor, tipo) => {
   if (!valor?.trim()) return false;
-  const n = valor.replace(/\D/g, '');
+  const v = valor.trim();
   switch (tipo) {
-    case 'medico':       return /^CRM\s?\d{4,6}$/i.test(valor.trim()) && n.length >= 4 && n.length <= 6;
-    case 'dentista':     return /^CRO\s?\d{4,6}$/i.test(valor.trim()) && n.length >= 4 && n.length <= 6;
-    case 'nutricionista':return /^CRN\s?\d{4,5}$/i.test(valor.trim()) && n.length >= 4 && n.length <= 5;
-    case 'fisioterapeuta':return /^CREFITO\s?\d{4,6}$/i.test(valor.trim()) && n.length >= 4 && n.length <= 6;
-    case 'fonoaudiologo':return /^CRFa\s?\d{4,5}$/i.test(valor.trim()) && n.length >= 4 && n.length <= 5;
-    case 'psicologo':    return /^CRP\s?\d{1,2}\/\d{4,6}$/i.test(valor.trim());
-    default:             return n.length >= 3 && n.length <= 10;
+    case 'medico':         return /^CRM\/[A-Z]{2} \d{4,6}$/i.test(v);
+    case 'dentista':       return /^CRO\/[A-Z]{2} \d{4,6}$/i.test(v);
+    case 'nutricionista':  return /^CRN-[1-9] \d{4,5}$/.test(v);
+    case 'fisioterapeuta': return /^CREFITO-\d{1,2}\/\d{4,6}-[FT]$/i.test(v);
+    case 'fonoaudiologo':  return /^CRFa\/[A-Z]{2} \d{4,5}$/i.test(v);
+    case 'psicologo':      return /^CRP \d{2}\/\d{4,6}$/.test(v);
+    default:               return /^[A-Za-z0-9 /\-]{3,20}$/.test(v);
   }
 };
 

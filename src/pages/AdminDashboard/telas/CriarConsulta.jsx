@@ -1,4 +1,3 @@
-import { ptBR } from 'date-fns/locale';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useEffect, useState } from 'react';
@@ -197,7 +196,7 @@ const CriarConsulta = ({
               <div>
                 <label style={labelS}>Data da consulta</label>
                 <div style={{ border: '1.5px solid #E0DFD9', borderRadius: '8px', overflow: 'hidden', display: 'flex', justifyContent: 'center' }}>
-                  <DatePicker selected={dataReserva} onChange={d => d && setDataReserva(d)} minDate={new Date()} dateFormat="dd/MM/yyyy" locale={ptBR} showPopperArrow={false} inline />
+                  <DatePicker selected={dataReserva} onChange={d => d && setDataReserva(d)} minDate={new Date()} dateFormat="dd/MM/yyyy" locale="pt-BR" showPopperArrow={false} inline />
                 </div>
               </div>
 

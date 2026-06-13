@@ -1,4 +1,3 @@
-import { ptBR } from 'date-fns/locale';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -19,7 +18,7 @@ const EditarReservaModal = ({ show, onClose, editReservaData, setEditReservaData
         <div style={{ marginBottom: '16px', border: '1px solid #E0DFD9', borderRadius: '8px', padding: '8px' }}>
           <DatePicker
             selected={editReservaData} onChange={d => d && setEditReservaData(d)}
-            minDate={new Date()} dateFormat="dd/MM/yyyy" locale={ptBR}
+            minDate={new Date()} dateFormat="dd/MM/yyyy" locale="pt-BR"
             showPopperArrow={false} required inline
           />
         </div>

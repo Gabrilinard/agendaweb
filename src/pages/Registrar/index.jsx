@@ -163,16 +163,25 @@ const Registro = () => {
 
               <Input type="text" value={r.numeroConselho} onChange={r.handleNumeroConselhoChange} required
                 placeholder={
-                  r.tipoProfissional === 'medico' ? 'CRM 123456' : r.tipoProfissional === 'dentista' ? 'CRO 123456' :
-                  r.tipoProfissional === 'nutricionista' ? 'CRN 12345' : r.tipoProfissional === 'fisioterapeuta' ? 'CREFITO 123456' :
-                  r.tipoProfissional === 'fonoaudiologo' ? 'CRFa 12345' : r.tipoProfissional === 'psicologo' ? 'CRP 06/12345' : 'Número do Conselho'
+                  r.tipoProfissional === 'medico'         ? 'CRM/PI 425041' :
+                  r.tipoProfissional === 'dentista'       ? 'CRO/SP 12345' :
+                  r.tipoProfissional === 'nutricionista'  ? 'CRN-3 12345' :
+                  r.tipoProfissional === 'fisioterapeuta' ? 'CREFITO-8/123456-F' :
+                  r.tipoProfissional === 'fonoaudiologo'  ? 'CRFa/SP 12345' :
+                  r.tipoProfissional === 'psicologo'      ? 'CRP 06/12345' :
+                  'Número do Conselho'
                 }
                 maxLength={
-                  r.tipoProfissional === 'psicologo' ? 12 : r.tipoProfissional === 'fisioterapeuta' ? 14 :
-                  ['medico','dentista'].includes(r.tipoProfissional) ? 11 :
-                  ['nutricionista','fonoaudiologo'].includes(r.tipoProfissional) ? 10 : 15
+                  r.tipoProfissional === 'fisioterapeuta' ? 18 :
+                  r.tipoProfissional === 'medico'         ? 14 :
+                  r.tipoProfissional === 'psicologo'      ? 13 :
+                  r.tipoProfissional === 'dentista'       ? 13 :
+                  r.tipoProfissional === 'fonoaudiologo'  ? 13 :
+                  r.tipoProfissional === 'nutricionista'  ? 11 : 20
                 }
+                style={r.fieldErrors.numeroConselho ? { borderColor: '#dc3545' } : {}}
               />
+              {r.fieldErrors.numeroConselho && <FieldError>{r.fieldErrors.numeroConselho}</FieldError>}
 
               {r.numeroConselho?.trim() && (
                 <>

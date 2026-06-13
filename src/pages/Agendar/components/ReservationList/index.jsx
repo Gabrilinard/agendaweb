@@ -1,6 +1,5 @@
 import React from 'react';
 import { CalendarDays } from 'lucide-react';
-import { ptBR } from 'date-fns/locale';
 import DatePicker from 'react-datepicker';
 import {
   ContainerEdicao,
@@ -148,7 +147,7 @@ const ReservationItem = ({ reserva, actions }) => {
               onChange={(date) => date && setNovaData(date)}
               minDate={new Date()}
               dateFormat="dd/MM/yyyy"
-              locale={ptBR}
+              locale="pt-BR"
               showPopperArrow={false}
               required
             />

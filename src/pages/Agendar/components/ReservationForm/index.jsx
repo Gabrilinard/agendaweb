@@ -1,4 +1,3 @@
-import { ptBR } from 'date-fns/locale';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { formatarHorarioBrasil } from '../../utils/formatters';
@@ -165,7 +164,7 @@ const ReservationForm = ({
             minDate={new Date()}
             filterDate={isDateAvailable}
             dateFormat="dd/MM/yyyy"
-            locale={ptBR}
+            locale="pt-BR"
             inline
           />
         </div>
