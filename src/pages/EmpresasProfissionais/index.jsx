@@ -1,14 +1,15 @@
-import axios from 'axios';
+import { CheckCircle, ChevronDown, MapPin, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { BsActivity, BsVolumeUpFill } from 'react-icons/bs';
 import { FaAppleAlt, FaBrain, FaStethoscope, FaTooth } from 'react-icons/fa';
-import { CheckCircle, ChevronDown, MapPin, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Footer from '../../components/Footer';
 import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
+import { getAvatarColor, getInitials } from '../../utils/avatar';
+import { getProfissionaisByCategoria } from './api';
 
 const DARK_GREEN = '#1C5C40';
 const MID_GREEN = '#2D8A62';
@@ -16,22 +17,6 @@ const BG = '#F7F3EE';
 const BORDER = '#E5E0DA';
 const TEXT = '#111';
 const MUTED = '#666';
-
-const AVATAR_COLORS = [
-  { bg: '#D4EDE1', color: '#1A5C3C' },
-  { bg: '#FDE8CC', color: '#8B4A00' },
-  { bg: '#D6E8F5', color: '#1A4A7A' },
-  { bg: '#F5D6E8', color: '#7A1A5A' },
-  { bg: '#E8E0F5', color: '#4A1A7A' },
-  { bg: '#FDE8CC', color: '#7A4A1A' },
-];
-
-const getAvatarColor = (name = '') => AVATAR_COLORS[(name.charCodeAt(0) || 0) % AVATAR_COLORS.length];
-
-const getInitials = (name = '') => {
-  const p = name.trim().split(' ');
-  return p.length >= 2 ? (p[0][0] + p[p.length - 1][0]).toUpperCase() : name.slice(0, 2).toUpperCase();
-};
 
 const CATEGORIAS = [
   { key: 'medico',        label: 'Médicos',         icon: <FaStethoscope /> },
@@ -41,8 +26,6 @@ const CATEGORIAS = [
   { key: 'fonoaudiologo', label: 'Fonoaudiólogos',   icon: <BsVolumeUpFill /> },
   { key: 'psicologo',     label: 'Psicólogos',       icon: <FaBrain /> },
 ];
-
-// ── Styled ──────────────────────────────────────────────────────────────────
 
 const PageWrapper = styled.div`
   display: flex;
@@ -84,7 +67,6 @@ const PageDesc = styled.p`
   line-height: 1.5;
 `;
 
-// Category tabs
 const SpecTabs = styled.div`
   display: flex;
   gap: 6px;
@@ -129,7 +111,6 @@ const TabCount = styled.span`
   opacity: 0.75;
 `;
 
-// Filters row
 const FiltersRow = styled.div`
   display: flex;
   gap: 10px;
@@ -210,7 +191,6 @@ const ResultCount = styled.div`
   strong { color: ${TEXT}; }
 `;
 
-// Cards grid
 const CardsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -407,8 +387,6 @@ const EmptyMsg = styled.div`
   font-size: 0.95rem;
 `;
 
-// ── Component ────────────────────────────────────────────────────────────────
-
 const PUBLICO_OPTIONS = [
   'Crianças (0-14)',
   'Adolescentes (15-17)',
@@ -436,7 +414,7 @@ const EmpresasProfissionais = () => {
       const result = {};
       for (const c of CATEGORIAS) {
         try {
-          const { data } = await axios.get(`http://localhost:3000/profissionais/${c.key}`);
+          const { data } = await getProfissionaisByCategoria(c.key);
           result[c.key] = data || [];
         } catch { result[c.key] = []; }
       }
@@ -487,7 +465,6 @@ const EmpresasProfissionais = () => {
         <PageTitle>Profissionais disponíveis</PageTitle>
         <PageDesc>Escolha a especialidade, filtre por modalidade e veja quem tem horário aberto agora.</PageDesc>
 
-        {/* Specialty tabs */}
         <SpecTabs>
           {CATEGORIAS.map(c => (
             <SpecTab
@@ -502,7 +479,6 @@ const EmpresasProfissionais = () => {
           ))}
         </SpecTabs>
 
-        {/* Filters */}
         <FiltersRow>
           <SearchWrap>
             <SearchIcon><Search size={16} /></SearchIcon>
