@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { updateInformacoes } from '../api';
 import { MapPin, MonitorPlay, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNotification } from '../../../contexts/NotificationContext';
@@ -120,7 +120,7 @@ const EditarInformacoes = ({
     setEditValorConsulta(valorStr);
 
     try {
-      await axios.patch(`http://localhost:3000/usuarios/${user?.id}/informacoes`, {
+      await updateInformacoes(user?.id, {
         tipoProfissional: especialidade,
         descricao: sobre,
         publicoAtendido: publicoSel.join(','),

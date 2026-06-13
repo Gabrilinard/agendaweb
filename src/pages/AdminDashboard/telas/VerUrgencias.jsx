@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { updateReserva } from '../api';
 import { CalendarClock, CalendarDays, Clock, Download, Mail, MessageCircle, Smartphone, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -117,7 +117,7 @@ const VerUrgencias = ({
   const aceitar = (r) => {
     setDismissed(prev => new Set([...prev, r.id]));
     setSelectedId(null);
-    axios.patch(`http://localhost:3000/reservas/${r.id}`, { is_urgente: false, status: 'confirmado' })
+    updateReserva(r.id, { is_urgente: false, status: 'confirmado' })
       .then(() => { success('Urgência aceita e convertida em consulta confirmada!'); buscarReservas(); })
       .catch(() => {
         setDismissed(prev => { const s = new Set(prev); s.delete(r.id); return s; });
@@ -134,7 +134,7 @@ const VerUrgencias = ({
     const horarioFinal = `${String((hh + 1) % 24).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
     setEnviando(true);
     try {
-      await axios.patch(`http://localhost:3000/reservas/${r.id}`, {
+      await updateReserva(r.id, {
         dia: ajusteDia,
         horario: ajusteHorario,
         horarioFinal,

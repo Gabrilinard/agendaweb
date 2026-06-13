@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { getCandidatos, notificarVaga } from '../api';
 import { AlertCircle, Bell, Calendar, Check, Clock, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -17,9 +17,7 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
     setLoadingCandidatos(p => ({ ...p, [reserva.id]: true }));
     try {
       const dia = String(reserva.dia).split('T')[0];
-      const { data } = await axios.get('http://localhost:3000/vagas/candidatos', {
-        params: { profissional_id: reserva.profissional_id || user?.id, dia, excluir_usuario_id: reserva.usuario_id },
-      });
+      const { data } = await getCandidatos(reserva.profissional_id || user?.id, dia, reserva.usuario_id);
       setCandidatos(p => ({ ...p, [reserva.id]: data }));
     } catch {
       showError('Erro ao carregar candidatos.');
@@ -39,7 +37,7 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
     setNotificando(p => ({ ...p, [key]: true }));
     const dia = String(reserva.dia).split('T')[0];
     try {
-      await axios.post('http://localhost:3000/vagas/notificar', {
+      await notificarVaga({
         profissional_id: reserva.profissional_id || user.id,
         reserva_liberada_id: reserva.id,
         dia,
