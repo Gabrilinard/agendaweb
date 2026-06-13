@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Activity, Dna, Scale, Utensils } from 'lucide-react';
+import { Activity, Dna, Scale, Send, Utensils } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -11,9 +11,10 @@ import {
   Grid,
   Input,
   Label,
+  SectionBlock,
   SectionTitle,
   Select,
-  TextArea
+  TextArea,
 } from '../style';
 
 const Nutricao = ({ nomeProfissional, reservaIds, pendingReservas }) => {
@@ -39,7 +40,7 @@ const Nutricao = ({ nomeProfissional, reservaIds, pendingReservas }) => {
     horariosRefeicoes: '',
     problemasMetabolicos: '',
     examesRecentes: '',
-    suplementos: ''
+    suplementos: '',
   });
 
   const updateField = (key) => (e) => {
@@ -75,16 +76,18 @@ const Nutricao = ({ nomeProfissional, reservaIds, pendingReservas }) => {
       let idsParaUsar = [...reservaIdsNormalizados];
 
       if (!idsParaUsar.length && pendingReservas?.length) {
-        const criadas = await Promise.all(pendingReservas.map(r =>
-          axios.post('http://localhost:3000/reservas', {
-            nome: user.nome, sobrenome: user.sobrenome,
-            email: user.email, telefone: user.telefone || '',
-            dia: r.dia, horario: r.horario, horarioFinal: r.horarioFinal,
-            qntd_pessoa: 1, usuario_id: user.id,
-            nomeProfissional: nomeProfissional || null,
-          })
-        ));
-        idsParaUsar = criadas.map(r => r.data?.id).filter(Boolean);
+        const criadas = await Promise.all(
+          pendingReservas.map((r) =>
+            axios.post('http://localhost:3000/reservas', {
+              nome: user.nome, sobrenome: user.sobrenome,
+              email: user.email, telefone: user.telefone || '',
+              dia: r.dia, horario: r.horario, horarioFinal: r.horarioFinal,
+              qntd_pessoa: 1, usuario_id: user.id,
+              nomeProfissional: nomeProfissional || null,
+            })
+          )
+        );
+        idsParaUsar = criadas.map((r) => r.data?.id).filter(Boolean);
       }
 
       if (!idsParaUsar.length) {
@@ -97,14 +100,11 @@ const Nutricao = ({ nomeProfissional, reservaIds, pendingReservas }) => {
         tipoProfissional: 'nutricionista',
         reservaIds: idsParaUsar,
         paciente: {
-          id: user.id,
-          nome: user.nome,
-          sobrenome: user.sobrenome,
-          email: user.email,
-          telefone: user.telefone
+          id: user.id, nome: user.nome, sobrenome: user.sobrenome,
+          email: user.email, telefone: user.telefone,
         },
         nutricao: form,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       };
 
       await axios.post('http://localhost:3000/formularios', {
@@ -112,7 +112,7 @@ const Nutricao = ({ nomeProfissional, reservaIds, pendingReservas }) => {
         tipoFormulario: 'nutricionista',
         tipoAtendimento: null,
         usuarioId: user.id,
-        conteudo: payload
+        conteudo: payload,
       });
 
       success('Formulário de nutrição enviado com sucesso!');
@@ -127,9 +127,9 @@ const Nutricao = ({ nomeProfissional, reservaIds, pendingReservas }) => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <SectionTitle><Scale size={18} /> Objetivo</SectionTitle>
-      <Grid>
-        <Field style={{ gridColumn: '1 / -1' }}>
+      <SectionBlock>
+        <SectionTitle><Scale size={16} /> Objetivo</SectionTitle>
+        <Field>
           <Label>Qual seu objetivo?</Label>
           <TextArea
             value={form.objetivo}
@@ -138,116 +138,125 @@ const Nutricao = ({ nomeProfissional, reservaIds, pendingReservas }) => {
             required
           />
         </Field>
-      </Grid>
+      </SectionBlock>
 
-      <SectionTitle><Utensils size={18} /> Alimentação</SectionTitle>
-      <Grid>
-        <Field>
-          <Label>Quantas refeições faz por dia?</Label>
-          <Select value={form.refeicoesPorDia} onChange={updateField('refeicoesPorDia')} required>
-            <option value="">Selecione...</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-            <option value="5">5</option>
-            <option value="6_ou_mais">6 ou mais</option>
-          </Select>
-        </Field>
+      <SectionBlock>
+        <SectionTitle><Utensils size={16} /> Alimentação</SectionTitle>
+        <Grid>
+          <Field>
+            <Label>Quantas refeições faz por dia?</Label>
+            <Select value={form.refeicoesPorDia} onChange={updateField('refeicoesPorDia')} required>
+              <option value="">Selecione...</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6_ou_mais">6 ou mais</option>
+            </Select>
+          </Field>
+          <Field>
+            <Label>Consumo de água diário</Label>
+            <Select value={form.aguaDiaria} onChange={updateField('aguaDiaria')} required>
+              <option value="">Selecione...</option>
+              <option value="menos_1l">Menos de 1L</option>
+              <option value="1_2l">1–2L</option>
+              <option value="2_3l">2–3L</option>
+              <option value="mais_3l">Mais de 3L</option>
+            </Select>
+          </Field>
+          <Field style={{ gridColumn: '1 / -1' }}>
+            <Label>Restrições alimentares</Label>
+            <Input
+              value={form.restricoes}
+              onChange={updateField('restricoes')}
+              placeholder="Lactose, glúten, etc. (opcional)"
+            />
+          </Field>
+          <Field style={{ gridColumn: '1 / -1' }}>
+            <Label>Preferências ou aversões alimentares</Label>
+            <TextArea
+              value={form.preferenciasAversoes}
+              onChange={updateField('preferenciasAversoes')}
+              placeholder="Opcional"
+            />
+          </Field>
+        </Grid>
+      </SectionBlock>
 
-        <Field>
-          <Label>Consumo de água diário</Label>
-          <Select value={form.aguaDiaria} onChange={updateField('aguaDiaria')} required>
-            <option value="">Selecione...</option>
-            <option value="menos_1l">Menos de 1L</option>
-            <option value="1_2l">1–2L</option>
-            <option value="2_3l">2–3L</option>
-            <option value="mais_3l">Mais de 3L</option>
-          </Select>
-        </Field>
+      <SectionBlock>
+        <SectionTitle><Activity size={16} /> Estilo de Vida</SectionTitle>
+        <Grid>
+          <Field>
+            <Label>Prática de atividade física</Label>
+            <Select value={form.atividadeFisica} onChange={updateField('atividadeFisica')}>
+              <option value="">Selecione...</option>
+              <option value="nao">Não pratico</option>
+              <option value="1_2">1–2x por semana</option>
+              <option value="3_4">3–4x por semana</option>
+              <option value="5_ou_mais">5x ou mais</option>
+            </Select>
+          </Field>
+          <Field>
+            <Label>Rotina de trabalho</Label>
+            <Select value={form.rotinaTrabalho} onChange={updateField('rotinaTrabalho')}>
+              <option value="">Selecione...</option>
+              <option value="sedentario">Sedentário</option>
+              <option value="misto">Misto</option>
+              <option value="ativo">Ativo</option>
+            </Select>
+          </Field>
+          <Field style={{ gridColumn: '1 / -1' }}>
+            <Label>Horários de refeições</Label>
+            <TextArea
+              value={form.horariosRefeicoes}
+              onChange={updateField('horariosRefeicoes')}
+              placeholder="Ex: café 07:30, almoço 12:30, jantar 20:00"
+            />
+          </Field>
+        </Grid>
+      </SectionBlock>
 
-        <Field style={{ gridColumn: '1 / -1' }}>
-          <Label>Restrições alimentares</Label>
-          <Input
-            value={form.restricoes}
-            onChange={updateField('restricoes')}
-            placeholder="Lactose, glúten, etc. (opcional)"
-          />
-        </Field>
-
-        <Field style={{ gridColumn: '1 / -1' }}>
-          <Label>Preferências ou aversões alimentares</Label>
-          <TextArea
-            value={form.preferenciasAversoes}
-            onChange={updateField('preferenciasAversoes')}
-            placeholder="Opcional"
-          />
-        </Field>
-      </Grid>
-
-      <SectionTitle><Activity size={18} /> Estilo de vida</SectionTitle>
-      <Grid>
-        <Field>
-          <Label>Prática de atividade física</Label>
-          <Select value={form.atividadeFisica} onChange={updateField('atividadeFisica')}>
-            <option value="">Selecione...</option>
-            <option value="nao">Não pratico</option>
-            <option value="1_2">1–2x por semana</option>
-            <option value="3_4">3–4x por semana</option>
-            <option value="5_ou_mais">5x ou mais</option>
-          </Select>
-        </Field>
-        <Field>
-          <Label>Rotina de trabalho</Label>
-          <Select value={form.rotinaTrabalho} onChange={updateField('rotinaTrabalho')}>
-            <option value="">Selecione...</option>
-            <option value="sedentario">Sedentário</option>
-            <option value="misto">Misto</option>
-            <option value="ativo">Ativo</option>
-          </Select>
-        </Field>
-
-        <Field style={{ gridColumn: '1 / -1' }}>
-          <Label>Horários de refeições</Label>
-          <TextArea
-            value={form.horariosRefeicoes}
-            onChange={updateField('horariosRefeicoes')}
-            placeholder="Ex: café 07:30, almoço 12:30, jantar 20:00"
-          />
-        </Field>
-      </Grid>
-
-      <SectionTitle><Dna size={18} /> Saúde e metabolismo</SectionTitle>
-      <Grid>
-        <Field style={{ gridColumn: '1 / -1' }}>
-          <Label>Problemas como diabetes, colesterol alto</Label>
-          <TextArea
-            value={form.problemasMetabolicos}
-            onChange={updateField('problemasMetabolicos')}
-            placeholder="Opcional"
-          />
-        </Field>
-        <Field style={{ gridColumn: '1 / -1' }}>
-          <Label>Exames recentes (se tiver)</Label>
-          <TextArea
-            value={form.examesRecentes}
-            onChange={updateField('examesRecentes')}
-            placeholder="Opcional"
-          />
-        </Field>
-        <Field style={{ gridColumn: '1 / -1' }}>
-          <Label>Uso de suplementos</Label>
-          <Input
-            value={form.suplementos}
-            onChange={updateField('suplementos')}
-            placeholder="Opcional"
-          />
-        </Field>
-      </Grid>
+      <SectionBlock>
+        <SectionTitle><Dna size={16} /> Saúde e Metabolismo</SectionTitle>
+        <Grid>
+          <Field style={{ gridColumn: '1 / -1' }}>
+            <Label>Problemas como diabetes, colesterol alto</Label>
+            <TextArea
+              value={form.problemasMetabolicos}
+              onChange={updateField('problemasMetabolicos')}
+              placeholder="Opcional"
+            />
+          </Field>
+          <Field style={{ gridColumn: '1 / -1' }}>
+            <Label>Exames recentes (se tiver)</Label>
+            <TextArea
+              value={form.examesRecentes}
+              onChange={updateField('examesRecentes')}
+              placeholder="Opcional"
+            />
+          </Field>
+          <Field style={{ gridColumn: '1 / -1' }}>
+            <Label>Uso de suplementos</Label>
+            <Input
+              value={form.suplementos}
+              onChange={updateField('suplementos')}
+              placeholder="Opcional"
+            />
+          </Field>
+        </Grid>
+      </SectionBlock>
 
       <Actions>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Enviando...' : 'Enviar'}
+          {isSubmitting ? (
+            'Enviando...'
+          ) : (
+            <>
+              <Send size={15} />
+              Enviar Formulário
+            </>
+          )}
         </Button>
       </Actions>
     </form>

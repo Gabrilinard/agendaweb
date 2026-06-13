@@ -3,10 +3,12 @@ import Footer from '../../components/Footer';
 import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
+import Fisioterapia from './formularios/Fisioterapia';
+import Fonoaudiologia from './formularios/Fonoaudiologia';
 import Nutricao from './formularios/Nutricao';
 import Odontologia from './formularios/Odontologia';
 import Psicologia from './formularios/Psicologia';
-import SaudeGeral from './formularios/SaudeGeral';
+import SaudeGeral from './formularios/Medico';
 import { Card, Content, PageWrapper, Subtitle, Title } from './style';
 
 const Formulario = () => {
@@ -95,8 +97,11 @@ const Formulario = () => {
         <Card>
           <Title>Formulário Pré-Consulta</Title>
           <Subtitle>
-            {nomeProfissional ? `Profissional: ${nomeProfissional}` : 'Preencha as informações antes da consulta.'}
+            {nomeProfissional
+              ? `Profissional: ${nomeProfissional}`
+              : 'Preencha as informações antes da consulta.'}
           </Subtitle>
+          <hr style={{ border: 'none', borderTop: '1px solid #E2E8E5', margin: '0 0 4px' }} />
 
           {tipo === 'dentista' ? (
             <Odontologia nomeProfissional={nomeProfissional} reservaIds={reservaIds} pendingReservas={pendingReservas} />
@@ -104,17 +109,14 @@ const Formulario = () => {
             <Nutricao nomeProfissional={nomeProfissional} reservaIds={reservaIds} pendingReservas={pendingReservas} />
           ) : tipo === 'psicologo' ? (
             <Psicologia nomeProfissional={nomeProfissional} reservaIds={reservaIds} pendingReservas={pendingReservas} />
-          ) : tipo === 'medico' || tipo === 'fisioterapeuta' || tipo === 'fonoaudiologo' ? (
-            <SaudeGeral
-              nomeProfissional={nomeProfissional}
-              tipoProfissional={tipo}
-              reservaIds={reservaIds}
-              pendingReservas={pendingReservas}
-            />
+          ) : tipo === 'fisioterapeuta' ? (
+            <Fisioterapia nomeProfissional={nomeProfissional} reservaIds={reservaIds} pendingReservas={pendingReservas} />
+          ) : tipo === 'fonoaudiologo' ? (
+            <Fonoaudiologia nomeProfissional={nomeProfissional} reservaIds={reservaIds} pendingReservas={pendingReservas} />
+          ) : tipo === 'medico' ? (
+            <SaudeGeral nomeProfissional={nomeProfissional} reservaIds={reservaIds} pendingReservas={pendingReservas} />
           ) : (
-            <>
-              <Subtitle>Formulário ainda não disponível para este tipo de profissional.</Subtitle>
-            </>
+            <Subtitle>Formulário ainda não disponível para este tipo de profissional.</Subtitle>
           )}
         </Card>
       </Content>

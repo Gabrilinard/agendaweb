@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { AlertCircle, ClipboardList, Smile } from 'lucide-react';
+import { AlertCircle, ClipboardList, Send, Smile } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -11,9 +11,10 @@ import {
   Grid,
   Input,
   Label,
+  SectionBlock,
   SectionTitle,
   Select,
-  TextArea
+  TextArea,
 } from '../style';
 
 const Odontologia = ({ nomeProfissional, reservaIds, pendingReservas }) => {
@@ -43,7 +44,7 @@ const Odontologia = ({ nomeProfissional, reservaIds, pendingReservas }) => {
     alergiaAnestesiaDetalhe: '',
     problemasCardiacos: '',
     anticoagulantes: '',
-    anticoagulantesDetalhe: ''
+    anticoagulantesDetalhe: '',
   });
 
   const updateField = (key) => (e) => {
@@ -79,16 +80,18 @@ const Odontologia = ({ nomeProfissional, reservaIds, pendingReservas }) => {
       let idsParaUsar = [...reservaIdsNormalizados];
 
       if (!idsParaUsar.length && pendingReservas?.length) {
-        const criadas = await Promise.all(pendingReservas.map(r =>
-          axios.post('http://localhost:3000/reservas', {
-            nome: user.nome, sobrenome: user.sobrenome,
-            email: user.email, telefone: user.telefone || '',
-            dia: r.dia, horario: r.horario, horarioFinal: r.horarioFinal,
-            qntd_pessoa: 1, usuario_id: user.id,
-            nomeProfissional: nomeProfissional || null,
-          })
-        ));
-        idsParaUsar = criadas.map(r => r.data?.id).filter(Boolean);
+        const criadas = await Promise.all(
+          pendingReservas.map((r) =>
+            axios.post('http://localhost:3000/reservas', {
+              nome: user.nome, sobrenome: user.sobrenome,
+              email: user.email, telefone: user.telefone || '',
+              dia: r.dia, horario: r.horario, horarioFinal: r.horarioFinal,
+              qntd_pessoa: 1, usuario_id: user.id,
+              nomeProfissional: nomeProfissional || null,
+            })
+          )
+        );
+        idsParaUsar = criadas.map((r) => r.data?.id).filter(Boolean);
       }
 
       if (!idsParaUsar.length) {
@@ -101,14 +104,11 @@ const Odontologia = ({ nomeProfissional, reservaIds, pendingReservas }) => {
         tipoProfissional: 'dentista',
         reservaIds: idsParaUsar,
         paciente: {
-          id: user.id,
-          nome: user.nome,
-          sobrenome: user.sobrenome,
-          email: user.email,
-          telefone: user.telefone
+          id: user.id, nome: user.nome, sobrenome: user.sobrenome,
+          email: user.email, telefone: user.telefone,
         },
         odontologia: form,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       };
 
       await axios.post('http://localhost:3000/formularios', {
@@ -116,7 +116,7 @@ const Odontologia = ({ nomeProfissional, reservaIds, pendingReservas }) => {
         tipoFormulario: 'dentista',
         tipoAtendimento: null,
         usuarioId: user.id,
-        conteudo: payload
+        conteudo: payload,
       });
 
       success('Formulário odontológico enviado com sucesso!');
@@ -131,151 +131,159 @@ const Odontologia = ({ nomeProfissional, reservaIds, pendingReservas }) => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <SectionTitle><Smile size={18} /> Saúde bucal</SectionTitle>
-      <Grid>
-        <Field>
-          <Label>Motivo da consulta</Label>
-          <TextArea
-            value={form.motivoConsulta}
-            onChange={updateField('motivoConsulta')}
-            placeholder="Dor, limpeza, estética, etc."
-            required
-          />
-        </Field>
-        <Field>
-          <Label>Frequência de escovação diária</Label>
-          <Select value={form.escovacaoFrequencia} onChange={updateField('escovacaoFrequencia')} required>
-            <option value="">Selecione...</option>
-            <option value="1x">1x ao dia</option>
-            <option value="2x">2x ao dia</option>
-            <option value="3x">3x ao dia</option>
-            <option value="4x_ou_mais">4x ou mais</option>
-          </Select>
-        </Field>
+      <SectionBlock>
+        <SectionTitle><Smile size={16} /> Saúde Bucal</SectionTitle>
+        <Grid>
+          <Field>
+            <Label>Motivo da consulta</Label>
+            <TextArea
+              value={form.motivoConsulta}
+              onChange={updateField('motivoConsulta')}
+              placeholder="Dor, limpeza, estética, etc."
+              required
+            />
+          </Field>
+          <Field>
+            <Label>Frequência de escovação diária</Label>
+            <Select value={form.escovacaoFrequencia} onChange={updateField('escovacaoFrequencia')} required>
+              <option value="">Selecione...</option>
+              <option value="1x">1x ao dia</option>
+              <option value="2x">2x ao dia</option>
+              <option value="3x">3x ao dia</option>
+              <option value="4x_ou_mais">4x ou mais</option>
+            </Select>
+          </Field>
+          <Field>
+            <Label>Sente dor nos dentes ou gengiva?</Label>
+            <Select value={form.dor} onChange={updateField('dor')}>
+              <option value="">Selecione...</option>
+              <option value="sim">Sim</option>
+              <option value="nao">Não</option>
+            </Select>
+          </Field>
+          <Field>
+            <Label>Sangramento gengival?</Label>
+            <Select value={form.sangramento} onChange={updateField('sangramento')}>
+              <option value="">Selecione...</option>
+              <option value="sim">Sim</option>
+              <option value="nao">Não</option>
+            </Select>
+          </Field>
+          <Field>
+            <Label>Sensibilidade (frio / quente)?</Label>
+            <Select value={form.sensibilidade} onChange={updateField('sensibilidade')}>
+              <option value="">Selecione...</option>
+              <option value="sim">Sim</option>
+              <option value="nao">Não</option>
+            </Select>
+          </Field>
+          <Field>
+            <Label>Uso de fio dental</Label>
+            <Select value={form.fioDental} onChange={updateField('fioDental')} required>
+              <option value="">Selecione...</option>
+              <option value="sim">Sim</option>
+              <option value="nao">Não</option>
+            </Select>
+          </Field>
+        </Grid>
+      </SectionBlock>
 
-        <Field>
-          <Label>Sente dor nos dentes ou gengiva?</Label>
-          <Select value={form.dor} onChange={updateField('dor')}>
-            <option value="">Selecione...</option>
-            <option value="sim">Sim</option>
-            <option value="nao">Não</option>
-          </Select>
-        </Field>
-        <Field>
-          <Label>Sangramento gengival?</Label>
-          <Select value={form.sangramento} onChange={updateField('sangramento')}>
-            <option value="">Selecione...</option>
-            <option value="sim">Sim</option>
-            <option value="nao">Não</option>
-          </Select>
-        </Field>
+      <SectionBlock>
+        <SectionTitle><ClipboardList size={16} /> Histórico Odontológico</SectionTitle>
+        <Grid>
+          <Field>
+            <Label>Última consulta ao dentista</Label>
+            <Input
+              type="date"
+              value={form.ultimaConsulta}
+              onChange={updateField('ultimaConsulta')}
+            />
+          </Field>
+          <Field>
+            <Label>Já fez tratamento de canal?</Label>
+            <Select value={form.tratamentoCanal} onChange={updateField('tratamentoCanal')}>
+              <option value="">Selecione...</option>
+              <option value="sim">Sim</option>
+              <option value="nao">Não</option>
+            </Select>
+          </Field>
+          <Field>
+            <Label>Uso de aparelho ortodôntico</Label>
+            <Select value={form.aparelhoOrto} onChange={updateField('aparelhoOrto')}>
+              <option value="">Selecione...</option>
+              <option value="sim">Sim</option>
+              <option value="nao">Não</option>
+            </Select>
+          </Field>
+          <Field>
+            <Label>Bruxismo (ranger os dentes)</Label>
+            <Select value={form.bruxismo} onChange={updateField('bruxismo')}>
+              <option value="">Selecione...</option>
+              <option value="sim">Sim</option>
+              <option value="nao">Não</option>
+            </Select>
+          </Field>
+        </Grid>
+      </SectionBlock>
 
-        <Field>
-          <Label>Sensibilidade (frio/quente)?</Label>
-          <Select value={form.sensibilidade} onChange={updateField('sensibilidade')}>
-            <option value="">Selecione...</option>
-            <option value="sim">Sim</option>
-            <option value="nao">Não</option>
-          </Select>
-        </Field>
-        <Field>
-          <Label>Uso de fio dental</Label>
-          <Select value={form.fioDental} onChange={updateField('fioDental')} required>
-            <option value="">Selecione...</option>
-            <option value="sim">Sim</option>
-            <option value="nao">Não</option>
-          </Select>
-        </Field>
-      </Grid>
-
-      <SectionTitle><ClipboardList size={18} /> Histórico odontológico</SectionTitle>
-      <Grid>
-        <Field>
-          <Label>Última consulta ao dentista</Label>
-          <Input
-            type="date"
-            value={form.ultimaConsulta}
-            onChange={updateField('ultimaConsulta')}
-          />
-        </Field>
-        <Field>
-          <Label>Já fez tratamento de canal?</Label>
-          <Select value={form.tratamentoCanal} onChange={updateField('tratamentoCanal')}>
-            <option value="">Selecione...</option>
-            <option value="sim">Sim</option>
-            <option value="nao">Não</option>
-          </Select>
-        </Field>
-
-        <Field>
-          <Label>Uso de aparelho ortodôntico</Label>
-          <Select value={form.aparelhoOrto} onChange={updateField('aparelhoOrto')}>
-            <option value="">Selecione...</option>
-            <option value="sim">Sim</option>
-            <option value="nao">Não</option>
-          </Select>
-        </Field>
-        <Field>
-          <Label>Bruxismo (ranger os dentes)</Label>
-          <Select value={form.bruxismo} onChange={updateField('bruxismo')}>
-            <option value="">Selecione...</option>
-            <option value="sim">Sim</option>
-            <option value="nao">Não</option>
-          </Select>
-        </Field>
-      </Grid>
-
-      <SectionTitle><AlertCircle size={18} /> Informações importantes</SectionTitle>
-      <Grid>
-        <Field>
-          <Label>Alergia a anestesia?</Label>
-          <Select value={form.alergiaAnestesia} onChange={updateField('alergiaAnestesia')}>
-            <option value="">Selecione...</option>
-            <option value="sim">Sim</option>
-            <option value="nao">Não</option>
-          </Select>
-        </Field>
-        <Field>
-          <Label>Se sim, qual?</Label>
-          <Input
-            value={form.alergiaAnestesiaDetalhe}
-            onChange={updateField('alergiaAnestesiaDetalhe')}
-            placeholder="Opcional"
-            disabled={form.alergiaAnestesia !== 'sim'}
-          />
-        </Field>
-
-        <Field>
-          <Label>Problemas cardíacos</Label>
-          <Select value={form.problemasCardiacos} onChange={updateField('problemasCardiacos')}>
-            <option value="">Selecione...</option>
-            <option value="sim">Sim</option>
-            <option value="nao">Não</option>
-          </Select>
-        </Field>
-        <Field>
-          <Label>Uso de medicamentos anticoagulantes</Label>
-          <Select value={form.anticoagulantes} onChange={updateField('anticoagulantes')}>
-            <option value="">Selecione...</option>
-            <option value="sim">Sim</option>
-            <option value="nao">Não</option>
-          </Select>
-        </Field>
-
-        <Field style={{ gridColumn: '1 / -1' }}>
-          <Label>Quais anticoagulantes?</Label>
-          <Input
-            value={form.anticoagulantesDetalhe}
-            onChange={updateField('anticoagulantesDetalhe')}
-            placeholder="Opcional"
-            disabled={form.anticoagulantes !== 'sim'}
-          />
-        </Field>
-      </Grid>
+      <SectionBlock>
+        <SectionTitle><AlertCircle size={16} /> Informações Importantes</SectionTitle>
+        <Grid>
+          <Field>
+            <Label>Alergia a anestesia?</Label>
+            <Select value={form.alergiaAnestesia} onChange={updateField('alergiaAnestesia')}>
+              <option value="">Selecione...</option>
+              <option value="sim">Sim</option>
+              <option value="nao">Não</option>
+            </Select>
+          </Field>
+          <Field>
+            <Label>Se sim, qual?</Label>
+            <Input
+              value={form.alergiaAnestesiaDetalhe}
+              onChange={updateField('alergiaAnestesiaDetalhe')}
+              placeholder="Opcional"
+              disabled={form.alergiaAnestesia !== 'sim'}
+            />
+          </Field>
+          <Field>
+            <Label>Problemas cardíacos</Label>
+            <Select value={form.problemasCardiacos} onChange={updateField('problemasCardiacos')}>
+              <option value="">Selecione...</option>
+              <option value="sim">Sim</option>
+              <option value="nao">Não</option>
+            </Select>
+          </Field>
+          <Field>
+            <Label>Uso de medicamentos anticoagulantes</Label>
+            <Select value={form.anticoagulantes} onChange={updateField('anticoagulantes')}>
+              <option value="">Selecione...</option>
+              <option value="sim">Sim</option>
+              <option value="nao">Não</option>
+            </Select>
+          </Field>
+          <Field style={{ gridColumn: '1 / -1' }}>
+            <Label>Quais anticoagulantes?</Label>
+            <Input
+              value={form.anticoagulantesDetalhe}
+              onChange={updateField('anticoagulantesDetalhe')}
+              placeholder="Opcional"
+              disabled={form.anticoagulantes !== 'sim'}
+            />
+          </Field>
+        </Grid>
+      </SectionBlock>
 
       <Actions>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Enviando...' : 'Enviar'}
+          {isSubmitting ? (
+            'Enviando...'
+          ) : (
+            <>
+              <Send size={15} />
+              Enviar Formulário
+            </>
+          )}
         </Button>
       </Actions>
     </form>
