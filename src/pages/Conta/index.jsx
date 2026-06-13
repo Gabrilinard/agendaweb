@@ -58,7 +58,6 @@ const Grid = styled.div`
   }
 `;
 
-/* ── Left Card ── */
 const Card = styled.div`
   background: #fff;
   border-radius: 16px;
@@ -168,7 +167,6 @@ const EditBtn = styled.button`
   }
 `;
 
-/* ── Right Column ── */
 const RightCol = styled.div`
   display: flex;
   flex-direction: column;
@@ -280,7 +278,6 @@ const Conta = () => {
                 <PageTitle>Suas informações</PageTitle>
 
                 <Grid>
-                    {/* Left — user info */}
                     <Card>
                         <UserHeader>
                             <UserAvatarLarge>{initials}</UserAvatarLarge>
@@ -313,7 +310,6 @@ const Conta = () => {
                         </EditBtn>
                     </Card>
 
-                    {/* Right — professional + logout */}
                     <RightCol>
                         <ProfCard>
                             <SparkleIcon>✳</SparkleIcon>
