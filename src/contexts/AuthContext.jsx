@@ -1,5 +1,5 @@
-import axios from 'axios';
 import { createContext, useContext, useEffect, useState } from 'react';
+import client from '../api/client';
 
 const AuthContext = createContext();
 
@@ -21,7 +21,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, senha) => {
     try {
-      const { data } = await axios.post('http://localhost:3000/login', { email, senha });
+      const { data } = await client.post('/login', { email, senha });
       if (data.user) {
         setUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
