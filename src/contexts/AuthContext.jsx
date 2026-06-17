@@ -9,12 +9,19 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-    if (storedUser) {
+    const token = localStorage.getItem('token');
+    if (storedUser && token) {
       try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error('Erro ao carregar dados do usuário:', error);
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.exp * 1000 > Date.now()) {
+          setUser(JSON.parse(storedUser));
+        } else {
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+        }
+      } catch {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
       }
     }
   }, []);
@@ -25,6 +32,7 @@ export const AuthProvider = ({ children }) => {
       if (data.user) {
         setUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('token', data.token);
         return data.user;
       }
       return null;
@@ -42,6 +50,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setCart([]);
     localStorage.removeItem('user');
+    localStorage.removeItem('token');
   };
 
   const addItemToCart = (item) => {
