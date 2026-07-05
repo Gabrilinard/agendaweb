@@ -1,5 +1,26 @@
 import { useState } from 'react';
 import { Clock, Download, Search } from 'lucide-react';
+import styled from 'styled-components';
+
+const PagePad = styled.div`
+  padding: 28px 32px;
+  font-family: Figtree, sans-serif;
+  @media (max-width: 768px) { padding: 20px 16px; }
+`;
+
+const TableScroll = styled.div`
+  @media (max-width: 768px) {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 14px;
+  }
+`;
+
+const TableInner = styled.div`
+  @media (max-width: 768px) {
+    min-width: 560px;
+  }
+`;
 
 const CARD = { background: 'white', borderRadius: '14px', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' };
 
@@ -95,7 +116,7 @@ const VerHistorico = ({ reservas, searchHistory, setSearchHistory, formatarDataE
   };
 
   return (
-    <div style={{ padding: '28px 32px', fontFamily: 'Figtree, sans-serif' }}>
+    <PagePad>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
@@ -148,7 +169,9 @@ const VerHistorico = ({ reservas, searchHistory, setSearchHistory, formatarDataE
           <p style={{ margin: '6px 0 0', fontSize: '13px' }}>O histórico mostra consultas de datas anteriores</p>
         </div>
       ) : (
+        <TableScroll>
         <div style={CARD}>
+          <TableInner>
           {/* Column headers */}
           <div style={{
             display: 'grid', gridTemplateColumns: '2fr 1.2fr 0.9fr 1.1fr 0.7fr 32px',
@@ -211,9 +234,11 @@ const VerHistorico = ({ reservas, searchHistory, setSearchHistory, formatarDataE
               </div>
             );
           })}
+          </TableInner>
         </div>
+        </TableScroll>
       )}
-    </div>
+    </PagePad>
   );
 };
 

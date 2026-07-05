@@ -1,5 +1,26 @@
 import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
+import styled from 'styled-components';
+
+const PageLayout = styled.div`
+  padding: 28px 32px;
+  font-family: Figtree, sans-serif;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  @media (max-width: 768px) {
+    padding: 20px 16px;
+    flex-direction: column;
+  }
+`;
+
+const FormPanel = styled.div`
+  width: 380px;
+  flex-shrink: 0;
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+`;
 
 const CARD = { background: 'white', borderRadius: '14px', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' };
 const PAGE_SIZE = 10;
@@ -196,7 +217,7 @@ const VerSolicitacoes = ({
   };
 
   return (
-    <div style={{ padding: '28px 32px', fontFamily: 'Figtree, sans-serif', display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
+    <PageLayout>
       {/* Main list */}
       <div style={{ flex: 1, minWidth: 0 }}>
         {/* Header */}
@@ -404,7 +425,7 @@ const VerSolicitacoes = ({
 
       {/* Formulário side panel */}
       {reservaSelecionada && (
-        <div style={{ width: '380px', flexShrink: 0 }}>
+        <FormPanel>
           <div style={CARD}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid #F0EFE9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
@@ -426,9 +447,9 @@ const VerSolicitacoes = ({
               )}
             </div>
           </div>
-        </div>
+        </FormPanel>
       )}
-    </div>
+    </PageLayout>
   );
 };
 

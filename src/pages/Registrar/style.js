@@ -25,8 +25,13 @@ export const Form = styled.form`
   padding: 30px;
   border-radius: 8px;
   box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  width: 400px;
+  width: 100%;
+  max-width: 440px;
   text-align: center;
+
+  @media (max-width: 480px) {
+    padding: 24px 18px;
+  }
 `;
 
 export const InputWrapper = styled.div`

@@ -2,6 +2,42 @@ import { updateInformacoes } from '../api';
 import { MapPin, MonitorPlay, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNotification } from '../../../contexts/NotificationContext';
+import styled from 'styled-components';
+
+const StickyFooter = styled.div`
+  position: fixed;
+  bottom: 0;
+  left: 260px;
+  right: 0;
+  background: white;
+  border-top: 1px solid #F0EFE9;
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  z-index: 50;
+  font-family: Figtree, sans-serif;
+  @media (max-width: 768px) {
+    left: 0;
+    padding: 12px 16px;
+    & > button { flex: 1; }
+  }
+`;
+
+const TwoColGrid = styled.div`
+  flex: 1;
+  padding: 0 32px;
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  gap: 20px;
+  align-items: flex-start;
+  padding-bottom: 90px;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    padding: 0 16px 90px;
+  }
+`;
 
 const CARD = { background: 'white', borderRadius: '14px', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' };
 const inputS = {
@@ -160,7 +196,7 @@ const EditarInformacoes = ({
       </div>
 
       {/* Two-column body */}
-      <div style={{ flex: 1, padding: '0 32px', display: 'grid', gridTemplateColumns: '1fr 360px', gap: '20px', alignItems: 'flex-start', paddingBottom: '90px' }}>
+      <TwoColGrid>
         {/* ── Left: Perfil público ── */}
         <div style={CARD}>
           <div style={{ padding: '22px 26px 0', borderBottom: '1px solid #F0EFE9', paddingBottom: '18px' }}>
@@ -346,22 +382,17 @@ const EditarInformacoes = ({
             </div>
           </div>
         </div>
-      </div>
+      </TwoColGrid>
 
       {/* ── Sticky footer ── */}
-      <div style={{
-        position: 'fixed', bottom: 0, left: '260px', right: 0,
-        background: 'white', borderTop: '1px solid #F0EFE9',
-        padding: '14px 32px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '12px',
-        zIndex: 50, fontFamily: 'Figtree, sans-serif',
-      }}>
+      <StickyFooter>
         <button onClick={handleDescartar} style={{ padding: '10px 22px', background: 'none', border: '1.5px solid #E0DFD9', borderRadius: '8px', fontSize: '14px', color: '#555', cursor: 'pointer', fontFamily: 'Figtree, sans-serif', fontWeight: '500' }}>
           Descartar mudanças
         </button>
         <button onClick={handleSalvar} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 26px', background: '#1B4D3E', color: 'white', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', fontFamily: 'Figtree, sans-serif' }}>
           ✓ Salvar tudo
         </button>
-      </div>
+      </StickyFooter>
     </div>
   );
 };

@@ -1,6 +1,53 @@
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useEffect, useState } from 'react';
+import styled from 'styled-components';
+
+const PagePad = styled.div`
+  padding: 28px 32px;
+  font-family: Figtree, sans-serif;
+  @media (max-width: 768px) { padding: 20px 16px; }
+`;
+
+const CenteredWrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  @media (max-width: 768px) { align-items: stretch; }
+`;
+
+const FormSummaryGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 20px;
+  align-items: start;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const TimeGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+`;
+
+const FooterRow = styled.div`
+  padding: 16px 24px;
+  border-top: 1px solid #F0EFE9;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 10px;
+    & > button { width: 100%; }
+  }
+`;
 
 const CARD = { background: 'white', borderRadius: '14px', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' };
 const inputS = {
@@ -157,7 +204,8 @@ const CriarConsulta = ({
   /* ── Modo paciente ── */
   if (modo === 'paciente') {
     return (
-      <div style={{ padding: '28px 32px', fontFamily: 'Figtree, sans-serif', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <PagePad>
+      <CenteredWrap>
         <div style={{ width: '100%', maxWidth: '520px' }}>
           <div style={{ marginBottom: '24px' }}>
             <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#1a1a1a', margin: 0 }}>Criar consulta para paciente</h1>
@@ -225,7 +273,8 @@ const CriarConsulta = ({
             </div>
           </div>
         </div>
-      </div>
+      </CenteredWrap>
+      </PagePad>
     );
   }
 
@@ -236,7 +285,7 @@ const CriarConsulta = ({
   ];
 
   return (
-    <div style={{ padding: '28px 32px', fontFamily: 'Figtree, sans-serif' }}>
+    <PagePad>
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#1a1a1a', margin: 0 }}>Editar horários</h1>
         <p style={{ color: '#888', fontSize: '14px', margin: '6px 0 0', maxWidth: '520px' }}>{subtitulo}</p>
@@ -275,7 +324,7 @@ const CriarConsulta = ({
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '20px', alignItems: 'start' }}>
+      <FormSummaryGrid>
         {/* Main form */}
         <div style={CARD}>
           {/* Tabs */}
@@ -349,7 +398,7 @@ const CriarConsulta = ({
                     </div>
 
                     {/* Time range + duration */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+                    <TimeGrid>
                       <div>
                         <label style={labelS}>Início</label>
                         <input type="time" value={inicio} onChange={e => { setSlotsManualmenteTocados(true); setInicio(e.target.value); }} style={inputS} />
@@ -364,7 +413,7 @@ const CriarConsulta = ({
                           {DURACOES.map(d => <option key={d.v} value={d.v}>{d.l}</option>)}
                         </select>
                       </div>
-                    </div>
+                    </TimeGrid>
 
                     {/* Pausa almoço */}
                     <label style={{
@@ -524,7 +573,7 @@ const CriarConsulta = ({
           </div>
 
           {/* Footer */}
-          <div style={{ padding: '16px 24px', borderTop: '1px solid #F0EFE9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <FooterRow>
             <button style={{ padding: '10px 20px', background: 'none', border: '1.5px solid #E0DFD9', borderRadius: '8px', fontSize: '14px', color: '#555', cursor: 'pointer', fontFamily: 'Figtree, sans-serif' }}>
               Cancelar
             </button>
@@ -534,7 +583,7 @@ const CriarConsulta = ({
             >
               ✓ {tab === 'bloquear' ? 'Bloquear período' : 'Salvar horários'}
             </button>
-          </div>
+          </FooterRow>
         </div>
 
         {/* Right panel — summary */}
@@ -600,8 +649,8 @@ const CriarConsulta = ({
             </div>
           </div>
         )}
-      </div>
-    </div>
+      </FormSummaryGrid>
+    </PagePad>
   );
 };
 

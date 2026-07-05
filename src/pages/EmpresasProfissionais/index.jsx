@@ -162,14 +162,24 @@ const StyledSelect = styled.select`
   background: #fff;
   border: 1.5px solid ${BORDER};
   border-radius: 10px;
-  padding: 11px 36px 11px 14px;
-  font-size: 0.85rem;
+  padding: 10px 36px 10px 14px;
+  font-size: 0.84rem;
   font-family: 'Figtree', sans-serif;
+  font-weight: 500;
   color: ${TEXT};
   cursor: pointer;
   outline: none;
   min-width: 170px;
-  &:focus { border-color: ${MID_GREEN}; }
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:hover { border-color: #c5bfb8; }
+  &:focus {
+    border-color: ${MID_GREEN};
+    box-shadow: 0 0 0 3px rgba(45,138,98,0.12);
+  }
+
+  @media (max-width: 768px) { min-width: 0; width: 100%; }
 `;
 
 const SelectArrow = styled.div`

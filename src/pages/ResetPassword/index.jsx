@@ -21,7 +21,13 @@ const FormWrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 350px;
+  width: 100%;
+  max-width: 380px;
+  margin: 0 16px;
+
+  @media (max-width: 480px) {
+    padding: 24px 20px;
+  }
 `;
 
 const Input = styled.input`

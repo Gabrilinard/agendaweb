@@ -1,6 +1,37 @@
 import { getCandidatos, notificarVaga } from '../api';
 import { AlertCircle, Bell, Calendar, Check, Clock, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import styled from 'styled-components';
+
+const PagePad = styled.div`
+  padding: 28px 32px;
+  font-family: Figtree, sans-serif;
+  @media (max-width: 768px) { padding: 20px 16px; }
+`;
+
+const SlotHeader = styled.div`
+  padding: 18px 24px 16px;
+  border-bottom: 1px solid #F0EFE9;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  @media (max-width: 480px) {
+    flex-wrap: wrap;
+  }
+`;
+
+const CandidatoRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: ${({ $urgent }) => $urgent ? '#FFF7F0' : '#F7F7F4'};
+  border: 1px solid ${({ $urgent }) => $urgent ? '#FED7B0' : '#E8E8E2'};
+  @media (max-width: 480px) {
+    flex-wrap: wrap;
+  }
+`;
 
 const CARD = { background: 'white', borderRadius: '14px', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' };
 
@@ -57,7 +88,7 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
 
   if (vagas.length === 0) {
     return (
-      <div style={{ padding: '28px 32px', fontFamily: 'Figtree, sans-serif' }}>
+      <PagePad>
         <div style={{ marginBottom: '24px' }}>
           <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#1a1a1a', margin: 0 }}>Vagas liberadas</h1>
           <p style={{ color: '#888', fontSize: '14px', margin: '6px 0 0' }}>Horários liberados por pacientes para redistribuição.</p>
@@ -67,12 +98,12 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
           <p style={{ margin: 0, fontSize: '15px', fontWeight: '500' }}>Nenhuma vaga liberada no momento</p>
           <p style={{ margin: '6px 0 0', fontSize: '13px' }}>Quando um paciente liberar um horário, aparecerá aqui.</p>
         </div>
-      </div>
+      </PagePad>
     );
   }
 
   return (
-    <div style={{ padding: '28px 32px', fontFamily: 'Figtree, sans-serif' }}>
+    <PagePad>
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#1a1a1a', margin: 0 }}>Vagas liberadas</h1>
         <p style={{ color: '#888', fontSize: '14px', margin: '6px 0 0' }}>
@@ -89,7 +120,7 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
           return (
             <div key={reserva.id} style={CARD}>
               {/* Slot header */}
-              <div style={{ padding: '18px 24px 16px', borderBottom: '1px solid #F0EFE9', display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <SlotHeader>
                 <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <Calendar size={22} color="#92400E" />
                 </div>
@@ -107,7 +138,7 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
                 <span style={{ background: '#FEF3C7', color: '#92400E', borderRadius: '20px', padding: '5px 12px', fontSize: '12px', fontWeight: '700' }}>
                   Disponível
                 </span>
-              </div>
+              </SlotHeader>
 
               {/* Candidates */}
               <div style={{ padding: '16px 24px' }}>
@@ -129,12 +160,7 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
                       const enviando = notificando[key];
 
                       return (
-                        <div key={c.usuario_id} style={{
-                          display: 'flex', alignItems: 'center', gap: '12px',
-                          padding: '12px 16px', borderRadius: '10px',
-                          background: c.is_urgente ? '#FFF7F0' : '#F7F7F4',
-                          border: `1px solid ${c.is_urgente ? '#FED7B0' : '#E8E8E2'}`,
-                        }}>
+                        <CandidatoRow key={c.usuario_id} $urgent={c.is_urgente}>
                           {/* Priority badge */}
                           <div style={{ flexShrink: 0 }}>
                             {c.is_urgente ? (
@@ -181,7 +207,7 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
                           >
                             {jaNotificado ? <><Check size={13} /> Notificado</> : enviando ? 'Enviando…' : <><Bell size={13} /> Notificar</>}
                           </button>
-                        </div>
+                        </CandidatoRow>
                       );
                     })}
                   </div>
@@ -191,7 +217,7 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
           );
         })}
       </div>
-    </div>
+    </PagePad>
   );
 };
 

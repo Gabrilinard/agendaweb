@@ -1,3 +1,4 @@
+import styled from 'styled-components';
 import { getAvaliacoesByProfissional, getMediaByProfissional } from '../../api';
 import { useEffect, useState } from 'react';
 import L from 'leaflet';
@@ -31,6 +32,25 @@ const getInitials = (name) => {
   if (parts.length === 1) return parts[0][0].toUpperCase();
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 };
+
+const CardOuter = styled.div`
+  background: white;
+  border-radius: 16px;
+  padding: 0;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  font-family: Figtree, sans-serif;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1.5px solid #F0EFE9;
+  align-self: stretch;
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    flex-shrink: 1;
+  }
+`;
 
 const sectionLabel = {
   fontSize: '11px',
@@ -86,29 +106,26 @@ const ProfessionalInfo = ({ profissionalInfo, location, endereco }) => {
   })();
 
   return (
-    <div style={{
-      background: 'white',
-      borderRadius: '14px',
-      padding: '24px',
-      width: '340px',
-      minWidth: '300px',
-      boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
-      fontFamily: 'Figtree, sans-serif',
-      flexShrink: 0,
-    }}>
-      {/* Avatar + Nome */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '6px' }}>
+    <CardOuter>
+      <div style={{
+        background: `linear-gradient(135deg, ${av.bg} 0%, ${av.bg}cc 100%)`,
+        padding: '24px 24px 20px',
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '16px',
+      }}>
         <div style={{
-          width: '52px', height: '52px', borderRadius: '50%',
-          background: av.bg, color: av.color,
+          width: '60px', height: '60px', borderRadius: '14px',
+          background: 'white', color: av.color,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontWeight: '700', fontSize: '18px', flexShrink: 0,
+          fontWeight: '800', fontSize: '20px', flexShrink: 0,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
         }}>
           {initials}
         </div>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontWeight: '700', fontSize: '17px', color: '#1a1a1a' }}>{nomeCompleto}</span>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            <span style={{ fontWeight: '800', fontSize: '17px', color: '#1a1a1a', lineHeight: 1.2 }}>{nomeCompleto}</span>
             <span style={{
               width: '18px', height: '18px', borderRadius: '50%',
               background: '#2563EB', display: 'inline-flex',
@@ -118,16 +135,20 @@ const ProfessionalInfo = ({ profissionalInfo, location, endereco }) => {
             </span>
           </div>
           {profissionalInfo.tipoProfissional && (
-            <p style={{ color: '#666', fontSize: '13px', margin: '2px 0 0' }}>
+            <p style={{ color: '#444', fontSize: '13px', margin: '4px 0 0', fontWeight: '500' }}>
               {profissionalInfo.tipoProfissional}
             </p>
           )}
-          <p style={{ color: '#888', fontSize: '12px', margin: '3px 0 0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <p style={{ color: '#555', fontSize: '12px', margin: '6px 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}>
             <StarRating media={avalMedia.media} />
-            <span>{avalMedia.media > 0 ? avalMedia.media.toFixed(1) : '—'} · {avalMedia.total} avalia{avalMedia.total !== 1 ? 'ções' : 'ção'}</span>
+            <span style={{ fontWeight: '600' }}>{avalMedia.media > 0 ? avalMedia.media.toFixed(1) : '—'}</span>
+            <span style={{ color: '#888' }}>· {avalMedia.total} avalia{avalMedia.total !== 1 ? 'ções' : 'ção'}</span>
           </p>
         </div>
       </div>
+
+      {/* Corpo do card */}
+      <div style={{ padding: '20px 24px 24px' }}>
 
       <div style={divider} />
 
@@ -232,7 +253,8 @@ const ProfessionalInfo = ({ profissionalInfo, location, endereco }) => {
           </div>
         </>
       )}
-    </div>
+      </div>
+    </CardOuter>
   );
 };
 

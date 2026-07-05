@@ -1,5 +1,103 @@
 import { useState } from 'react';
 import { CalendarDays, CalendarPlus, CheckCircle, ClipboardList, MapPin, Zap } from 'lucide-react';
+import styled from 'styled-components';
+
+const TwoColGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 16px;
+  align-items: start;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const AgendaTopBar = styled.div`
+  padding: 22px 32px 16px;
+  background: #F0EFE9;
+  flex-shrink: 0;
+  @media (max-width: 768px) {
+    padding: 12px 16px 10px;
+  }
+`;
+
+const AgendaTopRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+`;
+
+const AgendaControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  @media (max-width: 768px) {
+    gap: 6px;
+    width: 100%;
+  }
+`;
+
+const CalendarCard = styled.div`
+  margin: 0 32px 24px;
+  flex: 1;
+  background: white;
+  border-radius: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+  @media (max-width: 768px) {
+    display: none;
+  }
+`;
+
+const CalendarInner = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+`;
+
+const MobileDayCard = styled.div`
+  display: none;
+  @media (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    margin: 0 12px 12px;
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    overflow: hidden;
+    min-height: 0;
+    height: 0;
+  }
+`;
+
+const AgendaTitle = styled.h1`
+  font-size: 28px;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin: 0;
+  @media (max-width: 768px) { font-size: 20px; }
+`;
+
+const AgendaSubtitle = styled.p`
+  color: #888;
+  font-size: 13px;
+  margin: 4px 0 0;
+  @media (max-width: 768px) { display: none; }
+`;
+
+const HomeWrap = styled.div`
+  padding: 28px 32px;
+  font-family: Figtree, sans-serif;
+  @media (max-width: 768px) { padding: 20px 16px; }
+`;
 
 const HOUR_HEIGHT = 72;
 const START_HOUR = 7;
@@ -78,10 +176,12 @@ const ApptBlock = ({ r, fmt }) => {
   );
 };
 
-// ── Agenda (weekly calendar) ─────────────────────────────────────────────────
 const AgendaView = ({ reservas, formatarHorarioBrasil, irPara }) => {
   const [weekOffset, setWeekOffset] = useState(0);
   const [viewMode, setViewMode] = useState('semana');
+  const [mobileDayOffset, setMobileDayOffset] = useState(0);
+  const [dayOffset, setDayOffset] = useState(0);
+  const [monthOffset, setMonthOffset] = useState(0);
 
   const weekStart = getWeekStart(weekOffset);
   const weekDays = getWeekDays(weekStart);
@@ -90,14 +190,33 @@ const AgendaView = ({ reservas, formatarHorarioBrasil, irPara }) => {
   const nowH = new Date().getHours() + new Date().getMinutes() / 60;
   const nowTop = (nowH - START_HOUR) * HOUR_HEIGHT;
 
-  // Month label
+  const selectedDay = new Date(); selectedDay.setDate(selectedDay.getDate() + dayOffset); selectedDay.setHours(0,0,0,0);
+  const selectedDayKey = toDayKey(selectedDay);
+
+  const monthViewDate = new Date(); monthViewDate.setDate(1); monthViewDate.setMonth(monthViewDate.getMonth() + monthOffset); monthViewDate.setHours(0,0,0,0);
+
+  const handleNavPrev = () => {
+    if (viewMode === 'dia') setDayOffset(d => d - 1);
+    else if (viewMode === 'mês') setMonthOffset(m => m - 1);
+    else setWeekOffset(w => w - 1);
+  };
+  const handleNavNext = () => {
+    if (viewMode === 'dia') setDayOffset(d => d + 1);
+    else if (viewMode === 'mês') setMonthOffset(m => m + 1);
+    else setWeekOffset(w => w + 1);
+  };
+
   const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   const firstDay = weekDays[0]; const lastDay = weekDays[5];
-  const monthLabel = firstDay.getMonth() === lastDay.getMonth()
+  const weekLabel = firstDay.getMonth() === lastDay.getMonth()
     ? `${months[firstDay.getMonth()]} ${firstDay.getFullYear()}`
     : `${months[firstDay.getMonth()]} – ${months[lastDay.getMonth()]} ${lastDay.getFullYear()}`;
+  const navLabel = viewMode === 'dia'
+    ? selectedDay.toLocaleDateString('pt-BR', { weekday: 'short', day: 'numeric', month: 'short' }).replace(/\.$/, '')
+    : viewMode === 'mês'
+    ? `${months[monthViewDate.getMonth()]} ${monthViewDate.getFullYear()}`
+    : weekLabel;
 
-  // Group reservas by day key
   const byDay = {};
   reservas.forEach(r => {
     if (!r.dia) return;
@@ -106,21 +225,37 @@ const AgendaView = ({ reservas, formatarHorarioBrasil, irPara }) => {
     byDay[raw].push(r);
   });
 
+  // Mobile day view
+  const mobileDay = new Date();
+  mobileDay.setDate(mobileDay.getDate() + mobileDayOffset);
+  mobileDay.setHours(0, 0, 0, 0);
+  const mobileDayKey = toDayKey(mobileDay);
+  const mobileDayReservas = (byDay[mobileDayKey] || []).slice().sort((a, b) => (parseH(a.horario) || 0) - (parseH(b.horario) || 0));
+  const mobileDayLabel = mobileDay.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+  const navBtnStyle = { background: 'none', border: 'none', cursor: 'pointer', fontSize: '22px', color: '#555', padding: '4px 10px', lineHeight: 1 };
+
+  // Week strip for mobile
+  const mobileWeekDays = (() => {
+    const dow = mobileDay.getDay();
+    const diff = dow === 0 ? -6 : 1 - dow;
+    const mon = new Date(mobileDay); mon.setDate(mobileDay.getDate() + diff);
+    return Array.from({ length: 7 }, (_, i) => { const d = new Date(mon); d.setDate(mon.getDate() + i); return d; });
+  })();
+  const DAY_INIT = ['D','S','T','Q','Q','S','S'];
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'Figtree, sans-serif', background: '#F0EFE9' }}>
-      {/* Top bar */}
-      <div style={{ padding: '22px 32px 16px', background: '#F0EFE9', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+      <AgendaTopBar>
+        <AgendaTopRow>
           <div>
-            <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#1a1a1a', margin: 0 }}>Agenda da semana</h1>
-            <p style={{ color: '#888', fontSize: '13px', margin: '4px 0 0' }}>Visualize, mova e bloqueie horários — clique em um evento para detalhes</p>
+            <AgendaTitle>Agenda da semana</AgendaTitle>
+            <AgendaSubtitle>Visualize, mova e bloqueie horários — clique em um evento para detalhes</AgendaSubtitle>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {/* Week nav */}
+          <AgendaControls>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px', background: 'white', borderRadius: '8px', padding: '4px', border: '1px solid #E0DFD9' }}>
-              <button onClick={() => setWeekOffset(w => w - 1)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 10px', fontSize: '14px', color: '#555', borderRadius: '6px' }}>‹</button>
-              <span style={{ fontSize: '13px', fontWeight: '600', color: '#333', padding: '0 8px', minWidth: '120px', textAlign: 'center' }}>{monthLabel}</span>
-              <button onClick={() => setWeekOffset(w => w + 1)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 10px', fontSize: '14px', color: '#555', borderRadius: '6px' }}>›</button>
+              <button onClick={handleNavPrev} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 10px', fontSize: '14px', color: '#555', borderRadius: '6px' }}>‹</button>
+              <span style={{ fontSize: '13px', fontWeight: '600', color: '#333', padding: '0 8px', minWidth: '130px', textAlign: 'center', textTransform: 'capitalize' }}>{navLabel}</span>
+              <button onClick={handleNavNext} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 10px', fontSize: '14px', color: '#555', borderRadius: '6px' }}>›</button>
             </div>
             {/* View toggle */}
             <div style={{ display: 'flex', background: 'white', borderRadius: '8px', border: '1px solid #E0DFD9', overflow: 'hidden' }}>
@@ -135,68 +270,286 @@ const AgendaView = ({ reservas, formatarHorarioBrasil, irPara }) => {
             <button onClick={() => irPara('criar')} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', background: '#1B4D3E', color: 'white', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', fontFamily: 'Figtree, sans-serif' }}>
               + Adicionar
             </button>
-          </div>
-        </div>
-      </div>
+          </AgendaControls>
+        </AgendaTopRow>
+      </AgendaTopBar>
 
       {/* Calendar card */}
-      <div style={{ margin: '0 32px 24px', flex: 1, background: 'white', borderRadius: '14px', boxShadow: '0 1px 4px rgba(0,0,0,0.07)', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
-        {/* Column headers */}
-        <div style={{ display: 'flex', borderBottom: '1.5px solid #E8E8E2', flexShrink: 0 }}>
-          <div style={{ width: 64, flexShrink: 0 }} />
-          {weekDays.map((day, i) => {
-            const key = toDayKey(day);
-            const isToday = key === todayKey;
-            const count = (byDay[key] || []).length;
-            return (
-              <div key={i} style={{ flex: 1, textAlign: 'center', padding: '10px 0 12px', borderLeft: '1px solid #F0EFE9', background: isToday ? '#F0F9F6' : 'transparent' }}>
-                <p style={{ margin: 0, fontSize: '11px', fontWeight: '700', color: isToday ? '#1B4D3E' : '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{WEEK_LABELS[i]}</p>
-                <p style={{ margin: '3px 0 2px', fontSize: '22px', fontWeight: '700', color: isToday ? '#1B4D3E' : '#1a1a1a', lineHeight: 1 }}>{day.getDate()}</p>
-                <p style={{ margin: 0, fontSize: '11px', color: '#aaa' }}>{count > 0 ? `${count} consulta${count !== 1 ? 's' : ''}` : ''}</p>
-              </div>
-            );
-          })}
-        </div>
+      <CalendarCard>
+        <CalendarInner>
 
-        {/* Scrollable grid */}
-        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', minHeight: 0 }}>
-          {/* Time gutter */}
-          <div style={{ width: 64, flexShrink: 0, borderRight: '1px solid #F0EFE9' }}>
-            {HOURS.map(h => (
-              <div key={h} style={{ height: HOUR_HEIGHT, display: 'flex', alignItems: 'flex-start', paddingTop: 4, boxSizing: 'border-box' }}>
-                <span style={{ fontSize: 11, color: '#bbb', width: '100%', textAlign: 'right', paddingRight: 8 }}>
-                  {String(h).padStart(2, '0')}:00
-                </span>
-              </div>
-            ))}
-          </div>
-
-          {/* Day columns */}
-          {weekDays.map((day, i) => {
-            const key = toDayKey(day);
-            const isToday = key === todayKey;
-            const dayReservas = byDay[key] || [];
-            const totalH = HOURS.length * HOUR_HEIGHT;
-            return (
-              <div key={i} style={{ flex: 1, position: 'relative', borderLeft: '1px solid #F0EFE9', minWidth: 0, background: isToday ? '#FAFFFE' : 'white', minHeight: totalH }}>
-                {/* Hour lines */}
+          {/* ── SEMANA ── */}
+          {viewMode === 'semana' && <>
+            <div style={{ display: 'flex', borderBottom: '1.5px solid #E8E8E2', flexShrink: 0 }}>
+              <div style={{ width: 64, flexShrink: 0 }} />
+              {weekDays.map((day, i) => {
+                const key = toDayKey(day);
+                const isToday = key === todayKey;
+                const count = (byDay[key] || []).length;
+                return (
+                  <div key={i} style={{ flex: 1, textAlign: 'center', padding: '10px 0 12px', borderLeft: '1px solid #F0EFE9', background: isToday ? '#F0F9F6' : 'transparent' }}>
+                    <p style={{ margin: 0, fontSize: '11px', fontWeight: '700', color: isToday ? '#1B4D3E' : '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{WEEK_LABELS[i]}</p>
+                    <p style={{ margin: '3px 0 2px', fontSize: '22px', fontWeight: '700', color: isToday ? '#1B4D3E' : '#1a1a1a', lineHeight: 1 }}>{day.getDate()}</p>
+                    <p style={{ margin: 0, fontSize: '11px', color: '#aaa' }}>{count > 0 ? `${count} consulta${count !== 1 ? 's' : ''}` : ''}</p>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', minHeight: 0 }}>
+              <div style={{ width: 64, flexShrink: 0, borderRight: '1px solid #F0EFE9' }}>
                 {HOURS.map(h => (
-                  <div key={h} style={{ position: 'absolute', top: (h - START_HOUR) * HOUR_HEIGHT, left: 0, right: 0, borderTop: '1px solid #F5F5F0', height: HOUR_HEIGHT }} />
+                  <div key={h} style={{ height: HOUR_HEIGHT, display: 'flex', alignItems: 'flex-start', paddingTop: 4, boxSizing: 'border-box' }}>
+                    <span style={{ fontSize: 11, color: '#bbb', width: '100%', textAlign: 'right', paddingRight: 8 }}>{String(h).padStart(2, '0')}:00</span>
+                  </div>
                 ))}
-                {/* Current time */}
-                {isToday && nowTop >= 0 && nowTop <= totalH && (
+              </div>
+              {weekDays.map((day, i) => {
+                const key = toDayKey(day);
+                const isToday = key === todayKey;
+                const dayReservas = byDay[key] || [];
+                const totalH = HOURS.length * HOUR_HEIGHT;
+                return (
+                  <div key={i} style={{ flex: 1, position: 'relative', borderLeft: '1px solid #F0EFE9', minWidth: 0, background: isToday ? '#FAFFFE' : 'white', minHeight: totalH }}>
+                    {HOURS.map(h => <div key={h} style={{ position: 'absolute', top: (h - START_HOUR) * HOUR_HEIGHT, left: 0, right: 0, borderTop: '1px solid #F5F5F0', height: HOUR_HEIGHT }} />)}
+                    {isToday && nowTop >= 0 && nowTop <= totalH && (
+                      <div style={{ position: 'absolute', top: nowTop, left: 0, right: 0, zIndex: 5, pointerEvents: 'none' }}>
+                        <div style={{ position: 'absolute', left: -5, top: -5, width: 10, height: 10, borderRadius: '50%', background: '#E8611A' }} />
+                        <div style={{ height: 2, background: '#E8611A', position: 'absolute', left: 5, right: 0, top: -1 }} />
+                      </div>
+                    )}
+                    {dayReservas.map(r => <ApptBlock key={r.id} r={r} fmt={formatarHorarioBrasil} />)}
+                  </div>
+                );
+              })}
+            </div>
+          </>}
+
+          {/* ── DIA ── */}
+          {viewMode === 'dia' && <>
+            <div style={{ display: 'flex', borderBottom: '1.5px solid #E8E8E2', flexShrink: 0 }}>
+              <div style={{ width: 64, flexShrink: 0 }} />
+              <div style={{ flex: 1, textAlign: 'center', padding: '10px 0 12px', background: selectedDayKey === todayKey ? '#F0F9F6' : 'transparent' }}>
+                <p style={{ margin: 0, fontSize: '11px', fontWeight: '700', color: selectedDayKey === todayKey ? '#1B4D3E' : '#999', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  {selectedDay.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.','').toUpperCase()}
+                </p>
+                <p style={{ margin: '3px 0 2px', fontSize: '22px', fontWeight: '700', color: selectedDayKey === todayKey ? '#1B4D3E' : '#1a1a1a', lineHeight: 1 }}>{selectedDay.getDate()}</p>
+                <p style={{ margin: 0, fontSize: '11px', color: '#aaa' }}>
+                  {(byDay[selectedDayKey] || []).length > 0 ? `${(byDay[selectedDayKey] || []).length} consulta${(byDay[selectedDayKey] || []).length !== 1 ? 's' : ''}` : ''}
+                </p>
+              </div>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', minHeight: 0 }}>
+              <div style={{ width: 64, flexShrink: 0, borderRight: '1px solid #F0EFE9' }}>
+                {HOURS.map(h => (
+                  <div key={h} style={{ height: HOUR_HEIGHT, display: 'flex', alignItems: 'flex-start', paddingTop: 4, boxSizing: 'border-box' }}>
+                    <span style={{ fontSize: 11, color: '#bbb', width: '100%', textAlign: 'right', paddingRight: 8 }}>{String(h).padStart(2, '0')}:00</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ flex: 1, position: 'relative', background: selectedDayKey === todayKey ? '#FAFFFE' : 'white', minHeight: HOURS.length * HOUR_HEIGHT }}>
+                {HOURS.map(h => <div key={h} style={{ position: 'absolute', top: (h - START_HOUR) * HOUR_HEIGHT, left: 0, right: 0, borderTop: '1px solid #F5F5F0', height: HOUR_HEIGHT }} />)}
+                {selectedDayKey === todayKey && nowTop >= 0 && nowTop <= HOURS.length * HOUR_HEIGHT && (
                   <div style={{ position: 'absolute', top: nowTop, left: 0, right: 0, zIndex: 5, pointerEvents: 'none' }}>
                     <div style={{ position: 'absolute', left: -5, top: -5, width: 10, height: 10, borderRadius: '50%', background: '#E8611A' }} />
                     <div style={{ height: 2, background: '#E8611A', position: 'absolute', left: 5, right: 0, top: -1 }} />
                   </div>
                 )}
-                {/* Appointments */}
-                {dayReservas.map(r => <ApptBlock key={r.id} r={r} fmt={formatarHorarioBrasil} />)}
+                {(byDay[selectedDayKey] || []).map(r => <ApptBlock key={r.id} r={r} fmt={formatarHorarioBrasil} />)}
+              </div>
+            </div>
+          </>}
+
+          {/* ── MÊS ── */}
+          {viewMode === 'mês' && (() => {
+            const yr = monthViewDate.getFullYear();
+            const mo = monthViewDate.getMonth();
+            const firstOfMonth = new Date(yr, mo, 1);
+            const lastOfMonth = new Date(yr, mo + 1, 0);
+            const dow = firstOfMonth.getDay();
+            const startOffset = dow === 0 ? 6 : dow - 1;
+            const cells = [];
+            for (let i = 0; i < startOffset; i++) cells.push(null);
+            for (let d = 1; d <= lastOfMonth.getDate(); d++) cells.push(d);
+            while (cells.length % 7 !== 0) cells.push(null);
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', borderBottom: '1px solid #F0EFE9', flexShrink: 0 }}>
+                  {['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(d => (
+                    <div key={d} style={{ textAlign: 'center', padding: '10px 0', fontSize: '11px', fontWeight: '700', color: '#999', textTransform: 'uppercase' }}>{d}</div>
+                  ))}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', flex: 1 }}>
+                  {cells.map((day, i) => {
+                    if (!day) return <div key={i} style={{ borderBottom: '1px solid #F5F5F0', borderRight: '1px solid #F5F5F0', minHeight: 80 }} />;
+                    const cellDate = new Date(yr, mo, day);
+                    const cellKey = toDayKey(cellDate);
+                    const isToday = cellKey === todayKey;
+                    const cellReservas = byDay[cellKey] || [];
+                    return (
+                      <div key={i} onClick={() => { setDayOffset(Math.round((cellDate - today) / 86400000)); setViewMode('dia'); }}
+                        style={{ padding: '6px 8px', borderBottom: '1px solid #F5F5F0', borderRight: '1px solid #F5F5F0', cursor: 'pointer', background: isToday ? '#F0F9F6' : 'white', minHeight: 80 }}>
+                        <div style={{ width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isToday ? '#1B4D3E' : 'transparent', color: isToday ? 'white' : '#1a1a1a', fontSize: '12px', fontWeight: isToday ? '700' : '400', marginBottom: 4 }}>{day}</div>
+                        {cellReservas.slice(0,2).map((r, ri) => {
+                          const c = getColor(r);
+                          return <div key={ri} style={{ fontSize: '10px', color: c.color, background: c.bg, borderRadius: 3, padding: '1px 4px', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.horario ? String(r.horario).substring(0,5) : ''} {r.nome}</div>;
+                        })}
+                        {cellReservas.length > 2 && <div style={{ fontSize: '10px', color: '#888' }}>+{cellReservas.length - 2}</div>}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             );
-          })}
-        </div>
-      </div>
+          })()}
+
+        </CalendarInner>
+      </CalendarCard>
+
+      <MobileDayCard>
+
+        {viewMode === 'mês' && (() => {
+          const yr = monthViewDate.getFullYear();
+          const mo = monthViewDate.getMonth();
+          const firstOfMonth = new Date(yr, mo, 1);
+          const lastOfMonth = new Date(yr, mo + 1, 0);
+          const dow = firstOfMonth.getDay();
+          const startOffset = dow === 0 ? 6 : dow - 1;
+          const cells = [];
+          for (let i = 0; i < startOffset; i++) cells.push(null);
+          for (let d = 1; d <= lastOfMonth.getDate(); d++) cells.push(d);
+          while (cells.length % 7 !== 0) cells.push(null);
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', borderBottom: '1px solid #F0EFE9', flexShrink: 0, background: '#FAFAFA' }}>
+                {['S','T','Q','Q','S','S','D'].map((d, i) => (
+                  <div key={i} style={{ textAlign: 'center', padding: '8px 0', fontSize: '11px', fontWeight: '700', color: '#bbb' }}>{d}</div>
+                ))}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', flex: 1, overflowY: 'auto' }}>
+                {cells.map((day, i) => {
+                  if (!day) return <div key={i} style={{ borderBottom: '1px solid #F5F5F0', borderRight: '1px solid #F5F5F0', minHeight: 52 }} />;
+                  const cellDate = new Date(yr, mo, day);
+                  const cellKey = toDayKey(cellDate);
+                  const isToday = cellKey === todayKey;
+                  const cellAppts = byDay[cellKey] || [];
+                  return (
+                    <div key={i} onClick={() => { setMobileDayOffset(Math.round((cellDate - today) / 86400000)); setViewMode('semana'); }}
+                      style={{ padding: '6px 4px', borderBottom: '1px solid #F5F5F0', borderRight: '1px solid #F5F5F0', cursor: 'pointer', background: isToday ? '#F0F9F6' : 'white', minHeight: 52, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                      <div style={{ width: 26, height: 26, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isToday ? '#1B4D3E' : 'transparent', color: isToday ? 'white' : '#1a1a1a', fontSize: '13px', fontWeight: isToday ? '700' : '400' }}>{day}</div>
+                      {cellAppts.length > 0 && <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#1B4D3E', marginTop: 3 }} />}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ── MOBILE DIA (grade de horários) ── */}
+        {viewMode === 'dia' && <>
+          <div style={{ flexShrink: 0, borderBottom: '1px solid #F0EFE9' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 8px' }}>
+              <button onClick={() => setMobileDayOffset(d => d - 1)} style={navBtnStyle}>‹</button>
+              <div style={{ textAlign: 'center' }}>
+                <p style={{ margin: 0, fontSize: '14px', fontWeight: '700', color: '#1a1a1a', textTransform: 'capitalize' }}>
+                  {mobileDay.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
+                </p>
+                <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#888' }}>
+                  {mobileDayReservas.length === 0 ? 'Sem consultas' : `${mobileDayReservas.length} consulta${mobileDayReservas.length !== 1 ? 's' : ''}`}
+                </p>
+              </div>
+              <button onClick={() => setMobileDayOffset(d => d + 1)} style={navBtnStyle}>›</button>
+            </div>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', minHeight: 0 }}>
+            <div style={{ width: 52, flexShrink: 0, borderRight: '1px solid #F0EFE9' }}>
+              {HOURS.map(h => (
+                <div key={h} style={{ height: HOUR_HEIGHT, display: 'flex', alignItems: 'flex-start', paddingTop: 4, boxSizing: 'border-box' }}>
+                  <span style={{ fontSize: 10, color: '#bbb', width: '100%', textAlign: 'right', paddingRight: 6 }}>{String(h).padStart(2,'0')}:00</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ flex: 1, position: 'relative', background: mobileDayKey === todayKey ? '#FAFFFE' : 'white', minHeight: HOURS.length * HOUR_HEIGHT }}>
+              {HOURS.map(h => <div key={h} style={{ position: 'absolute', top: (h - START_HOUR) * HOUR_HEIGHT, left: 0, right: 0, borderTop: '1px solid #F5F5F0', height: HOUR_HEIGHT }} />)}
+              {mobileDayKey === todayKey && nowTop >= 0 && nowTop <= HOURS.length * HOUR_HEIGHT && (
+                <div style={{ position: 'absolute', top: nowTop, left: 0, right: 0, zIndex: 5, pointerEvents: 'none' }}>
+                  <div style={{ position: 'absolute', left: -5, top: -5, width: 10, height: 10, borderRadius: '50%', background: '#E8611A' }} />
+                  <div style={{ height: 2, background: '#E8611A', position: 'absolute', left: 5, right: 0, top: -1 }} />
+                </div>
+              )}
+              {mobileDayReservas.map(r => <ApptBlock key={r.id} r={r} fmt={formatarHorarioBrasil} />)}
+            </div>
+          </div>
+        </>}
+
+        {/* ── MOBILE SEMANA ── */}
+        {viewMode === 'semana' && <>
+          <div style={{ flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 8px 6px' }}>
+              <button onClick={() => setMobileDayOffset(d => d - 7)} style={navBtnStyle}>‹</button>
+              <span style={{ fontSize: '13px', fontWeight: '700', color: '#555', textTransform: 'capitalize' }}>
+                {mobileDay.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
+              </span>
+              <button onClick={() => setMobileDayOffset(d => d + 7)} style={navBtnStyle}>›</button>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-around', padding: '0 8px 10px' }}>
+              {mobileWeekDays.map((d, i) => {
+                const key = toDayKey(d);
+                const isSelected = key === mobileDayKey;
+                const isToday = key === todayKey;
+                const hasAppts = (byDay[key] || []).length > 0;
+                const offset = Math.round((d - today) / 86400000);
+                return (
+                  <div key={i} onClick={() => setMobileDayOffset(offset)}
+                    style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', gap: '3px' }}>
+                    <span style={{ fontSize: '10px', fontWeight: '600', color: isSelected ? '#1B4D3E' : '#999' }}>{DAY_INIT[d.getDay()]}</span>
+                    <div style={{ width: 34, height: 34, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isSelected ? '#1B4D3E' : isToday ? '#E8F5EF' : 'transparent', color: isSelected ? 'white' : isToday ? '#1B4D3E' : '#333', fontSize: '15px', fontWeight: isSelected || isToday ? '700' : '400' }}>{d.getDate()}</div>
+                    <div style={{ width: 4, height: 4, borderRadius: '50%', background: hasAppts ? (isSelected ? 'white' : '#1B4D3E') : 'transparent' }} />
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ borderTop: '1px solid #F0EFE9', padding: '8px 16px 6px' }}>
+              <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: '#1a1a1a', textTransform: 'capitalize' }}>
+                {mobileDay.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'short' })}
+              </p>
+              <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#888' }}>
+                {mobileDayReservas.length === 0 ? 'Sem consultas' : `${mobileDayReservas.length} consulta${mobileDayReservas.length !== 1 ? 's' : ''}`}
+              </p>
+            </div>
+          </div>
+          <div style={{ overflowY: 'auto', flex: 1, borderTop: '1px solid #F0EFE9' }}>
+            {mobileDayReservas.length === 0 ? (
+              <div style={{ padding: '36px 20px', textAlign: 'center', color: '#aaa' }}>
+                <p style={{ margin: 0, fontSize: '14px', fontWeight: '500' }}>Nenhuma consulta neste dia</p>
+              </div>
+            ) : (
+              mobileDayReservas.map(r => {
+                const c = getColor(r);
+                const av = getAv(`${r.nome} ${r.sobrenome}`);
+                const initials = getIn(`${r.nome} ${r.sobrenome}`);
+                const statusLabel = { confirmado: 'Confirmado', pendente: 'Pendente', negado: 'Negado', aguardando_confirmacao_paciente: 'Aguardando' }[r.status] || r.status;
+                return (
+                  <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderBottom: '1px solid #F7F7F4' }}>
+                    <div style={{ width: '44px', textAlign: 'center', flexShrink: 0 }}>
+                      <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: c.color }}>{formatarHorarioBrasil(r.horario)}</p>
+                      {r.horarioFinal && <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#aaa' }}>{formatarHorarioBrasil(r.horarioFinal)}</p>}
+                    </div>
+                    <div style={{ width: '3px', alignSelf: 'stretch', background: c.border, borderRadius: '3px', flexShrink: 0 }} />
+                    <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: av.bg, color: av.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '700', fontSize: '12px', flexShrink: 0 }}>{initials}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ margin: 0, fontWeight: '600', fontSize: '14px', color: '#1a1a1a' }}>{r.nome} {r.sobrenome}</p>
+                      <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.telefone || r.email || ''}</p>
+                    </div>
+                    <span style={{ background: c.bg, color: c.color, borderRadius: '20px', padding: '3px 9px', fontSize: '11px', fontWeight: '600', whiteSpace: 'nowrap', flexShrink: 0 }}>{statusLabel}</span>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </>}
+
+      </MobileDayCard>
     </div>
   );
 };
@@ -226,7 +579,7 @@ const HomeView = ({ reservas, reservasPorData, formatarHorarioBrasil, formatarDa
   ];
 
   return (
-    <div style={{ padding: '28px 32px', fontFamily: 'Figtree, sans-serif' }}>
+    <HomeWrap>
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', margin: 0 }}>Olá, {user?.nome || 'Profissional'}</h1>
         <p style={{ color: '#888', fontSize: '13px', margin: '4px 0 0' }}>
@@ -246,7 +599,7 @@ const HomeView = ({ reservas, reservasPorData, formatarHorarioBrasil, formatarDa
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '16px', alignItems: 'start' }}>
+      <TwoColGrid>
         <div style={CARD}>
           <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid #F0EFE9', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <h2 style={{ margin: 0, fontSize: '16px', fontWeight: '700', color: '#1a1a1a' }}>Agenda de hoje</h2>
@@ -310,8 +663,8 @@ const HomeView = ({ reservas, reservasPorData, formatarHorarioBrasil, formatarDa
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </TwoColGrid>
+    </HomeWrap>
   );
 };
 

@@ -90,6 +90,13 @@ export const TabsRow = styled.div`
   padding: 4px;
   margin-bottom: 28px;
   width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  @media (max-width: 600px) {
+    width: 100%;
+  }
 `;
 
 export const Tab = styled.button`

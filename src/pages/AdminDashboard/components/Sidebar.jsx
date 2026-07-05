@@ -1,4 +1,38 @@
-import { Calendar, CalendarDays, CalendarPlus, ClipboardList, Clock, Home, LogOut, MapPin, Unlock, User, UserCircle, Zap } from 'lucide-react';
+import { Calendar, CalendarDays, CalendarPlus, ClipboardList, Clock, Home, LogOut, MapPin, Unlock, User, UserCircle, X, Zap } from 'lucide-react';
+import styled from 'styled-components';
+
+const SidebarAside = styled.aside`
+  width: 260px;
+  background: white;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid #F0EFE9;
+  z-index: 1200;
+
+  @media (max-width: 768px) {
+    transform: ${({ $open }) => $open ? 'translateX(0)' : 'translateX(-100%)'};
+    transition: transform 0.28s ease;
+  }
+`;
+
+const MobileCloseBtn = styled.button`
+  display: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #555;
+  padding: 4px;
+
+  @media (max-width: 768px) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+`;
 
 const navBtn = (activeScreen, key) => ({
   width: 'calc(100% - 16px)', margin: '1px 8px', padding: '10px 12px',
@@ -10,7 +44,7 @@ const navBtn = (activeScreen, key) => ({
   fontSize: '14px', fontFamily: 'Figtree, sans-serif', textAlign: 'left',
 });
 
-const Sidebar = ({ user, av, initials, activeScreen, irPara, navigate, logout, pendentes, urgentes, vagasCount }) => {
+const Sidebar = ({ user, av, initials, activeScreen, irPara, navigate, logout, pendentes, urgentes, vagasCount, isOpen, onClose }) => {
   const navItems = [
     { key: 'home',         icon: <Home size={16} />,          label: 'Início' },
     { key: 'agenda',       icon: <Calendar size={16} />,      label: 'Agenda' },
@@ -25,9 +59,10 @@ const Sidebar = ({ user, av, initials, activeScreen, irPara, navigate, logout, p
   ];
 
   return (
-    <aside style={{ width: '260px', background: 'white', height: '100vh', position: 'fixed', left: 0, top: 0, display: 'flex', flexDirection: 'column', borderRight: '1px solid #F0EFE9', zIndex: 100 }}>
+    <SidebarAside $open={isOpen}>
       <div style={{ padding: '18px 16px 14px', borderBottom: '1px solid #F0EFE9' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <MobileCloseBtn onClick={onClose} aria-label="Fechar menu"><X size={18} /></MobileCloseBtn>
           <div style={{ width: '36px', height: '36px', background: '#1B4D3E', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700', fontSize: '13px', flexShrink: 0 }}>Aa</div>
           <div>
             <p style={{ fontWeight: '700', fontSize: '13px', color: '#1a1a1a', margin: 0 }}>Agende Aqui</p>
@@ -75,7 +110,7 @@ const Sidebar = ({ user, av, initials, activeScreen, irPara, navigate, logout, p
           <span>Sair</span>
         </button>
       </div>
-    </aside>
+    </SidebarAside>
   );
 };
 

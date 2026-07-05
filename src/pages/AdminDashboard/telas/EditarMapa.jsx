@@ -1,3 +1,31 @@
+import styled from 'styled-components';
+
+const PageWrapper = styled.div`
+  padding: 28px 32px;
+  font-family: Figtree, sans-serif;
+  @media (max-width: 768px) {
+    padding: 20px 16px;
+  }
+`;
+
+const TwoColGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+  align-items: flex-start;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const MapBox = styled.div`
+  height: 480px;
+  width: 100%;
+  @media (max-width: 768px) {
+    height: 300px;
+  }
+`;
+
 const CARD = { background: 'white', borderRadius: '14px', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' };
 const inputStyle = {
   width: '100%', padding: '10px 12px', border: '1px solid #E0DFD9',
@@ -12,22 +40,22 @@ const EditarMapa = ({
   handleEditarMapa,
 }) => {
   return (
-    <div style={{ padding: '28px 32px', fontFamily: 'Figtree, sans-serif' }}>
+    <PageWrapper>
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', margin: 0 }}>Editar Localização</h1>
         <p style={{ color: '#888', fontSize: '13px', margin: '4px 0 0' }}>Clique no mapa para definir sua localização de atendimento</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '20px', alignItems: 'flex-start' }}>
+      <TwoColGrid>
         {/* Map */}
         <div style={{ ...CARD, overflow: 'hidden' }}>
-          <div style={{ height: '480px', width: '100%' }}>
+          <MapBox>
             <LocationPickerEdit
               onLocationSelect={handleMapClick}
               initialLat={editLatitude}
               initialLng={editLongitude}
             />
-          </div>
+          </MapBox>
         </div>
 
         {/* Side form */}
@@ -85,8 +113,8 @@ const EditarMapa = ({
             Salvar localização
           </button>
         </div>
-      </div>
-    </div>
+      </TwoColGrid>
+    </PageWrapper>
   );
 };
 

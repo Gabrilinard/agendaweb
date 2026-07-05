@@ -176,11 +176,17 @@ const Agendar = () => {
                     <button
                         onClick={() => navigate(-1)}
                         style={{
-                            background: 'none', border: 'none', cursor: 'pointer',
-                            color: '#666', fontSize: '14px', display: 'flex',
-                            alignItems: 'center', gap: '6px', marginBottom: '20px',
-                            padding: 0, fontFamily: 'Figtree, sans-serif',
+                            background: 'white', border: '1.5px solid #E5E0DA',
+                            borderRadius: '10px', cursor: 'pointer',
+                            color: '#444', fontSize: '13px', fontWeight: '600',
+                            display: 'inline-flex', alignItems: 'center', gap: '6px',
+                            marginBottom: '20px', padding: '8px 16px',
+                            fontFamily: 'Figtree, sans-serif',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                            transition: 'background 0.15s, border-color 0.15s',
                         }}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#F2EDE8'; e.currentTarget.style.borderColor = '#c5bfb8'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.borderColor = '#E5E0DA'; }}
                     >
                         ← Voltar para lista
                     </button>

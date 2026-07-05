@@ -21,8 +21,8 @@ const ContentContainer = styled.div`
   align-items: center;
   justify-content: center;
   width: 100%;
-  flex-grow: 1; /* O conteúdo ocupa o espaço disponível */
-  padding-top: 40px;
+  flex-grow: 1;
+  padding: 40px 16px 20px;
 `;
 
 const FormWrapper = styled.div`
@@ -33,8 +33,14 @@ const FormWrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 350px;
-  margin-bottom: 20px; /* Espaço abaixo do formulário */
+  width: 100%;
+  max-width: 380px;
+  margin-bottom: 20px;
+
+  @media (max-width: 480px) {
+    padding: 24px 20px;
+    border-radius: 12px;
+  }
 `;
 
 const Form = styled.form`

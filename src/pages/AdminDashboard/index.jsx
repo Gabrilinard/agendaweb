@@ -1,6 +1,59 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { Menu } from 'lucide-react';
 import { useState } from 'react';
+import styled from 'styled-components';
+
+const DashLayout = styled.div`
+  display: flex;
+  min-height: 100vh;
+  font-family: Figtree, sans-serif;
+`;
+
+const DashMain = styled.main`
+  margin-left: 260px;
+  flex: 1;
+  min-height: 100vh;
+  background: #F0EFE9;
+
+  @media (max-width: 768px) {
+    margin-left: 0;
+    padding-top: 56px;
+  }
+`;
+
+const SidebarOverlay = styled.div`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: ${({ $open }) => $open ? 'block' : 'none'};
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: 1199;
+  }
+`;
+
+const MobileHamburger = styled.button`
+  display: none;
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 1198;
+  background: white;
+  border: 1px solid #E0DFD9;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+
+  @media (max-width: 768px) {
+    display: flex;
+  }
+`;
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
@@ -33,6 +86,7 @@ L.Icon.Default.mergeOptions({
 
 const AdminDashboard = () => {
   const [activeScreen, setActiveScreen] = useState('home');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { logout, user } = useAuth();
   const { success, error: showError, warning } = useNotification();
   const navigate = useNavigate();
@@ -167,15 +221,25 @@ const AdminDashboard = () => {
     }
   };
 
+  const irParaComFechar = async (screen) => {
+    await irPara(screen);
+    setSidebarOpen(false);
+  };
+
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: 'Figtree, sans-serif' }}>
+    <DashLayout>
+      <SidebarOverlay $open={sidebarOpen} onClick={() => setSidebarOpen(false)} />
+      <MobileHamburger onClick={() => setSidebarOpen(true)} aria-label="Abrir menu">
+        <Menu size={20} color="#333" />
+      </MobileHamburger>
       <Sidebar
         user={user} av={av} initials={initials}
-        activeScreen={activeScreen} irPara={irPara}
+        activeScreen={activeScreen} irPara={irParaComFechar}
         navigate={navigate} logout={logout}
         pendentes={pendentes} urgentes={urgentes} vagasCount={vagasCount}
+        isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)}
       />
-      <main style={{ marginLeft: '260px', flex: 1, minHeight: '100vh', background: '#F0EFE9' }}>
+      <DashMain>
         {renderScreen()}
         <EditarReservaModal
           show={edicao.showReservaEdit}
@@ -186,8 +250,8 @@ const AdminDashboard = () => {
           setEditReservaHorario={edicao.setEditReservaHorario}
           handleUpdateReserva={edicao.handleUpdateReserva}
         />
-      </main>
-    </div>
+      </DashMain>
+    </DashLayout>
   );
 };
 

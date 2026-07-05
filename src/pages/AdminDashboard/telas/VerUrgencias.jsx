@@ -1,6 +1,40 @@
 import { updateReserva } from '../api';
 import { CalendarClock, CalendarDays, Clock, Download, Mail, MessageCircle, Smartphone, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import styled from 'styled-components';
+
+const PagePad = styled.div`
+  padding: 28px 32px;
+  font-family: Figtree, sans-serif;
+  min-height: 100vh;
+  @media (max-width: 768px) { padding: 20px 16px; }
+`;
+
+const UrgenciaGrid = styled.div`
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 20px;
+  align-items: stretch;
+  height: calc(100vh - 100px);
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+`;
+
+const ListCol = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  height: 100%;
+  padding-bottom: 20px;
+  @media (max-width: 768px) {
+    height: auto;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+`;
 
 const CARD = { background: 'white', borderRadius: '14px', boxShadow: '0 1px 4px rgba(0,0,0,0.07)' };
 
@@ -166,7 +200,7 @@ const VerUrgencias = ({
   const suggestedSlots = getSuggestedSlots();
 
   return (
-    <div style={{ padding: '28px 32px', fontFamily: 'Figtree, sans-serif', minHeight: '100vh' }}>
+    <PagePad>
       {urgencias.length === 0 ? (
         <div>
           <div style={{ marginBottom: '20px' }}>
@@ -180,9 +214,9 @@ const VerUrgencias = ({
           </div>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '20px', alignItems: 'stretch', height: 'calc(100vh - 100px)' }}>
+        <UrgenciaGrid>
           {/* Left list */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', overflowY: 'auto', height: '100%', paddingBottom: '20px' }}>
+          <ListCol>
             {urgencias.map(r => {
               const fullName = `${r.nome || ''} ${r.sobrenome || ''}`.trim();
               const av = getAv(fullName);
@@ -230,7 +264,7 @@ const VerUrgencias = ({
                 </div>
               );
             })}
-          </div>
+          </ListCol>
 
           {/* Right detail panel */}
           {detalhes ? (
@@ -430,9 +464,9 @@ const VerUrgencias = ({
               <p style={{ margin: 0 }}>Selecione uma urgência ao lado para ver os detalhes</p>
             </div>
           )}
-        </div>
+        </UrgenciaGrid>
       )}
-    </div>
+    </PagePad>
   );
 };
 
