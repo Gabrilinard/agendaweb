@@ -176,7 +176,7 @@ const Urgencia = () => {
                     {reserva.descricao_urgencia}
                   </DescriptionBox>
                   {reserva.arquivo_urgencia && (
-                    <AttachmentLink href={`http://localhost:3000${reserva.arquivo_urgencia}`} target="_blank" rel="noopener noreferrer">
+                    <AttachmentLink href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${reserva.arquivo_urgencia}`} target="_blank" rel="noopener noreferrer">
                       📎 Visualizar Anexo/Comprovante
                     </AttachmentLink>
                   )}

@@ -311,7 +311,7 @@ const VerUrgencias = ({
                   <div>
                     <p style={{ margin: '0 0 8px', fontSize: '11px', fontWeight: '700', color: '#888', textTransform: 'uppercase', letterSpacing: '0.6px' }}>Anexos</p>
                     <a
-                      href={`http://localhost:3000${detalhes.arquivo_urgencia}`}
+                      href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${detalhes.arquivo_urgencia}`}
                       target="_blank" rel="noopener noreferrer"
                       style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', padding: '10px 14px', border: '1.5px solid #E0DFD9', borderRadius: '8px', textDecoration: 'none', color: '#333', fontSize: '13px', fontWeight: '500', background: 'white' }}
                     >

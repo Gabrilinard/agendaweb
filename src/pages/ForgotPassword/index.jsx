@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import styled from 'styled-components';
+import client from '../../api/client';
 import { useNotification } from '../../contexts/NotificationContext';
 
 const PageWrapper = styled.div`
@@ -70,20 +71,11 @@ const ForgotPassword = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/api/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-
-      if (response.ok) {
-        setSent(true);
-        success('E-mail enviado! Verifique sua caixa de entrada.');
-      } else {
-        showError('Erro ao enviar o e-mail. Tente novamente mais tarde.');
-      }
+      await client.post('/api/forgot-password', { email });
+      setSent(true);
+      success('E-mail enviado! Verifique sua caixa de entrada.');
     } catch {
-      showError('Erro de conexão. Tente novamente mais tarde.');
+      showError('Erro ao enviar o e-mail. Tente novamente mais tarde.');
     } finally {
       setLoading(false);
     }

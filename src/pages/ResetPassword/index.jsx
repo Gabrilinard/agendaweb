@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
+import client from '../../api/client';
 import { useNotification } from '../../contexts/NotificationContext';
 
 const PageWrapper = styled.div`
@@ -93,21 +94,12 @@ const ResetPassword = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/api/reset-password', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, senha }),
-      });
-
-      if (response.ok) {
-        success('Senha redefinida com sucesso!');
-        navigate('/entrar');
-      } else {
-        const data = await response.json();
-        showError(data.error || 'Link inválido ou expirado. Solicite um novo.');
-      }
-    } catch {
-      showError('Erro de conexão. Tente novamente mais tarde.');
+      await client.patch('/api/reset-password', { token, senha });
+      success('Senha redefinida com sucesso!');
+      navigate('/entrar');
+    } catch (err) {
+      const msg = err.response?.data?.error || 'Link inválido ou expirado. Solicite um novo.';
+      showError(msg);
     } finally {
       setLoading(false);
     }
