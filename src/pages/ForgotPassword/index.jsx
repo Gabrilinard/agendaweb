@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import emailjs from 'emailjs-com';
 import { useNotification } from '../../contexts/NotificationContext';
 
 const PageWrapper = styled.div`
@@ -39,42 +37,28 @@ const Button = styled.button`
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  width: 100%;
   &:hover {
     background-color: #218838;
   }
+  &:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+  }
+`;
+
+const Info = styled.p`
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+  margin-bottom: 16px;
 `;
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
   const { success, error: showError, warning } = useNotification();
-
-  const sendPasswordResetEmail = (userEmail, userId) => {
-    console.log(userEmail, userId);
-
-    if (!userEmail || !userId) {
-      console.log('E-mail ou ID não fornecidos.');
-      return;
-    }
-
-    const templateParams = {
-      email: userEmail,
-      reset_link: userId,
-    };
-
-    emailjs
-      .send('service_5guvy7s', 'template_6rjaiue', templateParams, '95NytkXcfDF9Z3EEQ')
-      .then((response) => {
-        console.log('E-mail de redefinição de senha enviado com sucesso:', response.status, response.text);
-        success('E-mail de redefinição de senha enviado! Verifique sua caixa de entrada.');
-
-        navigate('/ResetPassword');
-      })
-      .catch((error) => {
-        console.error('Erro ao enviar e-mail de redefinição de senha:', error);
-        showError('Erro ao enviar o e-mail. Tente novamente mais tarde.');
-      });
-  };
 
   const handleForgotPassword = async (e) => {
     e.preventDefault();
@@ -83,20 +67,25 @@ const ForgotPassword = () => {
       warning('Por favor, insira seu e-mail.');
       return;
     }
-    console.log("E-mail digitado:", email);
 
-    const response = await fetch('http://localhost:3000/api/forgot-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:3000/api/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
 
-    if (response.ok) {
-      const data = await response.json();
-      const userId = data.userId;
-      sendPasswordResetEmail(email, userId);
-    } else {
-      showError('Usuário não encontrado.');
+      if (response.ok) {
+        setSent(true);
+        success('E-mail enviado! Verifique sua caixa de entrada.');
+      } else {
+        showError('Erro ao enviar o e-mail. Tente novamente mais tarde.');
+      }
+    } catch {
+      showError('Erro de conexão. Tente novamente mais tarde.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -104,16 +93,26 @@ const ForgotPassword = () => {
     <PageWrapper>
       <FormWrapper>
         <h2>Redefinir Senha</h2>
-        <form onSubmit={handleForgotPassword}>
-          <Input
-            type="email"
-            placeholder="Digite seu e-mail"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Button type="submit">Enviar Link de Redefinição</Button>
-        </form>
+        {sent ? (
+          <Info>
+            Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha em breve.
+            Verifique também a pasta de spam.
+          </Info>
+        ) : (
+          <form onSubmit={handleForgotPassword} style={{ width: '100%' }}>
+            <Info>Digite seu e-mail cadastrado e enviaremos um link de redefinição.</Info>
+            <Input
+              type="email"
+              placeholder="Digite seu e-mail"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Enviando...' : 'Enviar Link de Redefinição'}
+            </Button>
+          </form>
+        )}
       </FormWrapper>
     </PageWrapper>
   );

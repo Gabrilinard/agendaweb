@@ -1,5 +1,5 @@
-import { useState} from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { useNotification } from '../../contexts/NotificationContext';
 
@@ -38,55 +38,86 @@ const Button = styled.button`
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  width: 100%;
   &:hover {
     background-color: #218838;
   }
+  &:disabled {
+    background-color: #6c757d;
+    cursor: not-allowed;
+  }
+`;
+
+const ErrorMsg = styled.p`
+  color: #dc3545;
+  font-size: 13px;
+  text-align: center;
 `;
 
 const ResetPassword = () => {
   const [senha, setSenha] = useState('');
-  const [id, setId] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { success, error: showError, warning } = useNotification();
+
+  const token = searchParams.get('token');
+
+  if (!token) {
+    return (
+      <PageWrapper>
+        <FormWrapper>
+          <h2>Link inválido</h2>
+          <ErrorMsg>
+            Este link de redefinição é inválido ou já foi utilizado.
+            Solicite um novo link em "Esqueceu a senha?".
+          </ErrorMsg>
+        </FormWrapper>
+      </PageWrapper>
+    );
+  }
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
-  
+
     if (senha !== confirmarSenha) {
       warning('As senhas não coincidem.');
       return;
     }
-  
-    console.log(`ID: ${id}, Senha: ${senha}`);
-  
-    const response = await fetch(`http://localhost:3000/api/reset-password/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ senha }),
-    });
-  
-    if (response.ok) {
-      success('Senha redefinida com sucesso.');
-      navigate('/entrar');
-    } else {
-      showError('Erro ao redefinir senha.');
+
+    if (senha.length < 6) {
+      warning('A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch('http://localhost:3000/api/reset-password', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, senha }),
+      });
+
+      if (response.ok) {
+        success('Senha redefinida com sucesso!');
+        navigate('/entrar');
+      } else {
+        const data = await response.json();
+        showError(data.error || 'Link inválido ou expirado. Solicite um novo.');
+      }
+    } catch {
+      showError('Erro de conexão. Tente novamente mais tarde.');
+    } finally {
+      setLoading(false);
     }
   };
-  
 
   return (
     <PageWrapper>
       <FormWrapper>
         <h2>Nova Senha</h2>
-        <form onSubmit={handleResetPassword}>
-        <Input
-            type="number"
-            placeholder="Seu Id"
-            value={id}
-            onChange={(e) => setId(e.target.value)}
-            required
-          />
+        <form onSubmit={handleResetPassword} style={{ width: '100%' }}>
           <Input
             type="password"
             placeholder="Nova senha"
@@ -96,12 +127,14 @@ const ResetPassword = () => {
           />
           <Input
             type="password"
-            placeholder="Confirmar senha"
+            placeholder="Confirmar nova senha"
             value={confirmarSenha}
             onChange={(e) => setConfirmarSenha(e.target.value)}
             required
           />
-          <Button type="submit" onClick={handleResetPassword}>Redefinir Senha</Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? 'Salvando...' : 'Redefinir Senha'}
+          </Button>
         </form>
       </FormWrapper>
     </PageWrapper>
