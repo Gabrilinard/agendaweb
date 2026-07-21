@@ -6,6 +6,12 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [cart, setCart] = useState([]);
+  const [viewMode, setViewModeState] = useState(null);
+
+  const setViewMode = (mode) => {
+    setViewModeState(mode);
+    localStorage.setItem('viewMode', mode);
+  };
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
@@ -14,14 +20,19 @@ export const AuthProvider = ({ children }) => {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         if (payload.exp * 1000 > Date.now()) {
-          setUser(JSON.parse(storedUser));
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          const storedViewMode = localStorage.getItem('viewMode');
+          setViewModeState(storedViewMode || parsedUser.tipoUsuario || 'paciente');
         } else {
           localStorage.removeItem('user');
           localStorage.removeItem('token');
+          localStorage.removeItem('viewMode');
         }
       } catch {
         localStorage.removeItem('user');
         localStorage.removeItem('token');
+        localStorage.removeItem('viewMode');
       }
     }
   }, []);
@@ -42,6 +53,7 @@ export const AuthProvider = ({ children }) => {
         setUser(data.user);
         localStorage.setItem('user', JSON.stringify(data.user));
         localStorage.setItem('token', data.token);
+        setViewMode(data.user.tipoUsuario || 'paciente');
         return data.user;
       }
       return null;
@@ -58,8 +70,10 @@ export const AuthProvider = ({ children }) => {
     }
     setUser(null);
     setCart([]);
+    setViewModeState(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    localStorage.removeItem('viewMode');
   };
 
   const addItemToCart = (item) => {
@@ -90,7 +104,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, cart, login, logout, addItemToCart, removeItemFromCart, setTotalAmount }}>
+    <AuthContext.Provider value={{ user, cart, login, logout, addItemToCart, removeItemFromCart, setTotalAmount, viewMode, setViewMode }}>
       {children}
     </AuthContext.Provider>
   );

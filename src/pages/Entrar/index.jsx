@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Footer from '../../components/Footer';
 import Header from '../../components/Header';
+import ModeSelectModal from '../../components/ModeSelectModal';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 
@@ -112,7 +113,8 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
+  const [showModeSelect, setShowModeSelect] = useState(false);
+  const { login, setViewMode } = useAuth();
   const { error: showError } = useNotification();
   const navigate = useNavigate();
 
@@ -130,7 +132,9 @@ const handleEmailKeyDown = (e) => {
   e.preventDefault();
   const userData = await login(email, senha);
   if (userData) {
-    if (userData.tipoUsuario === 'profissional') {
+    if (userData.tipoUsuario === 'profissional' && userData.temAcessoPaciente) {
+      setShowModeSelect(true);
+    } else if (userData.tipoUsuario === 'profissional') {
       navigate('/AdminDashboard');
     } else {
       navigate('/');
@@ -139,6 +143,12 @@ const handleEmailKeyDown = (e) => {
     showError('E-mail ou senha incorretos.');
   }
 };
+
+  const handleModeSelect = (mode) => {
+    setViewMode(mode);
+    setShowModeSelect(false);
+    navigate(mode === 'profissional' ? '/AdminDashboard' : '/');
+  };
 
 
   const togglePasswordVisibility = () => {
@@ -183,7 +193,8 @@ const handleEmailKeyDown = (e) => {
           </RegisterButton>
         </FormWrapper>
       </ContentContainer>
-      <Footer /> 
+      <Footer />
+      <ModeSelectModal show={showModeSelect} onSelect={handleModeSelect} />
     </PageWrapper>
   );
 };

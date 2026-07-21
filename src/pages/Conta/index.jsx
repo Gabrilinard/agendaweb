@@ -256,14 +256,22 @@ const LogoutBtn = styled.button`
 `;
 
 const Conta = () => {
-    const { user, logout } = useAuth();
+    const { user, logout, viewMode, setViewMode } = useAuth();
     const navigate = useNavigate();
 
     const initials = user
         ? `${user.nome?.[0] || ''}${user.sobrenome?.[0] || ''}`.toUpperCase()
         : 'U';
 
-    const tipoLabel = user?.tipoUsuario === 'profissional' ? 'Profissional' : 'Paciente';
+    const podeAlternarModo = user?.tipoUsuario === 'profissional' && user?.temAcessoPaciente;
+    const tipoLabel = podeAlternarModo
+        ? (viewMode === 'paciente' ? 'Paciente' : 'Profissional')
+        : (user?.tipoUsuario === 'profissional' ? 'Profissional' : 'Paciente');
+
+    const entrarComoProfissional = () => {
+        setViewMode('profissional');
+        navigate('/AdminDashboard');
+    };
 
     const handleLogout = () => {
         logout();
@@ -311,17 +319,31 @@ const Conta = () => {
                     </Card>
 
                     <RightCol>
-                        <ProfCard>
-                            <SparkleIcon>✳</SparkleIcon>
-                            <ProfCardTitle>Quer testar o lado profissional?</ProfCardTitle>
-                            <ProfCardDesc>
-                                Veja como é o dashboard de profissionais — agenda, urgências e solicitações em um só lugar.
-                            </ProfCardDesc>
-                            <ProfBtn onClick={() => navigate('/Registrar')}>
-                                <Users size={16} />
-                                Entrar como profissional
-                            </ProfBtn>
-                        </ProfCard>
+                        {podeAlternarModo ? (
+                            <ProfCard>
+                                <SparkleIcon>✳</SparkleIcon>
+                                <ProfCardTitle>Modo profissional</ProfCardTitle>
+                                <ProfCardDesc>
+                                    Sua conta também tem acesso profissional. Volte para o dashboard — agenda, urgências e solicitações em um só lugar.
+                                </ProfCardDesc>
+                                <ProfBtn onClick={entrarComoProfissional}>
+                                    <Users size={16} />
+                                    Entrar como profissional
+                                </ProfBtn>
+                            </ProfCard>
+                        ) : (
+                            <ProfCard>
+                                <SparkleIcon>✳</SparkleIcon>
+                                <ProfCardTitle>Quer testar o lado profissional?</ProfCardTitle>
+                                <ProfCardDesc>
+                                    Veja como é o dashboard de profissionais — agenda, urgências e solicitações em um só lugar.
+                                </ProfCardDesc>
+                                <ProfBtn onClick={() => navigate('/Registrar')}>
+                                    <Users size={16} />
+                                    Entrar como profissional
+                                </ProfBtn>
+                            </ProfCard>
+                        )}
 
                         <LogoutSection>
                             <LogoutBtn onClick={handleLogout}>

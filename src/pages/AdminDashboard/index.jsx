@@ -87,7 +87,7 @@ L.Icon.Default.mergeOptions({
 const AdminDashboard = () => {
   const [activeScreen, setActiveScreen] = useState('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { logout, user } = useAuth();
+  const { logout, user, setViewMode } = useAuth();
   const { success, error: showError, warning } = useNotification();
   const navigate = useNavigate();
   const notify = { success, showError, warning };
@@ -235,7 +235,7 @@ const AdminDashboard = () => {
       <Sidebar
         user={user} av={av} initials={initials}
         activeScreen={activeScreen} irPara={irParaComFechar}
-        navigate={navigate} logout={logout}
+        navigate={navigate} logout={logout} setViewMode={setViewMode}
         pendentes={pendentes} urgentes={urgentes} vagasCount={vagasCount}
         isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)}
       />

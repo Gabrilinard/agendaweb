@@ -37,13 +37,16 @@ const NAV_LINKS = [
 const Header = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { user } = useAuth();
+    const { user, viewMode } = useAuth();
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const initials = user
         ? `${user.nome?.[0] || ''}${user.sobrenome?.[0] || ''}`.toUpperCase()
         : '';
-    const tipoLabel = user?.tipoUsuario === 'profissional' ? 'Profissional' : 'Paciente';
+    const podeAlternarModo = user?.tipoUsuario === 'profissional' && user?.temAcessoPaciente;
+    const tipoLabel = podeAlternarModo
+        ? (viewMode === 'paciente' ? 'Paciente' : 'Profissional')
+        : (user?.tipoUsuario === 'profissional' ? 'Profissional' : 'Paciente');
 
     const go = (path) => {
         navigate(path);
