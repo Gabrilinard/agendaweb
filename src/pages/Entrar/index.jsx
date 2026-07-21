@@ -181,7 +181,7 @@ const handleEmailKeyDown = (e) => {
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </EyeIcon>
             </InputWrapper>
-            <ForgotPasswordButton onClick={() => navigate('/EsqueciSenha')}>
+            <ForgotPasswordButton type="button" onClick={() => navigate('/EsqueciSenha')}>
               Esqueceu a senha?
             </ForgotPasswordButton>
             <Button type="submit">Entrar</Button>
