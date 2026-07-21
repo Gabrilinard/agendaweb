@@ -132,10 +132,8 @@ const handleEmailKeyDown = (e) => {
   e.preventDefault();
   const userData = await login(email, senha);
   if (userData) {
-    if (userData.tipoUsuario === 'profissional' && userData.temAcessoPaciente) {
+    if (userData.tipoUsuario === 'profissional') {
       setShowModeSelect(true);
-    } else if (userData.tipoUsuario === 'profissional') {
-      navigate('/AdminDashboard');
     } else {
       navigate('/');
     }

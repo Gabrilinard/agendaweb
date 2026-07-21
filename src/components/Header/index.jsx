@@ -43,10 +43,7 @@ const Header = () => {
     const initials = user
         ? `${user.nome?.[0] || ''}${user.sobrenome?.[0] || ''}`.toUpperCase()
         : '';
-    const podeAlternarModo = user?.tipoUsuario === 'profissional' && user?.temAcessoPaciente;
-    const tipoLabel = podeAlternarModo
-        ? (viewMode === 'paciente' ? 'Paciente' : 'Profissional')
-        : (user?.tipoUsuario === 'profissional' ? 'Profissional' : 'Paciente');
+    const tipoLabel = user?.tipoUsuario === 'profissional' && viewMode !== 'paciente' ? 'Profissional' : 'Paciente';
 
     const go = (path) => {
         navigate(path);

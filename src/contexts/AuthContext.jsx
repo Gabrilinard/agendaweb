@@ -97,6 +97,14 @@ export const AuthProvider = ({ children }) => {
     });
   };
 
+  const updateUser = (partialUser) => {
+    setUser((prevUser) => {
+      const updatedUser = { ...prevUser, ...partialUser };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      return updatedUser;
+    });
+  };
+
   const setTotalAmount = (amount) => {
     if (user) {
       localStorage.setItem(`totalAmount_${user.email}`, JSON.stringify(amount));
@@ -104,7 +112,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, cart, login, logout, addItemToCart, removeItemFromCart, setTotalAmount, viewMode, setViewMode }}>
+    <AuthContext.Provider value={{ user, cart, login, logout, updateUser, addItemToCart, removeItemFromCart, setTotalAmount, viewMode, setViewMode }}>
       {children}
     </AuthContext.Provider>
   );

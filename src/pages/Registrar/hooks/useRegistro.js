@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { register } from '../api';
@@ -11,6 +11,7 @@ import {
 
 const useRegistro = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login } = useAuth();
   const { success, error: showError } = useNotification();
 
@@ -23,7 +24,7 @@ const useRegistro = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordsMatch, setPasswordsMatch] = useState(true);
-  const [tipoUsuario, setTipoUsuario] = useState('paciente');
+  const [tipoUsuario, setTipoUsuario] = useState(searchParams.get('tipo') === 'profissional' ? 'profissional' : 'paciente');
   const [tipoProfissional, setTipoProfissional] = useState('');
   const [especialidadeMedica, setEspecialidadeMedica] = useState('');
   const [numeroConselho, setNumeroConselho] = useState('');

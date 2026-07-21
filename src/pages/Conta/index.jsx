@@ -1,9 +1,12 @@
-import { Edit2, LogOut, Users } from 'lucide-react';
+import { Check, Edit2, LogOut, Users, X } from 'lucide-react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import Footer from '../../components/Footer';
 import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotification } from '../../contexts/NotificationContext';
+import { updatePerfil } from './api';
 
 const DARK_GREEN = '#1C5C40';
 const MID_GREEN = '#2D8A62';
@@ -255,18 +258,95 @@ const LogoutBtn = styled.button`
   }
 `;
 
+const InfoInput = styled.input`
+  font-size: 0.85rem;
+  color: ${TEXT};
+  font-weight: 500;
+  text-align: right;
+  border: 1.5px solid ${BORDER};
+  border-radius: 8px;
+  padding: 6px 10px;
+  width: 60%;
+  font-family: 'Figtree', sans-serif;
+
+  &:focus {
+    outline: none;
+    border-color: ${MID_GREEN};
+  }
+
+  &:disabled {
+    background: ${BG};
+    color: ${MUTED};
+    cursor: not-allowed;
+  }
+`;
+
+const EditActions = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+`;
+
+const SaveBtn = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  padding: 12px;
+  background: ${DARK_GREEN};
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Figtree', sans-serif;
+  transition: background 0.2s;
+
+  &:hover {
+    background: ${MID_GREEN};
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const CancelBtn = styled.button`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: transparent;
+  color: ${MUTED};
+  border: 1.5px solid ${BORDER};
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Figtree', sans-serif;
+`;
+
 const Conta = () => {
-    const { user, logout, viewMode, setViewMode } = useAuth();
+    const { user, logout, updateUser, viewMode, setViewMode } = useAuth();
     const navigate = useNavigate();
+    const { success, error: showError } = useNotification();
+
+    const [isEditing, setIsEditing] = useState(false);
+    const [editNome, setEditNome] = useState('');
+    const [editSobrenome, setEditSobrenome] = useState('');
+    const [editTelefone, setEditTelefone] = useState('');
+    const [salvando, setSalvando] = useState(false);
 
     const initials = user
         ? `${user.nome?.[0] || ''}${user.sobrenome?.[0] || ''}`.toUpperCase()
         : 'U';
 
-    const podeAlternarModo = user?.tipoUsuario === 'profissional' && user?.temAcessoPaciente;
-    const tipoLabel = podeAlternarModo
-        ? (viewMode === 'paciente' ? 'Paciente' : 'Profissional')
-        : (user?.tipoUsuario === 'profissional' ? 'Profissional' : 'Paciente');
+    const podeAlternarModo = user?.tipoUsuario === 'profissional';
+    const tipoLabel = user?.tipoUsuario === 'profissional' && viewMode !== 'paciente' ? 'Profissional' : 'Paciente';
 
     const entrarComoProfissional = () => {
         setViewMode('profissional');
@@ -276,6 +356,39 @@ const Conta = () => {
     const handleLogout = () => {
         logout();
         navigate('/');
+    };
+
+    const handleIniciarEdicao = () => {
+        setEditNome(user?.nome || '');
+        setEditSobrenome(user?.sobrenome || '');
+        setEditTelefone(user?.telefone || '');
+        setIsEditing(true);
+    };
+
+    const handleCancelarEdicao = () => {
+        setIsEditing(false);
+    };
+
+    const handleSalvarPerfil = async () => {
+        if (!user?.id) {
+            showError('Erro ao identificar usuário.');
+            return;
+        }
+        setSalvando(true);
+        try {
+            await updatePerfil(user.id, {
+                nome: editNome,
+                sobrenome: editSobrenome,
+                telefone: editTelefone,
+            });
+            updateUser({ nome: editNome, sobrenome: editSobrenome, telefone: editTelefone });
+            success('Perfil atualizado com sucesso!');
+            setIsEditing(false);
+        } catch {
+            showError('Erro ao atualizar perfil.');
+        } finally {
+            setSalvando(false);
+        }
     };
 
     return (
@@ -299,23 +412,69 @@ const Conta = () => {
 
                         <InfoList>
                             <InfoRow>
+                                <InfoLabel>Nome</InfoLabel>
+                                {isEditing ? (
+                                    <InfoInput
+                                        value={editNome}
+                                        onChange={(e) => setEditNome(e.target.value)}
+                                    />
+                                ) : (
+                                    <InfoValue>{user?.nome || '—'}</InfoValue>
+                                )}
+                            </InfoRow>
+                            <InfoRow>
+                                <InfoLabel>Sobrenome</InfoLabel>
+                                {isEditing ? (
+                                    <InfoInput
+                                        value={editSobrenome}
+                                        onChange={(e) => setEditSobrenome(e.target.value)}
+                                    />
+                                ) : (
+                                    <InfoValue>{user?.sobrenome || '—'}</InfoValue>
+                                )}
+                            </InfoRow>
+                            <InfoRow>
                                 <InfoLabel>Email</InfoLabel>
                                 <InfoValue>{user?.email || '—'}</InfoValue>
                             </InfoRow>
                             <InfoRow>
                                 <InfoLabel>Telefone</InfoLabel>
-                                <InfoValue>{user?.telefone || '—'}</InfoValue>
+                                {isEditing ? (
+                                    <InfoInput
+                                        value={editTelefone}
+                                        onChange={(e) => setEditTelefone(e.target.value)}
+                                    />
+                                ) : (
+                                    <InfoValue>{user?.telefone || '—'}</InfoValue>
+                                )}
                             </InfoRow>
                             <InfoRow>
                                 <InfoLabel>Tipo de conta</InfoLabel>
-                                <InfoValue>{tipoLabel}</InfoValue>
+                                {isEditing ? (
+                                    <InfoInput value={tipoLabel} disabled />
+                                ) : (
+                                    <InfoValue>{tipoLabel}</InfoValue>
+                                )}
                             </InfoRow>
                         </InfoList>
 
-                        <EditBtn>
-                            <Edit2 size={14} />
-                            Editar perfil
-                        </EditBtn>
+                        {isEditing ? (
+                            <EditActions>
+                                <CancelBtn onClick={handleCancelarEdicao} disabled={salvando}>
+                                    <X size={14} />
+                                    Cancelar
+                                </CancelBtn>
+                                <SaveBtn onClick={handleSalvarPerfil} disabled={salvando}>
+                                    <Check size={14} />
+                                    {salvando ? 'Salvando...' : 'Salvar'}
+                                </SaveBtn>
+                            </EditActions>
+                        ) : (
+                            <EditBtn onClick={handleIniciarEdicao}>
+                                <Edit2 size={14} />
+                                Editar perfil
+                            </EditBtn>
+                        )}
                     </Card>
 
                     <RightCol>
@@ -338,7 +497,7 @@ const Conta = () => {
                                 <ProfCardDesc>
                                     Veja como é o dashboard de profissionais — agenda, urgências e solicitações em um só lugar.
                                 </ProfCardDesc>
-                                <ProfBtn onClick={() => navigate('/Registrar')}>
+                                <ProfBtn onClick={() => navigate('/Registrar?tipo=profissional')}>
                                     <Users size={16} />
                                     Entrar como profissional
                                 </ProfBtn>
