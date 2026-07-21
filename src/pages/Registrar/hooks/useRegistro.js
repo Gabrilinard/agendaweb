@@ -26,7 +26,6 @@ const useRegistro = () => {
   const [tipoUsuario, setTipoUsuario] = useState('paciente');
   const [tipoProfissional, setTipoProfissional] = useState('');
   const [especialidadeMedica, setEspecialidadeMedica] = useState('');
-  const [profissaoCustomizada, setProfissaoCustomizada] = useState('');
   const [numeroConselho, setNumeroConselho] = useState('');
   const [ufRegiao, setUfRegiao] = useState('');
   const [latitude, setLatitude] = useState(null);
@@ -144,7 +143,6 @@ const useRegistro = () => {
     if (tipoUsuario === 'profissional') {
       if (!tipoProfissional) { showError('Por favor, selecione o tipo de profissional.'); return; }
       if (tipoProfissional === 'medico' && !especialidadeMedica) { showError('Por favor, selecione sua especialidade médica.'); return; }
-      if (tipoProfissional === 'outros' && !profissaoCustomizada.trim()) { showError('Por favor, informe sua profissão.'); return; }
       if (!numeroConselho?.trim()) { showError('Por favor, informe o número do conselho.'); return; }
       if (!validarNumeroConselho(numeroConselho, tipoProfissional)) {
         const msgs = {
@@ -172,10 +170,9 @@ const useRegistro = () => {
         cpf: cpf.replace(/\D/g, ''),
         tipoUsuario: tipoUsuario || 'paciente',
         ...(tipoUsuario === 'profissional' && {
-          tipoProfissional: tipoProfissional === 'outros' ? profissaoCustomizada : tipoProfissional,
+          tipoProfissional,
           ...(tipoProfissional === 'psicologo' && { abordagemTerapeutica: abordagemTerapeutica.trim(), areaAtuacaoPsi: areaAtuacaoPsi.trim() }),
           especialidadeMedica: tipoProfissional === 'medico' ? especialidadeMedica : null,
-          profissaoCustomizada: tipoProfissional === 'outros' ? profissaoCustomizada : null,
           numeroConselho: numeroConselho.trim(), ufRegiao: ufRegiao.trim(),
           latitude, longitude, cidade: cidade.trim(),
           descricao: descricao.trim(), publicoAtendido: publicoAtendido.trim(),
@@ -198,7 +195,7 @@ const useRegistro = () => {
     nome, setNome, sobrenome, setSobrenome, telefone, email, setEmail,
     senha, setSenha, confirmarSenha, showPassword, showConfirmPassword,
     passwordsMatch, tipoUsuario, setTipoUsuario, tipoProfissional, setTipoProfissional,
-    especialidadeMedica, setEspecialidadeMedica, profissaoCustomizada, setProfissaoCustomizada,
+    especialidadeMedica, setEspecialidadeMedica,
     numeroConselho, ufRegiao, latitude, longitude, cidade, descricao, setDescricao,
     publicoAtendido, setPublicoAtendido, modalidade, setModalidade,
     valorConsulta, setValorConsulta, diasAtendimento, setDiasAtendimento,

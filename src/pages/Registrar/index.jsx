@@ -92,7 +92,6 @@ const Registro = () => {
                 <label style={{ display: 'block', marginBottom: '16px', textAlign: 'left', fontWeight: 'bold' }}>Tipo de Profissional:</label>
                 <Select value={r.tipoProfissional} required onChange={e => {
                   r.setTipoProfissional(e.target.value);
-                  if (e.target.value !== 'outros') r.setProfissaoCustomizada('');
                   if (e.target.value !== 'medico') r.setEspecialidadeMedica('');
                 }}>
                   <option value="">Selecione...</option>
@@ -102,7 +101,6 @@ const Registro = () => {
                   <option value="fisioterapeuta">Fisioterapeuta</option>
                   <option value="fonoaudiologo">Fonoaudiólogo</option>
                   <option value="psicologo">Psicólogo</option>
-                  <option value="outros">Outros</option>
                 </Select>
               </div>
 
@@ -114,10 +112,6 @@ const Registro = () => {
                     {ESPECIALIDADES_MEDICAS.map(e => <option key={e} value={e}>{e}</option>)}
                   </Select>
                 </div>
-              )}
-
-              {r.tipoProfissional === 'outros' && (
-                <Input type="text" placeholder="Digite sua profissão" value={r.profissaoCustomizada} onChange={e => r.setProfissaoCustomizada(e.target.value)} required />
               )}
 
               {r.tipoProfissional === 'psicologo' && (

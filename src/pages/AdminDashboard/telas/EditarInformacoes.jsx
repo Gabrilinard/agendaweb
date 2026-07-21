@@ -2,6 +2,7 @@ import { updateInformacoes } from '../api';
 import { MapPin, MonitorPlay, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { ESPECIALIDADES_MEDICAS } from '../../Registrar/utils/constantes';
 import styled from 'styled-components';
 
 const StickyFooter = styled.div`
@@ -48,12 +49,16 @@ const inputS = {
 const labelS = { fontSize: '13px', fontWeight: '500', color: '#555', display: 'block', marginBottom: '6px' };
 
 const PUBLICOS = ['Crianças', 'Adolescentes', 'Adultos', 'Idosos', 'Gestantes'];
-const ESPECIALIDADES = [
-  'Clínico Geral','Cardiologista','Dermatologista','Endocrinologista','Fisioterapeuta',
-  'Fonoaudiólogo','Gastroenterologista','Geriatra','Ginecologista','Neurologista',
-  'Nutricionista','Oftalmologista','Ortopedista','Otorrinolaringologista','Pediatra',
-  'Psiquiatra','Psicólogo','Reumatologista','Urologista','Outro',
-];
+
+// Para as demais categorias, tipoProfissional guarda o slug definido no cadastro —
+// não deve ser sobrescrito por um rótulo diferente aqui.
+const CATEGORIAS_LABEL = {
+  dentista: 'Dentista',
+  nutricionista: 'Nutricionista',
+  fisioterapeuta: 'Fisioterapeuta',
+  fonoaudiologo: 'Fonoaudiólogo',
+  psicologo: 'Psicólogo',
+};
 
 const Toggle = ({ checked, onChange }) => (
   <div onClick={() => onChange(!checked)} style={{
@@ -105,9 +110,12 @@ const EditarInformacoes = ({
 }) => {
   const { success, error: showError } = useNotification();
 
+  const tipoProfissionalAtual = editTipoProfissional || user?.tipoProfissional || '';
+  const isMedico = ESPECIALIDADES_MEDICAS.includes(tipoProfissionalAtual);
+
   // ── Local state ───────────────────────────────────────────
   const [nomeCompleto, setNomeCompleto] = useState(`${user?.nome || ''} ${user?.sobrenome || ''}`.trim());
-  const [especialidade, setEspecialidade] = useState(editTipoProfissional || user?.tipoProfissional || '');
+  const [especialidade, setEspecialidade] = useState(tipoProfissionalAtual);
   const [registro, setRegistro] = useState(user?.registroProfissional || '');
   const [sobre, setSobre] = useState(editDescricao || '');
   const [aceitarEmergentes, setAceitarEmergentes] = useState(true);
@@ -157,7 +165,7 @@ const EditarInformacoes = ({
 
     try {
       await updateInformacoes(user?.id, {
-        tipoProfissional: especialidade,
+        ...(isMedico ? { tipoProfissional: especialidade } : {}),
         descricao: sobre,
         publicoAtendido: publicoSel.join(','),
         modalidade: modalStr,
@@ -225,15 +233,16 @@ const EditarInformacoes = ({
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
               <div>
                 <label style={labelS}>Especialidade</label>
-                {editTipoProfissional && editTipoProfissional !== especialidade && (
-                  <p style={{ margin: '0 0 6px', fontSize: '12px', color: '#888' }}>
-                    Salvo: <strong style={{ color: '#1B4D3E' }}>{editTipoProfissional}</strong>
-                  </p>
+                {isMedico ? (
+                  <select value={especialidade} onChange={e => setEspecialidade(e.target.value)} style={{ ...inputS, cursor: 'pointer' }}>
+                    <option value="">Selecione...</option>
+                    {ESPECIALIDADES_MEDICAS.map(e => <option key={e} value={e}>{e}</option>)}
+                  </select>
+                ) : (
+                  <div style={{ padding: '10px 14px', background: '#F7F7F4', border: '1.5px solid #E0DFD9', borderRadius: '8px', fontSize: '14px', color: '#1a1a1a' }}>
+                    {CATEGORIAS_LABEL[tipoProfissionalAtual] || tipoProfissionalAtual || 'Não informado'}
+                  </div>
                 )}
-                <select value={especialidade} onChange={e => setEspecialidade(e.target.value)} style={{ ...inputS, cursor: 'pointer' }}>
-                  <option value="">Selecione...</option>
-                  {ESPECIALIDADES.map(e => <option key={e} value={e}>{e}</option>)}
-                </select>
               </div>
               <div>
                 <label style={labelS}>Número do conselho</label>

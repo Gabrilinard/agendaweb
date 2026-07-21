@@ -101,7 +101,7 @@ const Sidebar = ({ user, av, initials, activeScreen, irPara, navigate, logout, p
       </nav>
 
       <div style={{ padding: '12px 8px', borderTop: '1px solid #F0EFE9', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-        <button onClick={() => navigate('/EmpresasProfissionais')} style={{ ...navBtn(activeScreen, '_'), color: '#555' }}>
+        <button onClick={() => navigate('/')} style={{ ...navBtn(activeScreen, '_'), color: '#555' }}>
           <span style={{ width: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><UserCircle size={16} /></span>
           <span>Modo paciente</span>
         </button>
