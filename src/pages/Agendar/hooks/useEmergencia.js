@@ -48,10 +48,11 @@ export const useEmergencia = (user, nomeProfissional) => {
 
     // Append turno/dias preferences to description for option 1
     let descricaoFinal = urgenciaDescricao;
+    let turnoStr = '';
     if (urgenciaModalidade === 'profissional_escolhe') {
       const turnoLabels = { manha: 'Manhã', tarde: 'Tarde', noite: 'Noite' };
       const diasLabels = { seg: 'Segunda', ter: 'Terça', qua: 'Quarta', qui: 'Quinta', sex: 'Sexta', sab: 'Sábado' };
-      const turnoStr = urgenciaTurno.map(t => turnoLabels[t]).join(', ');
+      turnoStr = urgenciaTurno.map(t => turnoLabels[t]).join(', ');
       const diasStr = urgenciaDias.map(d => diasLabels[d]).join(', ');
       if (turnoStr) descricaoFinal += `\n\nTurno preferencial: ${turnoStr}`;
       if (diasStr) descricaoFinal += `\nDias preferidos: ${diasStr}`;
@@ -71,6 +72,8 @@ export const useEmergencia = (user, nomeProfissional) => {
     formData.append('status', 'pendente');
     formData.append('is_urgente', true);
     formData.append('descricao_urgencia', descricaoFinal);
+    formData.append('modalidade_urgencia', urgenciaModalidade);
+    if (turnoStr) formData.append('turno_urgencia', turnoStr);
 
     if (urgenciaArquivo) {
       formData.append('arquivo_urgencia', urgenciaArquivo);

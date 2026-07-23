@@ -119,7 +119,8 @@ const AdminDashboard = () => {
   const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
   const pendentes = reservas.filter(r => !r.is_urgente && r.status === 'pendente' && r.dia && parseDia(r.dia) >= hoje).length;
   const vagasCount = reservas.filter(r => r.status === 'liberado').length;
-  const urgentes = reservas.filter(r => r.is_urgente && (!r.dia || parseDia(r.dia) >= hoje)).length;
+  const URGENCIA_STATUS_ATIVOS = new Set(['pendente', 'aguardando_confirmacao_paciente']);
+  const urgentes = reservas.filter(r => r.is_urgente && URGENCIA_STATUS_ATIVOS.has(r.status) && (!r.dia || parseDia(r.dia) >= hoje)).length;
 
   const nomeCompleto = `${user?.nome || ''} ${user?.sobrenome || ''}`.trim();
   const av = getAvatarColor(nomeCompleto);

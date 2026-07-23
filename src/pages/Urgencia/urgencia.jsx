@@ -154,7 +154,10 @@ const Urgencia = () => {
           <EmptyState>Nenhuma solicitação de urgência pendente.</EmptyState>
         ) : (
           <UrgenciaList>
-            {urgencias.map(reserva => (
+            {urgencias.map(reserva => {
+              const bloqueiaAceitar = reserva.modalidade_urgencia === 'profissional_escolhe';
+              const mostrarTurno = reserva.status === 'pendente' && reserva.modalidade_urgencia === 'profissional_escolhe';
+              return (
               <UrgenciaCard key={reserva.id}>
                 <InfoGroup>
                   <InfoLabel>Paciente</InfoLabel>
@@ -162,13 +165,20 @@ const Urgencia = () => {
                   <InfoLabel>Contato</InfoLabel>
                   <InfoValue>{reserva.telefone}</InfoValue>
                 </InfoGroup>
-                
-                <InfoGroup>
-                  <InfoLabel>Data Preferencial</InfoLabel>
-                  <InfoValue>{formatarDataExibicao(reserva.dia)}</InfoValue>
-                  <InfoLabel>Horário</InfoLabel>
-                  <InfoValue>{formatarHorarioBrasil(reserva.horario)}</InfoValue>
-                </InfoGroup>
+
+                {mostrarTurno ? (
+                  <InfoGroup>
+                    <InfoLabel>Turno Preferido</InfoLabel>
+                    <InfoValue>{reserva.turno_urgencia || 'Sem preferência'}</InfoValue>
+                  </InfoGroup>
+                ) : (
+                  <InfoGroup>
+                    <InfoLabel>Data Preferencial</InfoLabel>
+                    <InfoValue>{formatarDataExibicao(reserva.dia)}</InfoValue>
+                    <InfoLabel>Horário</InfoLabel>
+                    <InfoValue>{formatarHorarioBrasil(reserva.horario)}</InfoValue>
+                  </InfoGroup>
+                )}
 
                 <InfoGroup style={{flex: 2}}>
                   <InfoLabel>Descrição da Urgência</InfoLabel>
@@ -176,22 +186,27 @@ const Urgencia = () => {
                     {reserva.descricao_urgencia}
                   </DescriptionBox>
                   {reserva.arquivo_urgencia && (
-                    <AttachmentLink href={`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${reserva.arquivo_urgencia}`} target="_blank" rel="noopener noreferrer">
+                    <AttachmentLink href={/^https?:\/\//.test(reserva.arquivo_urgencia) ? reserva.arquivo_urgencia : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${reserva.arquivo_urgencia}`} target="_blank" rel="noopener noreferrer">
                       📎 Visualizar Anexo/Comprovante
                     </AttachmentLink>
                   )}
                 </InfoGroup>
 
                 <Actions>
-                  <AcceptButton onClick={() => handleAccept(reserva.id)}>Aceitar</AcceptButton>
-                  <EditButton onClick={() => openEditModal(reserva)}>Ajustar</EditButton>
+                  {!bloqueiaAceitar && (
+                    <AcceptButton onClick={() => handleAccept(reserva.id)}>Aceitar</AcceptButton>
+                  )}
+                  <EditButton onClick={() => openEditModal(reserva)}>
+                    {bloqueiaAceitar ? 'Propor horário' : 'Ajustar'}
+                  </EditButton>
                   <DenyButton onClick={() => {
                     setDenyingId(reserva.id);
                     setShowDenyModal(true);
                   }}>Negar</DenyButton>
                 </Actions>
               </UrgenciaCard>
-            ))}
+              );
+            })}
           </UrgenciaList>
         )}
       </Content>

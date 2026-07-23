@@ -568,7 +568,7 @@ const HomeView = ({ reservas, reservasPorData, formatarHorarioBrasil, formatarDa
     const d = p.length === 3 ? new Date(+p[0], +p[1] - 1, +p[2]) : new Date(raw);
     d.setHours(0, 0, 0, 0); return d >= hoje;
   })());
-  const urgentes = reservas.filter(r => r.is_urgente);
+  const urgentes = reservas.filter(r => r.is_urgente && (r.status === 'pendente' || r.status === 'aguardando_confirmacao_paciente'));
   const hojeConfirmadas = (reservasPorData[hojeKey] || []).filter(r => r.status === 'confirmado');
 
   const statCards = [

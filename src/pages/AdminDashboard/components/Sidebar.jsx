@@ -55,7 +55,7 @@ const Sidebar = ({ user, av, initials, activeScreen, irPara, navigate, logout, s
     { key: 'vagas',        icon: <Unlock size={16} />,        label: 'Vagas',        badge: vagasCount || null, badgeColor: '#7C3AED' },
     { key: 'historico',    icon: <Clock size={16} />,         label: 'Histórico' },
     { key: 'mapa',         icon: <MapPin size={16} />,        label: 'Editar Mapa' },
-    { key: 'informacoes',  icon: <User size={16} />,          label: 'Informações' },
+    { key: 'informacoes',  icon: <User size={16} />,          label: 'Perfil' },
   ];
 
   return (
