@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, FileText, Search, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Download, FileText, Search, X } from 'lucide-react';
 import styled from 'styled-components';
 
 const PageLayout = styled.div`
@@ -72,6 +72,12 @@ const formatarTitulo = (chave) => {
     }).join(' ');
 };
 
+const isArquivoUrl = (v) =>
+  typeof v === 'string' && (/^\/uploads\//.test(v.trim()) || /^https?:\/\/.*\/uploads\//.test(v.trim()));
+
+const getArquivoUrl = (v) =>
+  /^https?:\/\//.test(v) ? v : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${v}`;
+
 const formatarValor = (v) => {
   if (v === null || v === undefined || v === '') return '—';
   if (typeof v === 'boolean') return v ? 'Sim' : 'Não';
@@ -108,7 +114,18 @@ const RenderConteudo = ({ valor, path = 'root' }) => {
               ) : (
                 <div style={{ display: 'flex', gap: '8px', fontSize: '13px' }}>
                   <span style={{ fontWeight: '600', color: '#555', minWidth: '160px', flexShrink: 0 }}>{formatarTitulo(k)}:</span>
-                  <span style={{ color: '#1a1a1a' }}>{formatarValor(v)}</span>
+                  {isArquivoUrl(v) ? (
+                    <a
+                      href={getArquivoUrl(v)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', color: '#1B4D3E', fontWeight: '600', textDecoration: 'none' }}
+                    >
+                      <Download size={13} /> Ver / baixar arquivo
+                    </a>
+                  ) : (
+                    <span style={{ color: '#1a1a1a' }}>{formatarValor(v)}</span>
+                  )}
                 </div>
               )}
             </div>
