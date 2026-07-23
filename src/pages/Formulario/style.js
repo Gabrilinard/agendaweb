@@ -226,6 +226,27 @@ export const CheckboxLabel = styled.label`
   }
 `;
 
+export const AttachmentBox = styled.div`
+  border: 1.5px dashed ${BD};
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  cursor: pointer;
+  background: white;
+  transition: border-color 0.15s;
+
+  &:hover {
+    border-color: ${GA};
+  }
+`;
+
+export const AttachmentHint = styled.p`
+  color: #8a938e;
+  font-size: 12px;
+  margin: 4px 0 0;
+  font-family: 'Figtree', sans-serif;
+`;
+
 export const Actions = styled.div`
   display: flex;
   gap: 12px;

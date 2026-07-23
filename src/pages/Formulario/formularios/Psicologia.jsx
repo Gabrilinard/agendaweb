@@ -1,11 +1,13 @@
 import { createFormulario, createReserva } from '../api';
-import { Brain, FileText, Heart, MessageCircle, Pill, Send, Shield, Users } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { Brain, FileText, Heart, MessageCircle, Paperclip, Pill, Send, Shield, Users } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useNotification } from '../../../contexts/NotificationContext';
 import {
   Actions,
+  AttachmentBox,
+  AttachmentHint,
   Button,
   Field,
   Grid,
@@ -65,7 +67,18 @@ const Psicologia = ({ nomeProfissional, reservaIds, pendingReservas }) => {
     observacoes: '',
   });
 
+  const [examesArquivo, setExamesArquivo] = useState(null);
+  const fileInputRef = useRef();
+
   const updateField = (key) => (e) => setForm((prev) => ({ ...prev, [key]: e.target.value }));
+
+  const handleFileClick = () => fileInputRef.current?.click();
+
+  const handleFileDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) setExamesArquivo(file);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -162,13 +175,24 @@ const Psicologia = ({ nomeProfissional, reservaIds, pendingReservas }) => {
         createdAt: new Date().toISOString(),
       };
 
-      await createFormulario({
-        reservaIds: idsParaUsar,
-        tipoFormulario: 'psicologia',
-        tipoAtendimento: 'psicologia',
-        usuarioId: user.id,
-        conteudo: payload,
-      });
+      if (examesArquivo) {
+        const formData = new FormData();
+        formData.append('reservaIds', JSON.stringify(idsParaUsar));
+        formData.append('tipoFormulario', 'psicologia');
+        formData.append('tipoAtendimento', 'psicologia');
+        formData.append('usuarioId', user.id);
+        formData.append('conteudo', JSON.stringify(payload));
+        formData.append('exame_anexo', examesArquivo);
+        await createFormulario(formData);
+      } else {
+        await createFormulario({
+          reservaIds: idsParaUsar,
+          tipoFormulario: 'psicologia',
+          tipoAtendimento: 'psicologia',
+          usuarioId: user.id,
+          conteudo: payload,
+        });
+      }
 
       success('Formulário enviado com sucesso!');
       navigate('/minhas-consultas');
@@ -464,6 +488,27 @@ const Psicologia = ({ nomeProfissional, reservaIds, pendingReservas }) => {
             value={form.observacoes}
             onChange={updateField('observacoes')}
             placeholder="Opcional"
+          />
+        </Field>
+        <Field style={{ marginTop: 12 }}>
+          <Label>Anexar exame ou laudo recente (se tiver)</Label>
+          <AttachmentBox
+            onClick={handleFileClick}
+            onDrop={handleFileDrop}
+            onDragOver={(e) => e.preventDefault()}
+          >
+            <Paperclip size={16} style={{ marginBottom: 4 }} />
+            <div style={{ fontSize: 13, fontWeight: 500, color: '#1a1a1a' }}>
+              {examesArquivo ? examesArquivo.name : 'Clique para anexar ou arraste um arquivo'}
+            </div>
+            <AttachmentHint>PNG, JPG ou PDF (opcional)</AttachmentHint>
+          </AttachmentBox>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,.pdf"
+            onChange={(e) => setExamesArquivo(e.target.files[0])}
+            style={{ display: 'none' }}
           />
         </Field>
       </SectionBlock>

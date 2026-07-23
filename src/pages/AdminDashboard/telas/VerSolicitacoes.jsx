@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileText, Search, X } from 'lucide-react';
 import styled from 'styled-components';
 
 const PageLayout = styled.div`
@@ -343,6 +343,9 @@ const VerSolicitacoes = ({
                     </button>
                     <button onClick={() => onEditarReserva(r)} style={{ padding: '6px 14px', borderRadius: '7px', fontSize: '12px', fontWeight: '500', cursor: 'pointer', background: '#F7F7F4', color: '#555', border: '1px solid #E0DFD9', fontFamily: 'Figtree, sans-serif' }}>
                       Editar
+                    </button>
+                    <button onClick={() => selecionarReservaParaFormulario(r)} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '6px 14px', borderRadius: '7px', fontSize: '12px', fontWeight: '500', cursor: 'pointer', background: '#F7F7F4', color: '#555', border: '1px solid #E0DFD9', fontFamily: 'Figtree, sans-serif' }}>
+                      <FileText size={12} /> Ver formulário
                     </button>
                     <button onClick={() => removerReserva(r.id)} style={{ padding: '6px 14px', borderRadius: '7px', fontSize: '12px', fontWeight: '500', cursor: 'pointer', background: 'none', color: '#EF4444', border: '1px solid #FECACA', fontFamily: 'Figtree, sans-serif' }}>
                       Remover

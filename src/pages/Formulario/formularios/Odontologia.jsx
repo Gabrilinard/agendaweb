@@ -1,11 +1,13 @@
 import { createFormulario, createReserva } from '../api';
-import { AlertCircle, ClipboardList, Send, Smile } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { AlertCircle, ClipboardList, Paperclip, Send, Smile } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useNotification } from '../../../contexts/NotificationContext';
 import {
   Actions,
+  AttachmentBox,
+  AttachmentHint,
   Button,
   Field,
   Grid,
@@ -47,8 +49,19 @@ const Odontologia = ({ nomeProfissional, reservaIds, pendingReservas }) => {
     anticoagulantesDetalhe: '',
   });
 
+  const [examesArquivo, setExamesArquivo] = useState(null);
+  const fileInputRef = useRef();
+
   const updateField = (key) => (e) => {
     setForm((prev) => ({ ...prev, [key]: e.target.value }));
+  };
+
+  const handleFileClick = () => fileInputRef.current?.click();
+
+  const handleFileDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) setExamesArquivo(file);
   };
 
   const handleSubmit = async (e) => {
@@ -111,13 +124,23 @@ const Odontologia = ({ nomeProfissional, reservaIds, pendingReservas }) => {
         createdAt: new Date().toISOString(),
       };
 
-      await createFormulario({
-        reservaIds: idsParaUsar,
-        tipoFormulario: 'dentista',
-        tipoAtendimento: null,
-        usuarioId: user.id,
-        conteudo: payload,
-      });
+      if (examesArquivo) {
+        const formData = new FormData();
+        formData.append('reservaIds', JSON.stringify(idsParaUsar));
+        formData.append('tipoFormulario', 'dentista');
+        formData.append('usuarioId', user.id);
+        formData.append('conteudo', JSON.stringify(payload));
+        formData.append('exame_anexo', examesArquivo);
+        await createFormulario(formData);
+      } else {
+        await createFormulario({
+          reservaIds: idsParaUsar,
+          tipoFormulario: 'dentista',
+          tipoAtendimento: null,
+          usuarioId: user.id,
+          conteudo: payload,
+        });
+      }
 
       success('Formulário odontológico enviado com sucesso!');
       navigate('/minhas-consultas');
@@ -269,6 +292,27 @@ const Odontologia = ({ nomeProfissional, reservaIds, pendingReservas }) => {
               onChange={updateField('anticoagulantesDetalhe')}
               placeholder="Opcional"
               disabled={form.anticoagulantes !== 'sim'}
+            />
+          </Field>
+          <Field style={{ gridColumn: '1 / -1' }}>
+            <Label>Anexar exame recente (se tiver)</Label>
+            <AttachmentBox
+              onClick={handleFileClick}
+              onDrop={handleFileDrop}
+              onDragOver={(e) => e.preventDefault()}
+            >
+              <Paperclip size={16} style={{ marginBottom: 4 }} />
+              <div style={{ fontSize: 13, fontWeight: 500, color: '#1a1a1a' }}>
+                {examesArquivo ? examesArquivo.name : 'Clique para anexar ou arraste um arquivo'}
+              </div>
+              <AttachmentHint>PNG, JPG ou PDF (opcional)</AttachmentHint>
+            </AttachmentBox>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.pdf"
+              onChange={(e) => setExamesArquivo(e.target.files[0])}
+              style={{ display: 'none' }}
             />
           </Field>
         </Grid>
