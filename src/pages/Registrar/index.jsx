@@ -201,10 +201,22 @@ const Registro = () => {
                 style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '4px', width: '100%', minHeight: '100px', fontFamily: 'Figtree, sans-serif', resize: 'vertical' }} />
 
               <label style={{ display: 'block', marginBottom: '2px', textAlign: 'left', fontWeight: 'bold' }}>Público Atendido:</label>
-              <Select value={r.publicoAtendido} onChange={e => r.setPublicoAtendido(e.target.value)} required>
-                <option value="">Selecione...</option>
-                {['Adultos','Crianças','Idosos','Adultos e Crianças','Adultos e Idosos','Crianças e Idosos','Todos'].map(v => <option key={v} value={v}>{v}</option>)}
-              </Select>
+              <RadioGroup style={{ flexWrap: 'wrap', justifyContent: 'flex-start' }}>
+                {['Crianças', 'Adolescentes', 'Adultos', 'Idosos', 'Gestantes'].map(v => {
+                  const selecionados = r.publicoAtendido ? r.publicoAtendido.split(',').map(s => s.trim()).filter(Boolean) : [];
+                  const checked = selecionados.includes(v);
+                  const toggle = () => {
+                    const next = checked ? selecionados.filter(x => x !== v) : [...selecionados, v];
+                    r.setPublicoAtendido(next.join(','));
+                  };
+                  return (
+                    <RadioLabel key={v}>
+                      <RadioInput type="checkbox" checked={checked} onChange={toggle} />
+                      {v}
+                    </RadioLabel>
+                  );
+                })}
+              </RadioGroup>
 
               <label style={{ display: 'block', marginBottom: '2px', textAlign: 'left', fontWeight: 'bold' }}>Modalidade:</label>
               <Select value={r.modalidade} onChange={e => r.setModalidade(e.target.value)} required>

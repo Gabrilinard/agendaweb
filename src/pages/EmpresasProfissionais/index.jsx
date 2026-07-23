@@ -397,13 +397,7 @@ const EmptyMsg = styled.div`
   font-size: 0.95rem;
 `;
 
-const PUBLICO_OPTIONS = [
-  'Crianças (0-14)',
-  'Adolescentes (15-17)',
-  'Adultos e idosos',
-  'Gestantes',
-  'Todos',
-];
+const PUBLICO_OPTIONS = ['Crianças', 'Adolescentes', 'Adultos', 'Idosos', 'Gestantes'];
 
 const EmpresasProfissionais = () => {
   const navigate = useNavigate();
@@ -441,11 +435,17 @@ const EmpresasProfissionais = () => {
       p.nomeCompleto?.toLowerCase().includes(busca.toLowerCase()) ||
       p.tipoProfissional?.toLowerCase().includes(busca.toLowerCase());
 
+    const modalidadesProfissional = p.modalidade
+      ? p.modalidade.split(',').map(s => s.trim().toLowerCase())
+      : [];
     const matchModal = !filtroModalidade ||
-      p.modalidade?.toLowerCase().includes(filtroModalidade.toLowerCase());
+      modalidadesProfissional.includes(filtroModalidade.toLowerCase());
 
+    const publicosProfissional = p.publicoAtendido
+      ? p.publicoAtendido.split(',').map(s => s.trim().toLowerCase())
+      : [];
     const matchPublico = !filtroPublico ||
-      p.publicoAtendido?.toLowerCase().includes(filtroPublico.toLowerCase());
+      publicosProfissional.includes(filtroPublico.toLowerCase());
 
     const media = Number(p.mediaAvaliacao) || 0;
     const matchAvaliacao = !filtroAvaliacao || media >= filtroAvaliacao;
@@ -504,6 +504,7 @@ const EmpresasProfissionais = () => {
               <option value="">Todas as modalidades</option>
               <option value="online">Online</option>
               <option value="presencial">Presencial</option>
+              <option value="domiciliar">Domiciliar</option>
             </StyledSelect>
             <SelectArrow><ChevronDown size={15} /></SelectArrow>
           </SelectWrap>
@@ -597,9 +598,9 @@ const EmpresasProfissionais = () => {
 
                     <TagsRow>
                       {modalTags.map(t => <Tag key={t.label} $variant={t.variant}>{t.label}</Tag>)}
-                      {p.publicoAtendido && (
-                        <Tag $variant="blue">{p.publicoAtendido}</Tag>
-                      )}
+                      {p.publicoAtendido && p.publicoAtendido.split(',').map(s => s.trim()).filter(Boolean).map(pub => (
+                        <Tag key={pub} $variant="blue">{pub}</Tag>
+                      ))}
                     </TagsRow>
                   </CardBody>
 

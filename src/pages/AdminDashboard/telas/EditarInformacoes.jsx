@@ -1,9 +1,9 @@
-import { updateInformacoes } from '../api';
 import { MapPin, MonitorPlay, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import styled from 'styled-components';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { ESPECIALIDADES_MEDICAS } from '../../Registrar/utils/constantes';
-import styled from 'styled-components';
+import { updateInformacoes } from '../api';
 
 const StickyFooter = styled.div`
   position: fixed;
@@ -50,8 +50,13 @@ const labelS = { fontSize: '13px', fontWeight: '500', color: '#555', display: 'b
 
 const PUBLICOS = ['Crianças', 'Adolescentes', 'Adultos', 'Idosos', 'Gestantes'];
 
-// Para as demais categorias, tipoProfissional guarda o slug definido no cadastro —
-// não deve ser sobrescrito por um rótulo diferente aqui.
+const parsePublico = (raw) => {
+  if (!raw) return [];
+  const txt = raw.toLowerCase();
+  if (txt.includes('todos')) return [...PUBLICOS];
+  return PUBLICOS.filter(p => txt.includes(p.toLowerCase()));
+};
+
 const CATEGORIAS_LABEL = {
   dentista: 'Dentista',
   nutricionista: 'Nutricionista',
@@ -119,14 +124,9 @@ const EditarInformacoes = ({
   const [registro, setRegistro] = useState(user?.registroProfissional || '');
   const [sobre, setSobre] = useState(editDescricao || '');
   const [aceitarEmergentes, setAceitarEmergentes] = useState(true);
+  
+  const [publicoSel, setPublicoSel] = useState(() => parsePublico(editPublicoAtendido));
 
-  // Público atendido (multi-toggle)
-  const [publicoSel, setPublicoSel] = useState(() => {
-    if (!editPublicoAtendido) return [];
-    return editPublicoAtendido.split(',').map(s => s.trim()).filter(Boolean);
-  });
-
-  // Modalidades
   const [modalidades, setModalidades] = useState(() => {
     const mods = String(editModalidade || '').split(',').map(s => s.trim());
     return {

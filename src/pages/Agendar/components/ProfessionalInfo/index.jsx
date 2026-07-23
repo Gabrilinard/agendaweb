@@ -105,6 +105,14 @@ const ProfessionalInfo = ({ profissionalInfo, location, endereco }) => {
     return String(raw).split(',').map(s => s.trim()).filter(Boolean);
   })();
 
+  const publicos = (() => {
+    const raw = profissionalInfo.publicoAtendido;
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw.filter(Boolean);
+    try { const parsed = JSON.parse(raw); if (Array.isArray(parsed)) return parsed.filter(Boolean); } catch {}
+    return String(raw).split(',').map(s => s.trim()).filter(Boolean);
+  })();
+
   return (
     <CardOuter>
       <div style={{
@@ -184,6 +192,25 @@ const ProfessionalInfo = ({ profissionalInfo, location, endereco }) => {
           )}
         </div>
       </div>
+
+      {/* Público atendido */}
+      {publicos.length > 0 && (
+        <div style={{ background: '#F7F7F4', borderRadius: '10px', padding: '12px', marginBottom: '4px' }}>
+          <p style={{ ...sectionLabel, textAlign: 'center' }}>Público atendido</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', justifyContent: 'center' }}>
+            {publicos.map((pub, i) => (
+              <span key={i} style={{
+                display: 'inline-block', background: 'white',
+                border: '1px solid #BFDBFE', color: '#1E40AF',
+                borderRadius: '6px', padding: '4px 10px',
+                fontSize: '13px', fontWeight: '500', width: 'fit-content',
+              }}>
+                {pub}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Sobre */}
       {profissionalInfo.descricao && (
