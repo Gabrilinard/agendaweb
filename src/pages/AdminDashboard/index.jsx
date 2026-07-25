@@ -210,6 +210,9 @@ const AdminDashboard = () => {
             editPublicoAtendido={informacoes.editPublicoAtendido} setEditPublicoAtendido={informacoes.setEditPublicoAtendido}
             editModalidade={informacoes.editModalidade} setEditModalidade={informacoes.setEditModalidade}
             editValorConsulta={informacoes.editValorConsulta} setEditValorConsulta={informacoes.setEditValorConsulta}
+            editValorPresencial={informacoes.editValorPresencial} setEditValorPresencial={informacoes.setEditValorPresencial}
+            editValorOnline={informacoes.editValorOnline} setEditValorOnline={informacoes.setEditValorOnline}
+            editValorDomiciliar={informacoes.editValorDomiciliar} setEditValorDomiciliar={informacoes.setEditValorDomiciliar}
             diasSemana={informacoes.diasSemana} editDiasAtendimento={informacoes.editDiasAtendimento}
             editHorariosAtendimento={informacoes.editHorariosAtendimento}
             handleEditDiaChange={informacoes.handleEditDiaChange} handleEditHorarioChange={informacoes.handleEditHorarioChange}

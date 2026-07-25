@@ -55,6 +55,9 @@ export const useProfissional = (nomeProfissional) => {
             cidade: profData.cidade,
             ufRegiao: profData.ufRegiao,
             valorConsulta: profData.valorConsulta,
+            valorPresencial: profData.valorPresencial,
+            valorOnline: profData.valorOnline,
+            valorDomiciliar: profData.valorDomiciliar,
             diasAtendimento: diasAtendimento,
             horariosAtendimento: horariosAtendimento
           });

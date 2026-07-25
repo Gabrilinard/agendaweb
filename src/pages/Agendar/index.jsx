@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Footer from '../../components/Footer';
 import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNotification } from '../../contexts/NotificationContext';
 import { formatarDataBrasil } from './utils/formatters';
 import EmergencyModal from './components/EmergencyModal';
 import ProfessionalInfo from './components/ProfessionalInfo';
@@ -22,6 +23,7 @@ import {
 
 const Agendar = () => {
     const { user } = useAuth();
+    const { warning } = useNotification();
     const navigate = useNavigate();
     const location = useLocation();
     const { nome: nomeProfissional, tipo, categoria } = location.state || {};
@@ -40,6 +42,9 @@ const Agendar = () => {
         horario,
         setHorario,
         horariosDisponiveis,
+        modalidadeSelecionada,
+        setModalidadeSelecionada,
+        getValorModalidade,
         isDateAvailable,
         adicionarDiaReserva,
         enviarReservasEmLote,
@@ -70,10 +75,12 @@ const Agendar = () => {
         setUrgenciaDia,
         urgenciaTurno,
         urgenciaDias,
+        urgenciaConsultaModalidade,
+        setUrgenciaConsultaModalidade,
         toggleTurno,
         toggleDia,
         handleEmergencySubmit
-    } = useEmergencia(user, nomeProfissional);
+    } = useEmergencia(user, nomeProfissional, profissionalInfo);
 
     const normalizarTexto = (value) => (
         String(value || '')
@@ -149,6 +156,11 @@ const Agendar = () => {
     };
 
     const handleSolicitarConsulta = async () => {
+        if (!modalidadeSelecionada) {
+            warning('Por favor, escolha a modalidade da consulta.');
+            return;
+        }
+
         if (TIPOS_COM_FORMULARIO.has(tipoProfissional)) {
             const pendingReservas = reservasTemporarias.length > 0
                 ? reservasTemporarias
@@ -160,8 +172,13 @@ const Agendar = () => {
                 return;
             }
 
+            const valorModalidade = getValorModalidade(modalidadeSelecionada);
+            const pendingReservasComModalidade = pendingReservas.map(r => ({
+                ...r, modalidade: modalidadeSelecionada, valor: valorModalidade,
+            }));
+
             navigate('/Formulario', {
-                state: { nomeProfissional, tipoProfissional, pendingReservas }
+                state: { nomeProfissional, tipoProfissional, pendingReservas: pendingReservasComModalidade }
             });
         } else {
             await enviarReservasEmLote();
@@ -203,11 +220,14 @@ const Agendar = () => {
                         <ReservationForm
                             user={user}
                             nomeProfissional={nomeProfissional}
+                            profissionalInfo={profissionalInfo}
                             dataSelecionada={dataSelecionada}
                             setDataSelecionada={setDataSelecionada}
                             horario={horario}
                             setHorario={setHorario}
                             horariosDisponiveis={horariosDisponiveis}
+                            modalidadeSelecionada={modalidadeSelecionada}
+                            setModalidadeSelecionada={setModalidadeSelecionada}
                             isDateAvailable={isDateAvailable}
                             adicionarDiaReserva={() => adicionarDiaReserva(reservas)}
                             enviarReservas={handleSolicitarConsulta}
@@ -230,6 +250,9 @@ const Agendar = () => {
                 onClose={() => setShowEmergencyModal(false)}
                 onSubmit={handleEmergencySubmit}
                 user={user}
+                profissionalInfo={profissionalInfo}
+                urgenciaConsultaModalidade={urgenciaConsultaModalidade}
+                setUrgenciaConsultaModalidade={setUrgenciaConsultaModalidade}
                 urgenciaDescricao={urgenciaDescricao}
                 setUrgenciaDescricao={setUrgenciaDescricao}
                 urgenciaHorario={urgenciaHorario}

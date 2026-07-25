@@ -309,6 +309,11 @@ const VerUrgencias = ({
                       <span style={{ background: '#FFF3EE', color: '#E8611A', borderRadius: '6px', padding: '3px 8px', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <Zap size={10} /> Urgente
                       </span>
+                      {r.modalidade && (
+                        <span style={{ background: '#E8F5EF', color: '#1B4D3E', borderRadius: '6px', padding: '3px 8px', fontSize: '11px', fontWeight: '700' }}>
+                          {r.modalidade.charAt(0).toUpperCase()}{r.modalidade.slice(1)}
+                        </span>
+                      )}
                       {r.status === 'aguardando_confirmacao_paciente' && (
                         <span style={{ background: '#E8F5EF', color: '#1B4D3E', borderRadius: '6px', padding: '3px 8px', fontSize: '11px', fontWeight: '700' }}>
                           Aguardando paciente
@@ -390,6 +395,11 @@ const VerUrgencias = ({
                       <span style={{ background: '#FFF3EE', color: '#E8611A', borderRadius: '6px', padding: '3px 10px', fontSize: '12px', fontWeight: '700', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                         <Zap size={11} /> Urgente
                       </span>
+                      {detalhes.modalidade && (
+                        <span style={{ background: '#E8F5EF', color: '#1B4D3E', borderRadius: '6px', padding: '3px 10px', fontSize: '12px', fontWeight: '700' }}>
+                          {detalhes.modalidade.charAt(0).toUpperCase()}{detalhes.modalidade.slice(1)}
+                        </span>
+                      )}
                       {detalhes.status === 'aguardando_confirmacao_paciente' && (
                         <span style={{ background: '#E8F5EF', color: '#1B4D3E', borderRadius: '6px', padding: '3px 10px', fontSize: '12px', fontWeight: '700' }}>
                           Aguardando confirmação do paciente
@@ -437,6 +447,25 @@ const VerUrgencias = ({
                       {detalhes.horario && (
                         <span style={{ background: '#F7F7F4', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', color: '#333', fontWeight: '500', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                           <Clock size={13} color="#888" /> {formatarHorarioBrasil(detalhes.horario)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Modalidade e valor */}
+                {(detalhes.modalidade || detalhes.valor) && (
+                  <div>
+                    <p style={{ margin: '0 0 8px', fontSize: '11px', fontWeight: '700', color: '#888', textTransform: 'uppercase', letterSpacing: '0.6px' }}>Modalidade solicitada</p>
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                      {detalhes.modalidade && (
+                        <span style={{ background: '#E8F5EF', color: '#1B4D3E', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', fontWeight: '600' }}>
+                          {detalhes.modalidade.charAt(0).toUpperCase()}{detalhes.modalidade.slice(1)}
+                        </span>
+                      )}
+                      {detalhes.valor && (
+                        <span style={{ background: '#F7F7F4', borderRadius: '8px', padding: '8px 14px', fontSize: '13px', color: '#333', fontWeight: '500' }}>
+                          {detalhes.valor === 'A negociar' ? 'A negociar' : `R$ ${Number(detalhes.valor).toFixed(0)}`}
                         </span>
                       )}
                     </div>

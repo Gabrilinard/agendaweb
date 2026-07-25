@@ -108,6 +108,7 @@ const EditarInformacoes = ({
   editPublicoAtendido, setEditPublicoAtendido,
   editModalidade, setEditModalidade,
   editValorConsulta, setEditValorConsulta,
+  editValorPresencial, editValorOnline, editValorDomiciliar,
   diasSemana, editDiasAtendimento, editHorariosAtendimento,
   handleEditDiaChange, handleEditHorarioChange, handleEditRemoveHorario, handleEditAddHorario,
   handleEditarInformacoes,
@@ -130,9 +131,9 @@ const EditarInformacoes = ({
   const [modalidades, setModalidades] = useState(() => {
     const mods = String(editModalidade || '').split(',').map(s => s.trim());
     return {
-      presencial: { active: mods.includes('presencial'), valor: '', duracao: '30' },
-      online:     { active: mods.includes('online'),     valor: '', duracao: '30' },
-      domiciliar: { active: mods.includes('domiciliar'), valor: '', duracao: '60' },
+      presencial: { active: mods.includes('presencial'), valor: editValorPresencial || '', duracao: '30' },
+      online:     { active: mods.includes('online'),     valor: editValorOnline || '',     duracao: '30' },
+      domiciliar: { active: mods.includes('domiciliar'), valor: editValorDomiciliar || '', duracao: '60' },
     };
   });
 
@@ -156,7 +157,10 @@ const EditarInformacoes = ({
   const handleSalvar = async () => {
     const activeMods = Object.entries(modalidades).filter(([, v]) => v.active).map(([k]) => k);
     const modalStr = activeMods.join(',');
-    const valorStr = modalidades.presencial.valor || modalidades.online.valor || editValorConsulta || '';
+    const valorPresencial = modalidades.presencial.active ? modalidades.presencial.valor : '';
+    const valorOnline = modalidades.online.active ? modalidades.online.valor : '';
+    const valorDomiciliar = modalidades.domiciliar.active ? modalidades.domiciliar.valor : '';
+    const valorStr = valorPresencial || valorOnline || valorDomiciliar || editValorConsulta || '';
 
     setEditDescricao(sobre);
     setEditPublicoAtendido(publicoSel.join(','));
@@ -170,6 +174,7 @@ const EditarInformacoes = ({
         publicoAtendido: publicoSel.join(','),
         modalidade: modalStr,
         valorConsulta: valorStr,
+        valorPresencial, valorOnline, valorDomiciliar,
         diasAtendimento: editDiasAtendimento,
         horariosAtendimento: editHorariosAtendimento,
       });
@@ -315,15 +320,30 @@ const EditarInformacoes = ({
                   <ModalIcon type={key} active={mod.active} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ margin: 0, fontWeight: '600', fontSize: '14px', color: '#1a1a1a' }}>{MOD_LABELS[key]}</p>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
-                      <span style={{ fontSize: '12px', color: '#888' }}>R$</span>
-                      <input
-                        type="number" min="0"
-                        value={mod.valor}
-                        onChange={e => setModValor(key, e.target.value)}
-                        placeholder="—"
-                        style={{ width: '64px', padding: '3px 6px', border: '1px solid #E0DFD9', borderRadius: '5px', fontSize: '12px', fontFamily: 'Figtree, sans-serif', background: 'white' }}
-                      />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
+                      {mod.valor === 'A negociar' ? (
+                        <span style={{ fontSize: '12px', color: '#888', fontStyle: 'italic' }}>A negociar</span>
+                      ) : (
+                        <>
+                          <span style={{ fontSize: '12px', color: '#888' }}>R$</span>
+                          <input
+                            type="number" min="0"
+                            value={mod.valor}
+                            onChange={e => setModValor(key, e.target.value)}
+                            placeholder="—"
+                            style={{ width: '64px', padding: '3px 6px', border: '1px solid #E0DFD9', borderRadius: '5px', fontSize: '12px', fontFamily: 'Figtree, sans-serif', background: 'white' }}
+                          />
+                        </>
+                      )}
+                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: '#888', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={mod.valor === 'A negociar'}
+                          onChange={e => setModValor(key, e.target.checked ? 'A negociar' : '')}
+                          style={{ cursor: 'pointer' }}
+                        />
+                        negociar
+                      </label>
                       <span style={{ fontSize: '12px', color: '#888' }}>· {mod.duracao}min</span>
                     </div>
                   </div>

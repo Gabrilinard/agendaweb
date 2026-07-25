@@ -331,9 +331,15 @@ const VerSolicitacoes = ({
                       <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#888' }}>
                         {formatarDataExibicao(r.dia)} às {formatarHorarioBrasil(r.horario)}
                         {r.telefone ? ` · ${r.telefone}` : ''}
+                        {r.valor ? ` · ${r.valor === 'A negociar' ? 'A negociar' : `R$ ${Number(r.valor).toFixed(0)}`}` : ''}
                       </p>
                     </div>
                     <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0, flexWrap: 'wrap' }}>
+                      {r.modalidade && (
+                        <span style={{ background: '#E8F5EF', color: '#1B4D3E', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: '700' }}>
+                          {r.modalidade.charAt(0).toUpperCase()}{r.modalidade.slice(1)}
+                        </span>
+                      )}
                       {isUrgente && (
                         <span style={{ background: '#FFF0E6', color: '#C2410C', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: '700' }}>
                           ⚡ Emergente

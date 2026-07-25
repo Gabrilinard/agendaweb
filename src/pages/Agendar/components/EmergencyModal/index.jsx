@@ -61,10 +61,22 @@ const DIAS = [
   { key: 'sab', label: 'Sáb' },
 ];
 
+const MOD_LABELS = { presencial: 'Presencial', online: 'Online', domiciliar: 'Domiciliar' };
+
+const parseModalidades = (raw) => {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.filter(Boolean);
+  try { const parsed = JSON.parse(raw); if (Array.isArray(parsed)) return parsed.filter(Boolean); } catch {}
+  return String(raw).split(',').map(s => s.trim()).filter(Boolean);
+};
+
 const EmergencyModal = ({
   show,
   onClose,
   onSubmit,
+  profissionalInfo,
+  urgenciaConsultaModalidade,
+  setUrgenciaConsultaModalidade,
   urgenciaDescricao,
   setUrgenciaDescricao,
   urgenciaArquivo,
@@ -93,6 +105,17 @@ const EmergencyModal = ({
   };
 
   const pacienteEscolhe = urgenciaModalidade === 'paciente_escolhe';
+
+  const modalidadesDisponiveis = parseModalidades(profissionalInfo?.modalidade);
+  const getValor = (key) => {
+    const raw = key === 'presencial' ? profissionalInfo?.valorPresencial
+      : key === 'online' ? profissionalInfo?.valorOnline
+      : key === 'domiciliar' ? profissionalInfo?.valorDomiciliar
+      : null;
+    const valor = raw || profissionalInfo?.valorConsulta;
+    if (!valor || valor === 'A negociar' || Number(valor) <= 0) return 'A negociar';
+    return `R$ ${Number(valor).toFixed(0)}`;
+  };
 
   return (
     <div style={{
@@ -145,6 +168,28 @@ const EmergencyModal = ({
 
         {/* Body */}
         <form onSubmit={onSubmit} style={{ padding: '24px' }}>
+
+          {/* Modalidade */}
+          {modalidadesDisponiveis.length > 0 && (
+            <div style={{ marginBottom: '20px' }}>
+              <p style={{ fontWeight: '600', fontSize: '14px', margin: '0 0 10px', color: '#1a1a1a', fontFamily: 'Figtree, sans-serif' }}>
+                Modalidade da consulta <span style={{ color: '#E8611A' }}>*</span>
+              </p>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {modalidadesDisponiveis.map((mod, i) => {
+                  const key = String(mod).trim().toLowerCase();
+                  return (
+                    <Chip
+                      key={i}
+                      label={`${MOD_LABELS[key] || key} · ${getValor(key)}`}
+                      selected={urgenciaConsultaModalidade === key}
+                      onClick={() => setUrgenciaConsultaModalidade(key)}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Scheduling options */}
           <p style={{ fontWeight: '600', fontSize: '14px', margin: '0 0 10px', color: '#1a1a1a', fontFamily: 'Figtree, sans-serif' }}>

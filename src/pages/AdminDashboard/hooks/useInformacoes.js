@@ -23,6 +23,9 @@ const useInformacoes = (user, { success, warning, showError }) => {
   const [editPublicoAtendido, setEditPublicoAtendido] = useState('');
   const [editModalidade, setEditModalidade] = useState('');
   const [editValorConsulta, setEditValorConsulta] = useState('');
+  const [editValorPresencial, setEditValorPresencial] = useState('');
+  const [editValorOnline, setEditValorOnline] = useState('');
+  const [editValorDomiciliar, setEditValorDomiciliar] = useState('');
   const [editDiasAtendimento, setEditDiasAtendimento] = useState([]);
   const [editHorariosAtendimento, setEditHorariosAtendimento] = useState({});
 
@@ -35,6 +38,9 @@ const useInformacoes = (user, { success, warning, showError }) => {
       setEditPublicoAtendido(data.publicoAtendido || '');
       setEditModalidade(data.modalidade || '');
       setEditValorConsulta(data.valorConsulta || '');
+      setEditValorPresencial(data.valorPresencial || '');
+      setEditValorOnline(data.valorOnline || '');
+      setEditValorDomiciliar(data.valorDomiciliar || '');
     }
     const dias = parseDias(data.diasAtendimento);
     setEditDiasAtendimento(Array.isArray(dias) ? dias : []);
@@ -78,6 +84,7 @@ const useInformacoes = (user, { success, warning, showError }) => {
       await updateInformacoes(editingUserId, {
         descricao: editDescricao, publicoAtendido: editPublicoAtendido,
         modalidade: editModalidade, valorConsulta: editValorConsulta,
+        valorPresencial: editValorPresencial, valorOnline: editValorOnline, valorDomiciliar: editValorDomiciliar,
         diasAtendimento: editDiasAtendimento, horariosAtendimento: editHorariosAtendimento,
       });
       success('Informações salvas!');
@@ -100,6 +107,9 @@ const useInformacoes = (user, { success, warning, showError }) => {
     editPublicoAtendido, setEditPublicoAtendido,
     editModalidade, setEditModalidade,
     editValorConsulta, setEditValorConsulta,
+    editValorPresencial, setEditValorPresencial,
+    editValorOnline, setEditValorOnline,
+    editValorDomiciliar, setEditValorDomiciliar,
     editDiasAtendimento, editHorariosAtendimento,
     diasSemana: DIAS_SEMANA,
     carregarDados, handleEditDiaChange, handleEditAddHorario,

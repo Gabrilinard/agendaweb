@@ -160,38 +160,39 @@ const ProfessionalInfo = ({ profissionalInfo, location, endereco }) => {
 
       <div style={divider} />
 
-      {/* Modalidade + Valor */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '10px', marginBottom: '4px' }}>
-        {modalidades.length > 0 && (
-          <div style={{ background: '#F7F7F4', borderRadius: '10px', padding: '12px' }}>
-            <p style={{ ...sectionLabel, textAlign: 'center' }}>Modalidade</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-              {modalidades.map((mod, i) => (
-                <span key={i} style={{
-                  display: 'inline-block', background: 'white',
-                  border: '1px solid #D1FAE5', color: '#065F46',
-                  borderRadius: '6px', padding: '4px 10px',
-                  fontSize: '13px', fontWeight: '500', width: 'fit-content',
+      {/* Modalidades + Valores separados */}
+      {modalidades.length > 0 && (
+        <div style={{ background: '#F7F7F4', borderRadius: '10px', padding: '12px', marginBottom: '4px' }}>
+          <p style={{ ...sectionLabel, textAlign: 'center' }}>Modalidades e valores</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {modalidades.map((mod, i) => {
+              const key = String(mod).trim().toLowerCase();
+              const valorField = key === 'presencial' ? profissionalInfo.valorPresencial
+                : key === 'online' ? profissionalInfo.valorOnline
+                : key === 'domiciliar' ? profissionalInfo.valorDomiciliar
+                : null;
+              const valor = valorField || profissionalInfo.valorConsulta;
+              const label = key.charAt(0).toUpperCase() + key.slice(1);
+              return (
+                <div key={i} style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  background: 'white', border: '1px solid #D1FAE5', borderRadius: '6px',
+                  padding: '6px 12px',
                 }}>
-                  {mod}
-                </span>
-              ))}
-            </div>
+                  <span style={{ fontSize: '13px', fontWeight: '500', color: '#065F46' }}>{label}</span>
+                  {valor && valor !== 'A negociar' && Number(valor) > 0 ? (
+                    <span style={{ fontSize: '14px', fontWeight: '800', color: '#1a1a1a' }}>
+                      R$ {Number(valor).toFixed(0)}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '12px', fontWeight: '600', color: '#666' }}>A negociar</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        )}
-        <div style={{ background: '#F7F7F4', borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minWidth: '90px' }}>
-          <p style={{ ...sectionLabel, textAlign: 'center' }}>Valor</p>
-          {profissionalInfo.valorConsulta && Number(profissionalInfo.valorConsulta) > 0 ? (
-            <p style={{ fontWeight: '800', fontSize: '22px', color: '#1a1a1a', margin: 0, whiteSpace: 'nowrap' }}>
-              R$ {Number(profissionalInfo.valorConsulta).toFixed(0)}
-            </p>
-          ) : (
-            <p style={{ fontWeight: '600', fontSize: '13px', color: '#666', margin: 0, textAlign: 'center' }}>
-              A negociar
-            </p>
-          )}
         </div>
-      </div>
+      )}
 
       {/* Público atendido */}
       {publicos.length > 0 && (

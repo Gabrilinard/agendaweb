@@ -151,6 +151,7 @@ const Fisioterapia = ({ nomeProfissional, reservaIds, pendingReservas }) => {
               dia: r.dia, horario: r.horario, horarioFinal: r.horarioFinal,
               qntd_pessoa: 1, usuario_id: user.id,
               nomeProfissional: nomeProfissional || null,
+              modalidade: r.modalidade, valor: r.valor,
             })
           )
         );

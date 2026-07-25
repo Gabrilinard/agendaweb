@@ -4,7 +4,7 @@ import { useNotification } from '../../../contexts/NotificationContext';
 import { agendarService } from '../services/api';
 import { formatarDataBrasil } from '../utils/formatters';
 
-export const useEmergencia = (user, nomeProfissional) => {
+export const useEmergencia = (user, nomeProfissional, profissionalInfo) => {
   const { success, error: showError } = useNotification();
   const navigate = useNavigate();
   const [showEmergencyModal, setShowEmergencyModal] = useState(false);
@@ -15,6 +15,15 @@ export const useEmergencia = (user, nomeProfissional) => {
   const [urgenciaDia, setUrgenciaDia] = useState('');
   const [urgenciaTurno, setUrgenciaTurno] = useState([]);
   const [urgenciaDias, setUrgenciaDias] = useState([]);
+  const [urgenciaConsultaModalidade, setUrgenciaConsultaModalidade] = useState('');
+
+  const getValorModalidade = (key) => {
+    if (!profissionalInfo || !key) return '';
+    if (key === 'presencial') return profissionalInfo.valorPresencial || profissionalInfo.valorConsulta || '';
+    if (key === 'online') return profissionalInfo.valorOnline || profissionalInfo.valorConsulta || '';
+    if (key === 'domiciliar') return profissionalInfo.valorDomiciliar || profissionalInfo.valorConsulta || '';
+    return '';
+  };
 
   const toggleItem = (setter, list, item) => {
     setter(list.includes(item) ? list.filter(i => i !== item) : [...list, item]);
@@ -26,6 +35,11 @@ export const useEmergencia = (user, nomeProfissional) => {
 
     if (!urgenciaDescricao) {
       showError('Por favor, descreva o motivo da urgência.');
+      return;
+    }
+
+    if (!urgenciaConsultaModalidade) {
+      showError('Por favor, escolha a modalidade da consulta.');
       return;
     }
 
@@ -74,6 +88,8 @@ export const useEmergencia = (user, nomeProfissional) => {
     formData.append('descricao_urgencia', descricaoFinal);
     formData.append('modalidade_urgencia', urgenciaModalidade);
     if (turnoStr) formData.append('turno_urgencia', turnoStr);
+    formData.append('modalidade', urgenciaConsultaModalidade);
+    formData.append('valor', getValorModalidade(urgenciaConsultaModalidade));
 
     if (urgenciaArquivo) {
       formData.append('arquivo_urgencia', urgenciaArquivo);
@@ -90,6 +106,7 @@ export const useEmergencia = (user, nomeProfissional) => {
       setUrgenciaDia('');
       setUrgenciaTurno([]);
       setUrgenciaDias([]);
+      setUrgenciaConsultaModalidade('');
       navigate('/minhas-consultas');
     } catch (error) {
       console.error('Erro ao enviar emergência:', error);
@@ -112,6 +129,8 @@ export const useEmergencia = (user, nomeProfissional) => {
     setUrgenciaDia,
     urgenciaTurno,
     urgenciaDias,
+    urgenciaConsultaModalidade,
+    setUrgenciaConsultaModalidade,
     toggleTurno: (item) => toggleItem(setUrgenciaTurno, urgenciaTurno, item),
     toggleDia: (item) => toggleItem(setUrgenciaDias, urgenciaDias, item),
     handleEmergencySubmit

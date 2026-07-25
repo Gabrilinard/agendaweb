@@ -35,7 +35,9 @@ const useRegistro = () => {
   const [descricao, setDescricao] = useState('');
   const [publicoAtendido, setPublicoAtendido] = useState('');
   const [modalidade, setModalidade] = useState('');
-  const [valorConsulta, setValorConsulta] = useState('');
+  const [valorPresencial, setValorPresencial] = useState('');
+  const [valorOnline, setValorOnline] = useState('');
+  const [valorDomiciliar, setValorDomiciliar] = useState('');
   const [diasAtendimento, setDiasAtendimento] = useState([]);
   const [horariosAtendimento, setHorariosAtendimento] = useState({});
   const [cpf, setCpf] = useState('');
@@ -77,6 +79,17 @@ const useRegistro = () => {
   const handleNumeroConselhoChange = (e) => {
     clearFieldError('numeroConselho');
     setNumeroConselho(formatarNumeroConselho(e.target.value, tipoProfissional));
+  };
+
+  const toggleModalidade = (key) => {
+    const atuais = modalidade ? modalidade.split(',').map(s => s.trim()).filter(Boolean) : [];
+    const proximo = atuais.includes(key) ? atuais.filter(m => m !== key) : [...atuais, key];
+    setModalidade(proximo.join(','));
+    if (!proximo.includes(key)) {
+      if (key === 'presencial') setValorPresencial('');
+      if (key === 'online') setValorOnline('');
+      if (key === 'domiciliar') setValorDomiciliar('');
+    }
   };
 
   const handleDiaChange = (e) => {
@@ -177,7 +190,11 @@ const useRegistro = () => {
           numeroConselho: numeroConselho.trim(), ufRegiao: ufRegiao.trim(),
           latitude, longitude, cidade: cidade.trim(),
           descricao: descricao.trim(), publicoAtendido: publicoAtendido.trim(),
-          modalidade, valorConsulta, diasAtendimento, horariosAtendimento,
+          modalidade,
+          valorPresencial: modalidade.split(',').includes('presencial') ? valorPresencial : null,
+          valorOnline: modalidade.split(',').includes('online') ? valorOnline : null,
+          valorDomiciliar: modalidade.split(',').includes('domiciliar') ? valorDomiciliar : null,
+          diasAtendimento, horariosAtendimento,
         }),
       };
       await register(dados);
@@ -198,8 +215,9 @@ const useRegistro = () => {
     passwordsMatch, tipoUsuario, setTipoUsuario, tipoProfissional, setTipoProfissional,
     especialidadeMedica, setEspecialidadeMedica,
     numeroConselho, ufRegiao, latitude, longitude, cidade, descricao, setDescricao,
-    publicoAtendido, setPublicoAtendido, modalidade, setModalidade,
-    valorConsulta, setValorConsulta, diasAtendimento, setDiasAtendimento,
+    publicoAtendido, setPublicoAtendido, modalidade, setModalidade, toggleModalidade,
+    valorPresencial, setValorPresencial, valorOnline, setValorOnline,
+    valorDomiciliar, setValorDomiciliar, diasAtendimento, setDiasAtendimento,
     horariosAtendimento, setHorariosAtendimento, cpf, abordagemTerapeutica, setAbordagemTerapeutica,
     areaAtuacaoPsi, setAreaAtuacaoPsi, fieldErrors,
     getSenhaForca, clearFieldError, handleMapClick,

@@ -218,29 +218,36 @@ const Registro = () => {
                 })}
               </RadioGroup>
 
-              <label style={{ display: 'block', marginBottom: '2px', textAlign: 'left', fontWeight: 'bold' }}>Modalidade:</label>
-              <Select value={r.modalidade} onChange={e => r.setModalidade(e.target.value)} required>
-                <option value="">Selecione...</option>
-                <option value="presencial">Presencial</option>
-                <option value="online">Online</option>
-                <option value="domiciliar">Domiciliar</option>
-                <option value="presencial,online">Presencial e Online</option>
-                <option value="presencial,domiciliar">Presencial e Domiciliar</option>
-                <option value="online,domiciliar">Online e Domiciliar</option>
-                <option value="presencial,online,domiciliar">Presencial, Online e Domiciliar</option>
-              </Select>
-
-              <label style={{ display: 'block', marginBottom: '2px', textAlign: 'left', fontWeight: 'bold' }}>Valor da Consulta:</label>
+              <label style={{ display: 'block', marginBottom: '6px', textAlign: 'left', fontWeight: 'bold' }}>Modalidade e valores:</label>
               <div style={{ marginBottom: '15px' }}>
-                <Select value={r.valorConsulta === 'A negociar' ? 'A negociar' : 'Definir valor'} style={{ marginBottom: '10px' }}
-                  onChange={e => r.setValorConsulta(e.target.value === 'A negociar' ? 'A negociar' : '')}>
-                  <option value="Definir valor">Definir valor (R$)</option>
-                  <option value="A negociar">Valor a negociar</option>
-                </Select>
-                {r.valorConsulta !== 'A negociar' && (
-                  <Input type="number" placeholder="Ex: 150.00" value={r.valorConsulta} min="0" step="0.01"
-                    required={r.valorConsulta !== 'A negociar'} onChange={e => r.setValorConsulta(e.target.value)} />
-                )}
+                {[
+                  { key: 'presencial', label: 'Presencial', valor: r.valorPresencial, setValor: r.setValorPresencial },
+                  { key: 'online', label: 'Online', valor: r.valorOnline, setValor: r.setValorOnline },
+                  { key: 'domiciliar', label: 'Domiciliar', valor: r.valorDomiciliar, setValor: r.setValorDomiciliar },
+                ].map(({ key, label, valor, setValor }) => {
+                  const ativo = r.modalidade.split(',').includes(key);
+                  return (
+                    <div key={key} style={{ marginBottom: '10px' }}>
+                      <RadioLabel>
+                        <RadioInput type="checkbox" checked={ativo} onChange={() => r.toggleModalidade(key)} />
+                        {label}
+                      </RadioLabel>
+                      {ativo && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '4px', marginLeft: '22px' }}>
+                          <Select value={valor === 'A negociar' ? 'A negociar' : 'Definir valor'} style={{ width: 'auto' }}
+                            onChange={e => setValor(e.target.value === 'A negociar' ? 'A negociar' : '')}>
+                            <option value="Definir valor">Definir valor (R$)</option>
+                            <option value="A negociar">A negociar</option>
+                          </Select>
+                          {valor !== 'A negociar' && (
+                            <Input type="number" placeholder="Ex: 150.00" value={valor} min="0" step="0.01"
+                              required={ativo} onChange={e => setValor(e.target.value)} style={{ margin: 0 }} />
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               <HorariosSetup

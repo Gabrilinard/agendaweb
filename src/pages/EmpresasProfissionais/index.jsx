@@ -543,7 +543,11 @@ const EmpresasProfissionais = () => {
               const initials = getInitials(p.nomeCompleto || '');
               const modalTags = getModalidadeTags(p.modalidade);
               const hasLocation = p.cidade || p.ufRegiao;
-              const hasValor = p.valorConsulta && Number(p.valorConsulta) > 0;
+              const valoresNumericos = [p.valorPresencial, p.valorOnline, p.valorDomiciliar, p.valorConsulta]
+                .map(v => Number(v))
+                .filter(n => Number.isFinite(n) && n > 0);
+              const menorValor = valoresNumericos.length > 0 ? Math.min(...valoresNumericos) : null;
+              const hasValor = menorValor !== null;
               const horarioEntries = (() => {
                 if (!p.horariosAtendimento) return [];
                 try {
@@ -621,7 +625,7 @@ const EmpresasProfissionais = () => {
                     {hasValor && (
                       <PriceArea style={{ marginLeft: '16px', flexShrink: 0 }}>
                         <PriceLabel>A PARTIR DE</PriceLabel>
-                        <PriceValue>R$ {Number(p.valorConsulta).toFixed(0)}</PriceValue>
+                        <PriceValue>R$ {menorValor.toFixed(0)}</PriceValue>
                       </PriceArea>
                     )}
                   </CardFooterSection>

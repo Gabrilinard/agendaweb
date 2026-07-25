@@ -9,7 +9,8 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
   const [horario, setHorario] = useState('');
   const [horarioFinal, setHorarioFinal] = useState('');
   const [horariosDisponiveis, setHorariosDisponiveis] = useState([]);
-  
+  const [modalidadeSelecionada, setModalidadeSelecionada] = useState('');
+
   const [reservasTemporarias, setReservasTemporarias] = useState([]);
   const [datasSelecionadas, setDatasSelecionadas] = useState([]);
 
@@ -48,6 +49,14 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
     }
 
     return raw;
+  };
+
+  const getValorModalidade = (key) => {
+    if (!profissionalInfo || !key) return '';
+    if (key === 'presencial') return profissionalInfo.valorPresencial || profissionalInfo.valorConsulta || '';
+    if (key === 'online') return profissionalInfo.valorOnline || profissionalInfo.valorConsulta || '';
+    if (key === 'domiciliar') return profissionalInfo.valorDomiciliar || profissionalInfo.valorConsulta || '';
+    return '';
   };
 
   const calcularHorarioFinal = (horario) => {
@@ -127,9 +136,14 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
       showError('Por favor, preencha todos os campos corretamente.');
       return;
     }
-  
+
+    if (!modalidadeSelecionada) {
+      showError('Por favor, escolha a modalidade da consulta.');
+      return;
+    }
+
     const dataFormatada = formatarDataBrasil(dataSelecionada);
-  
+
     try {
       const response = await agendarService.createReserva({
         nome: user.nome,
@@ -139,9 +153,11 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
         dia: dataFormatada,
         horario,
         horarioFinal,
-        qntd_pessoa: 1, 
+        qntd_pessoa: 1,
         usuario_id: user.id,
         nomeProfissional: nomeProfissional || null,
+        modalidade: modalidadeSelecionada,
+        valor: getValorModalidade(modalidadeSelecionada),
       });
   
       setDataSelecionada(new Date());
@@ -213,6 +229,11 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
       return;
     }
 
+    if (!modalidadeSelecionada) {
+      warning('Por favor, escolha a modalidade da consulta.');
+      return;
+    }
+
     const reservasParaEnviar = reservasTemporarias.length > 0
       ? reservasTemporarias
       : (() => {
@@ -244,6 +265,8 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
           qntd_pessoa: 1,
           usuario_id: user.id,
           nomeProfissional: nomeProfissional || null,
+          modalidade: modalidadeSelecionada,
+          valor: getValorModalidade(modalidadeSelecionada),
         });
 
         return response?.data?.id;
@@ -272,6 +295,9 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
     horario,
     setHorario,
     horariosDisponiveis,
+    modalidadeSelecionada,
+    setModalidadeSelecionada,
+    getValorModalidade,
     isDateAvailable,
     agendarConsulta,
     adicionarDiaReserva,

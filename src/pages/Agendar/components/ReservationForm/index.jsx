@@ -97,13 +97,25 @@ const calendarCSS = `
   }
 `;
 
+const MOD_LABELS = { presencial: 'Presencial', online: 'Online', domiciliar: 'Domiciliar' };
+
+const parseModalidades = (raw) => {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.filter(Boolean);
+  try { const parsed = JSON.parse(raw); if (Array.isArray(parsed)) return parsed.filter(Boolean); } catch {}
+  return String(raw).split(',').map(s => s.trim()).filter(Boolean);
+};
+
 const ReservationForm = ({
   nomeProfissional,
+  profissionalInfo,
   dataSelecionada,
   setDataSelecionada,
   horario,
   setHorario,
   horariosDisponiveis,
+  modalidadeSelecionada,
+  setModalidadeSelecionada,
   isDateAvailable,
   adicionarDiaReserva,
   enviarReservas,
@@ -111,6 +123,17 @@ const ReservationForm = ({
   datasSelecionadas,
   onEmergencyClick,
 }) => {
+  const modalidadesDisponiveis = parseModalidades(profissionalInfo?.modalidade);
+  const getValor = (key) => {
+    const raw = key === 'presencial' ? profissionalInfo?.valorPresencial
+      : key === 'online' ? profissionalInfo?.valorOnline
+      : key === 'domiciliar' ? profissionalInfo?.valorDomiciliar
+      : null;
+    const valor = raw || profissionalInfo?.valorConsulta;
+    if (!valor || valor === 'A negociar' || Number(valor) <= 0) return 'A negociar';
+    return `R$ ${Number(valor).toFixed(0)}`;
+  };
+
   return (
     <div style={{
       background: 'white',
@@ -154,6 +177,42 @@ const ReservationForm = ({
           ⚡ Não pode esperar?
         </button>
       </div>
+
+      {/* Modalidade */}
+      {modalidadesDisponiveis.length > 0 && (
+        <div style={{ padding: '0 28px 20px' }}>
+          <p style={{
+            fontSize: '13px', fontWeight: '600', color: '#888',
+            textTransform: 'uppercase', letterSpacing: '0.6px', margin: '0 0 10px',
+          }}>
+            Escolha a modalidade
+          </p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {modalidadesDisponiveis.map((mod, i) => {
+              const key = String(mod).trim().toLowerCase();
+              const selected = modalidadeSelecionada === key;
+              return (
+                <button
+                  key={i}
+                  onClick={() => setModalidadeSelecionada(key)}
+                  style={{
+                    padding: '8px 16px', borderRadius: '8px', fontSize: '13px',
+                    fontWeight: '500', cursor: 'pointer', border: '1.5px solid',
+                    borderColor: selected ? '#1a1a1a' : '#E0DFD9',
+                    background: selected ? '#1a1a1a' : 'white',
+                    color: selected ? 'white' : '#333',
+                    fontFamily: 'Figtree, sans-serif',
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                  }}
+                >
+                  {MOD_LABELS[key] || key}
+                  <span style={{ fontSize: '11px', opacity: 0.8 }}>· {getValor(key)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Calendário */}
       <div style={{ padding: '0 28px' }}>
@@ -259,27 +318,33 @@ const ReservationForm = ({
         flexWrap: 'wrap',
       }}>
         <span style={{ color: '#999', fontSize: '13px' }}>
-          Selecione data e horário para continuar
+          {modalidadesDisponiveis.length > 0 && !modalidadeSelecionada
+            ? 'Escolha a modalidade, data e horário para continuar'
+            : 'Selecione data e horário para continuar'}
         </span>
         <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
           <button
             onClick={adicionarDiaReserva}
+            disabled={modalidadesDisponiveis.length > 0 && !modalidadeSelecionada}
             style={{
               padding: '9px 16px', borderRadius: '8px', fontSize: '13px',
               fontWeight: '500', cursor: 'pointer', background: 'white',
               border: '1.5px solid #E0DFD9', color: '#555',
               fontFamily: 'Figtree, sans-serif',
+              opacity: (modalidadesDisponiveis.length > 0 && !modalidadeSelecionada) ? 0.5 : 1,
             }}
           >
             + Adicionar dia
           </button>
           <button
             onClick={enviarReservas}
+            disabled={modalidadesDisponiveis.length > 0 && !modalidadeSelecionada}
             style={{
               padding: '9px 18px', borderRadius: '8px', fontSize: '13px',
               fontWeight: '600', cursor: 'pointer', background: '#1C5C40',
               border: 'none', color: 'white',
               fontFamily: 'Figtree, sans-serif',
+              opacity: (modalidadesDisponiveis.length > 0 && !modalidadeSelecionada) ? 0.5 : 1,
             }}
           >
             Solicitar e preencher formulário →
