@@ -59,10 +59,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { getAvatarColor, getInitials } from '../../utils/avatar';
 import { formatarDataCompleta as formatarDataExibicao, formatarHorarioBrasil, parseDia } from '../../utils/formatters';
-import { solicitarDados } from './api';
+import { solicitarDados, updateInformacoes } from './api';
 import EditarReservaModal from './components/EditarReservaModal';
 import LocationPickerEdit from './components/LocationPickerEdit';
 import Sidebar from './components/Sidebar';
+import StatusModal from './components/StatusModal';
 import useEditarReserva from './hooks/useEditarReserva';
 import useInformacoes from './hooks/useInformacoes';
 import useLocalizacao from './hooks/useLocalizacao';
@@ -87,7 +88,8 @@ L.Icon.Default.mergeOptions({
 const AdminDashboard = () => {
   const [activeScreen, setActiveScreen] = useState('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { logout, user, setViewMode } = useAuth();
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const { logout, user, setViewMode, updateUser } = useAuth();
   const { success, error: showError, warning } = useNotification();
   const navigate = useNavigate();
   const notify = { success, showError, warning };
@@ -230,6 +232,17 @@ const AdminDashboard = () => {
     setSidebarOpen(false);
   };
 
+  const handleSalvarStatus = async (aceitandoConsultas) => {
+    try {
+      await updateInformacoes(user.id, { aceitandoConsultas });
+      updateUser({ aceitandoConsultas });
+      setShowStatusModal(false);
+      success(aceitandoConsultas ? 'Você está aceitando consultas novamente.' : 'Atendimentos pausados.');
+    } catch {
+      showError('Erro ao atualizar status.');
+    }
+  };
+
   return (
     <DashLayout>
       <SidebarOverlay $open={sidebarOpen} onClick={() => setSidebarOpen(false)} />
@@ -242,6 +255,13 @@ const AdminDashboard = () => {
         navigate={navigate} logout={logout} setViewMode={setViewMode}
         pendentes={pendentes} urgentes={urgentes} vagasCount={vagasCount}
         isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)}
+        onAbrirStatusModal={() => setShowStatusModal(true)}
+      />
+      <StatusModal
+        show={showStatusModal}
+        onClose={() => setShowStatusModal(false)}
+        aceitandoConsultas={user?.aceitandoConsultas === undefined || Number(user.aceitandoConsultas) !== 0}
+        onSalvar={handleSalvarStatus}
       />
       <DashMain>
         {renderScreen()}

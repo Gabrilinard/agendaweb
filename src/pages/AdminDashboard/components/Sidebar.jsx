@@ -44,7 +44,8 @@ const navBtn = (activeScreen, key) => ({
   fontSize: '14px', fontFamily: 'Figtree, sans-serif', textAlign: 'left',
 });
 
-const Sidebar = ({ user, av, initials, activeScreen, irPara, navigate, logout, setViewMode, pendentes, urgentes, vagasCount, isOpen, onClose }) => {
+const Sidebar = ({ user, av, initials, activeScreen, irPara, navigate, logout, setViewMode, pendentes, urgentes, vagasCount, isOpen, onClose, onAbrirStatusModal }) => {
+  const aceitandoConsultas = user?.aceitandoConsultas === undefined || Number(user.aceitandoConsultas) !== 0;
   const navItems = [
     { key: 'home',         icon: <Home size={16} />,          label: 'Início' },
     { key: 'agenda',       icon: <Calendar size={16} />,      label: 'Agenda' },
@@ -83,9 +84,18 @@ const Sidebar = ({ user, av, initials, activeScreen, irPara, navigate, logout, s
             </p>
           </div>
         </div>
-        <div style={{ background: '#D1FAE5', borderRadius: '6px', padding: '4px 10px', width: 'fit-content' }}>
-          <span style={{ fontSize: '11px', color: '#065F46', fontWeight: '600' }}>● Aceitando consultas</span>
-        </div>
+        <button
+          onClick={onAbrirStatusModal}
+          style={{
+            background: aceitandoConsultas ? '#D1FAE5' : '#FEE2E2',
+            border: 'none', borderRadius: '6px', padding: '4px 10px', width: 'fit-content',
+            cursor: 'pointer',
+          }}
+        >
+          <span style={{ fontSize: '11px', color: aceitandoConsultas ? '#065F46' : '#991B1B', fontWeight: '600' }}>
+            {aceitandoConsultas ? '● Aceitando consultas' : '⏸ Atendimento pausado'}
+          </span>
+        </button>
       </div>
 
       <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto' }}>
