@@ -50,7 +50,7 @@ const useEditarReserva = (reservas, setReservas, buscarReservas, { success, warn
     setShowReservaEdit(true);
   };
 
-  const handleUpdateReserva = async (novoStatus = null) => {
+  const handleUpdateReserva = async () => {
     if (!editReservaId || !editReservaData || !editReservaHorario) { warning('Preencha todos os campos.'); return; }
     try {
       const d = editReservaData;
@@ -60,9 +60,9 @@ const useEditarReserva = (reservas, setReservas, buscarReservas, { success, warn
         dia: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
         horario: editReservaHorario,
         horarioFinal: `${String(hFim.getHours()).padStart(2, '0')}:${String(hFim.getMinutes()).padStart(2, '0')}`,
-        status: novoStatus || 'aguardando_confirmacao_paciente',
+        status: 'aguardando_confirmacao_paciente',
       });
-      success(novoStatus === 'confirmado' ? 'Consulta confirmada!' : 'Consulta atualizada.');
+      success('Horário sugerido ao paciente.');
       setShowReservaEdit(false); setEditReservaId(null); buscarReservas();
     } catch { showError('Erro ao atualizar.'); }
   };

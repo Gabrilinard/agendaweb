@@ -617,7 +617,11 @@ const VerUrgencias = ({
                     <button onClick={() => removerReserva(detalhes.id)} style={{ padding: '10px 16px', background: 'none', border: 'none', color: '#EF4444', fontSize: '13px', fontWeight: '600', cursor: 'pointer', fontFamily: 'Figtree, sans-serif' }}>
                       Não posso atender
                     </button>
-                    {!bloqueiaAceitar && (
+                    {detalhes.status === 'aguardando_confirmacao_paciente' ? (
+                      <span style={{ padding: '10px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', background: '#F3F4F6', color: '#9CA3AF' }}>
+                        Aguardando resposta do paciente
+                      </span>
+                    ) : !bloqueiaAceitar && (
                       <button
                         onClick={() => aceitar(detalhes)}
                         style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '11px 22px', background: '#E8611A', color: 'white', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', fontFamily: 'Figtree, sans-serif' }}

@@ -187,6 +187,7 @@ const ConsultaCard = ({
             <span style={{ flex: 1 }}>O profissional propôs este novo horário. Deseja confirmar?</span>
             <ConfirmBtns>
               <ConfirmNo onClick={() => onRecusarRemarcacao(c)}>Recusar</ConfirmNo>
+              <ConfirmNo onClick={() => onEditar(c)}>Sugerir outro horário</ConfirmNo>
               <ConfirmYes style={{ background: '#1C5C40' }} onClick={() => onAceitarRemarcacao(c)}>Confirmar</ConfirmYes>
             </ConfirmBtns>
           </RescheduleBar>

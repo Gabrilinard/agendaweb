@@ -30,9 +30,12 @@ const EditarReservaModal = ({ show, onClose, editReservaData, setEditReservaData
           style={{ width: '100%', padding: '10px 12px', border: '1px solid #E0DFD9', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', marginBottom: '20px' }}
         />
 
+        <p style={{ fontSize: '12.5px', color: '#888', margin: '0 0 14px', lineHeight: 1.4 }}>
+          O novo horário será enviado ao paciente como sugestão — ele poderá confirmar, recusar ou propor outro horário.
+        </p>
+
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={() => handleUpdateReserva('confirmado')} style={btn('#1B4D3E', 'white')}>Confirmar</button>
-          <button onClick={() => handleUpdateReserva()} style={btn('#F7F7F4', '#333', '1px solid #E0DFD9')}>Sugerir horário</button>
+          <button onClick={() => handleUpdateReserva()} style={btn('#1B9E5C', 'white')}>Sugerir horário</button>
           <button onClick={onClose} style={{ padding: '10px 14px', background: 'none', border: '1px solid #E0DFD9', borderRadius: '8px', fontSize: '14px', cursor: 'pointer', color: '#888' }}>✕</button>
         </div>
       </div>

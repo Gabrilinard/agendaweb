@@ -351,7 +351,12 @@ const VerSolicitacoes = ({
 
                   {/* Actions */}
                   <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }} onClick={e => e.stopPropagation()}>
-                    {r.status !== 'confirmado' && (
+                    {r.status === 'aguardando_confirmacao_paciente' && (
+                      <span style={{ padding: '6px 14px', borderRadius: '7px', fontSize: '12px', fontWeight: '600', background: '#F3F4F6', color: '#9CA3AF' }}>
+                        Aguardando resposta do paciente
+                      </span>
+                    )}
+                    {r.status !== 'confirmado' && r.status !== 'aguardando_confirmacao_paciente' && (
                       <button onClick={() => toggleStatus(r)} style={{ padding: '6px 14px', borderRadius: '7px', fontSize: '12px', fontWeight: '600', cursor: 'pointer', background: '#D1FAE5', color: '#065F46', border: 'none', fontFamily: 'Figtree, sans-serif' }}>
                         Confirmar
                       </button>
