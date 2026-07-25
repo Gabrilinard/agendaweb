@@ -431,9 +431,12 @@ export const NextAppSpec = styled.div`
 
 /* ── Specialties ── */
 export const SpecialtiesSection = styled.section`
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px;
+  box-sizing: border-box;
+  text-align: left !important;
 
   @media (max-width: 768px) {
     padding: 30px 20px;
@@ -446,6 +449,7 @@ export const SectionLabel = styled.div`
   color: ${MID_GREEN};
   letter-spacing: 0.12em;
   margin-bottom: 10px;
+  text-align: left !important;
 `;
 
 export const SectionTitle = styled.h2`
@@ -453,6 +457,7 @@ export const SectionTitle = styled.h2`
   font-weight: 800;
   color: ${TEXT_PRIMARY};
   margin: 0 0 8px;
+  text-align: left !important;
 
   @media (max-width: 768px) {
     font-size: 1.6rem;
@@ -465,16 +470,13 @@ export const SectionSubtitle = styled.p`
   margin: 0 0 32px;
   max-width: 480px;
   line-height: 1.5;
+  text-align: left !important;
 `;
 
 export const SpecialtiesGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 16px;
-
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
 
   @media (max-width: 600px) {
     grid-template-columns: repeat(2, 1fr);
