@@ -81,6 +81,21 @@ const gerarSlots = (inicio, fim, duracao, pausaAlmoco) => {
 
 const DIA_ABREV_MAP = { Domingo: 'Dom', Segunda: 'Seg', Terça: 'Ter', Quarta: 'Qua', Quinta: 'Qui', Sexta: 'Sex', Sábado: 'Sáb' };
 
+const inferirDuracao = (slots) => {
+  if (!slots || slots.length < 2) return '30';
+  const diffs = [];
+  for (let i = 1; i < slots.length; i++) {
+    const d = toMin(slots[i]) - toMin(slots[i - 1]);
+    if (d > 0) diffs.push(d);
+  }
+  return diffs.length ? String(Math.min(...diffs)) : '30';
+};
+
+const inferirFim = (slots, duracao) => {
+  if (!slots || slots.length === 0) return '17:00';
+  return toStr(toMin(slots[slots.length - 1]) + parseInt(duracao));
+};
+
 const CriarConsulta = ({
   modo = 'horarios',
   cpfUsuario, setCpfUsuario, userId,
@@ -105,9 +120,10 @@ const CriarConsulta = ({
 
   // Intervalo
   const [selectedDays, setSelectedDays] = useState(savedDayAbrevs.length ? savedDayAbrevs : ['Seg', 'Ter', 'Qua', 'Qui', 'Sex']);
-  const [inicio, setInicio] = useState('08:00');
-  const [fim, setFim] = useState('17:00');
-  const [duracao, setDuracao] = useState('30');
+  const duracaoInicial = firstSavedSlots ? inferirDuracao(firstSavedSlots) : '30';
+  const [inicio, setInicio] = useState(firstSavedSlots ? firstSavedSlots[0] : '08:00');
+  const [fim, setFim] = useState(firstSavedSlots ? inferirFim(firstSavedSlots, duracaoInicial) : '17:00');
+  const [duracao, setDuracao] = useState(duracaoInicial);
   const [pausaAlmoco, setPausaAlmoco] = useState(true);
 
   // Avulso
@@ -131,9 +147,14 @@ const CriarConsulta = ({
     if (!horariosAtendimentoAtual) return;
     const entries = Object.entries(horariosAtendimentoAtual);
     if (entries.length > 0 && Array.isArray(entries[0][1]) && entries[0][1].length > 0) {
-      setSlotsEditaveis([...entries[0][1]]);
-      setSlotsOriginais([...entries[0][1]]);
+      const slots = entries[0][1];
+      setSlotsEditaveis([...slots]);
+      setSlotsOriginais([...slots]);
       setSlotsManualmenteTocados(false);
+      const dur = inferirDuracao(slots);
+      setInicio(slots[0]);
+      setFim(inferirFim(slots, dur));
+      setDuracao(dur);
     }
     if (Array.isArray(diasAtendimentoAtual) && diasAtendimentoAtual.length > 0) {
       const abrevs = diasAtendimentoAtual.map(d => DIA_ABREV_MAP[d] || d).filter(a => DIAS_ABREV.includes(a));

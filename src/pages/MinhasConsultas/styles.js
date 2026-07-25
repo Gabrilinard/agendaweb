@@ -133,10 +133,34 @@ export const CardWrapper = styled.div`
 `;
 
 export const ConsultaCard = styled.div`
+  position: relative;
   background: #fff;
   border-radius: 16px;
   border: 1.5px solid ${BORDER};
   overflow: hidden;
+`;
+
+export const PaymentNote = styled.span`
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: ${MID_GREEN};
+  background: #EAF6EF;
+  border: 1px solid #CFEBDA;
+  padding: 3px 8px;
+  border-radius: 99px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 1;
+
+  @media (max-width: 600px) {
+    position: static;
+    align-self: flex-start;
+    margin: 0 16px;
+  }
 `;
 
 export const CardMain = styled.div`

@@ -1,4 +1,4 @@
-import { Calendar, Edit2, FileText, X } from 'lucide-react';
+import { Calendar, Edit2, FileText, Wallet, X } from 'lucide-react';
 import { getAvatarColor, getInitials } from '../../../utils/avatar';
 import { parseDia } from '../../../utils/formatters';
 import {
@@ -25,6 +25,7 @@ import {
   ModalityBadge,
   MONTH_SHORT,
   MUTED,
+  PaymentNote,
   ProfAvatar,
   ProfInfo,
   ProfName,
@@ -121,6 +122,9 @@ const ConsultaCard = ({
   return (
     <CardWrapper key={c.id}>
       <Card>
+        <PaymentNote title="O pagamento desta consulta é feito presencialmente, no momento do atendimento.">
+          <Wallet size={11} /> Pagamento na hora
+        </PaymentNote>
         <CardMain>
           <DateBox>
             <DateMonth>{dia ? MONTH_SHORT[dia.getMonth()] : '—'}</DateMonth>
