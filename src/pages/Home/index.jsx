@@ -230,7 +230,9 @@ const Home = () => {
                                     <AppointmentName>{nextProfName || 'Profissional'}</AppointmentName>
                                     <AppointmentSpec>{nextProfSpec} · Online</AppointmentSpec>
                                 </AppointmentInfoWrap>
-                                <AppointmentConf>✓ Confirmado</AppointmentConf>
+                                <AppointmentConf $pending={nextConsulta.status === 'pendente'}>
+                                    {nextConsulta.status === 'pendente' ? 'Pendente' : '✓ Confirmado'}
+                                </AppointmentConf>
                                 <AppointmentDate>
                                     <CalendarDays size={13} style={{ display: 'inline', verticalAlign: 'middle', marginRight: '4px' }} />
                                     {nextDia

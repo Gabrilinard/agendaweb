@@ -285,8 +285,8 @@ export const AppointmentSpec = styled.div`
 `;
 
 export const AppointmentConf = styled.div`
-  background: #E6F5EC;
-  color: ${MID_GREEN};
+  background: ${p => (p.$pending ? '#FEF3C7' : '#E6F5EC')};
+  color: ${p => (p.$pending ? '#92400E' : MID_GREEN)};
   font-size: 0.72rem;
   font-weight: 600;
   padding: 4px 10px;
