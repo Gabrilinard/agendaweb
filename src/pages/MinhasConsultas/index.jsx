@@ -58,11 +58,10 @@ const MinhasConsultas = () => {
     canceladas: consultas.canceladas,
   };
   const shown = tabMap[activeTab] || [];
-  const isPaciente = user?.tipoUsuario !== 'profissional';
 
   const cardProps = {
     today: consultas.today,
-    isPaciente,
+    isPaciente: true,
     confirmingId: consultas.confirmingId,
     setConfirmingId: consultas.setConfirmingId,
     liberandoId: consultas.liberandoId,
@@ -145,6 +144,8 @@ const MinhasConsultas = () => {
         setNovaData={edit.setNovaData}
         novoHorario={edit.novoHorario}
         setNovoHorario={edit.setNovoHorario}
+        horariosDisponiveis={edit.horariosDisponiveis}
+        carregandoHorarios={edit.carregandoHorarios}
         onSalvar={edit.handleSalvar}
       />
 

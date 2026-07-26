@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { parseDia } from '../../../utils/formatters';
 import {
   aceitarVaga,
+  deleteReserva,
   getReservas,
   getVagasPendentes,
   liberarVaga,
@@ -14,6 +16,7 @@ import {
 
 export const useConsultas = ({ onLoaded } = {}) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { success, error: showError } = useNotification();
 
   const [consultas, setConsultas] = useState([]);
@@ -26,15 +29,10 @@ export const useConsultas = ({ onLoaded } = {}) => {
   const buscarConsultas = async () => {
     try {
       setLoading(true);
-      const isProfissional = user.tipoUsuario === 'profissional';
-      const params = isProfissional
-        ? { profissional_id: user.id }
-        : { usuario_id: user.id };
-
-      const { data } = await getReservas(params);
+      const { data } = await getReservas({ usuario_id: user.id });
 
       const enriched = await Promise.all((data || []).map(async (c) => {
-        const otherId = isProfissional ? c.usuario_id : c.profissional_id;
+        const otherId = c.profissional_id;
         if (!otherId) return c;
         try {
           const { data: p } = await solicitarDados(otherId);
@@ -64,26 +62,49 @@ export const useConsultas = ({ onLoaded } = {}) => {
       setVagasPendentes(data || []);
     } catch { }
   };
+  
+  useEffect(() => {
+    if (!user?.id) return;
+    const interval = setInterval(buscarVagasPendentes, 15000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
 
   const handleCancelar = (id) => setConfirmingId(id);
 
   const handleConfirmarCancelamento = async () => {
     try {
-      await updateReserva(confirmingId, { status: 'negado' });
+      await deleteReserva(confirmingId);
       success('Consulta cancelada.');
       setConfirmingId(null);
       buscarConsultas();
-    } catch { showError('Erro ao cancelar.'); }
+    } catch (e) {
+      showError(e?.response?.data?.error || e?.response?.data?.message || 'Erro ao cancelar.');
+    }
   };
 
   const handleLiberarHorario = (id) => { setConfirmingId(null); setLiberandoId(id); };
 
   const handleConfirmarLiberacao = async () => {
+    const consultaLiberada = consultas.find(c => c.id === liberandoId);
     try {
       await liberarVaga(liberandoId);
-      success('Horário liberado! O profissional será notificado.');
+      success('Horário liberado! Escolha um novo dia e horário para sua consulta.');
       setLiberandoId(null);
       buscarConsultas();
+
+      if (consultaLiberada?.profissional_id) {
+        navigate('/Agendar', {
+          state: {
+            nome: consultaLiberada.nomeOutro,
+            tipo: consultaLiberada.tipoProfissionalRaw,
+            categoria: consultaLiberada.tipoProfissionalRaw,
+            profissionalId: consultaLiberada.profissional_id,
+            modalidadeSugerida: consultaLiberada.modalidade,
+            diaSugerido: consultaLiberada.dia,
+            horarioSugerido: consultaLiberada.horario,
+          },
+        });
+      }
     } catch { showError('Erro ao liberar horário.'); }
   };
 
@@ -92,10 +113,13 @@ export const useConsultas = ({ onLoaded } = {}) => {
     try {
       await aceitarVaga(notif.id, notif.token);
       success('Vaga aceita! Sua consulta foi atualizada.');
-      buscarVagasPendentes();
       buscarConsultas();
-    } catch { showError('Erro ao aceitar vaga.'); }
-    finally { setAceitandoVaga(null); }
+    } catch (e) {
+      showError(e?.response?.data?.error || 'Erro ao aceitar vaga.');
+    } finally {
+      buscarVagasPendentes();
+      setAceitandoVaga(null);
+    }
   };
 
   const handleRecusarVaga = async (notif) => {
