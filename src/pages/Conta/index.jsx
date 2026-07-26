@@ -6,6 +6,7 @@ import Footer from '../../components/Footer';
 import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
+import { OPCOES_GENERO } from '../../utils/titulo';
 import { updatePerfil } from './api';
 
 const DARK_GREEN = '#1C5C40';
@@ -258,6 +259,24 @@ const LogoutBtn = styled.button`
   }
 `;
 
+const InfoSelect = styled.select`
+  font-size: 0.85rem;
+  color: ${TEXT};
+  font-weight: 500;
+  text-align: right;
+  border: 1.5px solid ${BORDER};
+  border-radius: 8px;
+  padding: 6px 10px;
+  width: 60%;
+  font-family: 'Figtree', sans-serif;
+  background: #fff;
+
+  &:focus {
+    outline: none;
+    border-color: ${MID_GREEN};
+  }
+`;
+
 const InfoInput = styled.input`
   font-size: 0.85rem;
   color: ${TEXT};
@@ -339,6 +358,7 @@ const Conta = () => {
     const [editNome, setEditNome] = useState('');
     const [editSobrenome, setEditSobrenome] = useState('');
     const [editTelefone, setEditTelefone] = useState('');
+    const [editGenero, setEditGenero] = useState('');
     const [salvando, setSalvando] = useState(false);
 
     const initials = user
@@ -362,6 +382,7 @@ const Conta = () => {
         setEditNome(user?.nome || '');
         setEditSobrenome(user?.sobrenome || '');
         setEditTelefone(user?.telefone || '');
+        setEditGenero(user?.genero || '');
         setIsEditing(true);
     };
 
@@ -380,8 +401,9 @@ const Conta = () => {
                 nome: editNome,
                 sobrenome: editSobrenome,
                 telefone: editTelefone,
+                genero: editGenero || null,
             });
-            updateUser({ nome: editNome, sobrenome: editSobrenome, telefone: editTelefone });
+            updateUser({ nome: editNome, sobrenome: editSobrenome, telefone: editTelefone, genero: editGenero || null });
             success('Perfil atualizado com sucesso!');
             setIsEditing(false);
         } catch {
@@ -446,6 +468,24 @@ const Conta = () => {
                                     />
                                 ) : (
                                     <InfoValue>{user?.telefone || '—'}</InfoValue>
+                                )}
+                            </InfoRow>
+                            <InfoRow>
+                                <InfoLabel>Gênero</InfoLabel>
+                                {isEditing ? (
+                                    <InfoSelect
+                                        value={editGenero}
+                                        onChange={(e) => setEditGenero(e.target.value)}
+                                    >
+                                        <option value="">Selecione...</option>
+                                        {OPCOES_GENERO.map((o) => (
+                                            <option key={o.value} value={o.value}>{o.label}</option>
+                                        ))}
+                                    </InfoSelect>
+                                ) : (
+                                    <InfoValue>
+                                        {OPCOES_GENERO.find((o) => o.value === user?.genero)?.label || '—'}
+                                    </InfoValue>
                                 )}
                             </InfoRow>
                             <InfoRow>

@@ -12,13 +12,18 @@ import {
 const useRegistro = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const { success, error: showError } = useNotification();
 
-  const [nome, setNome] = useState('');
-  const [sobrenome, setSobrenome] = useState('');
+  const dadosBloqueados = !!user;
+  const cpfBloqueado = dadosBloqueados && !!user?.cpf;
+  const generoBloqueado = dadosBloqueados && !!user?.genero;
+
+  const [nome, setNome] = useState(user?.nome || '');
+  const [sobrenome, setSobrenome] = useState(user?.sobrenome || '');
   const [telefone, setTelefone] = useState('');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(user?.email || '');
+  const [genero, setGenero] = useState(user?.genero || '');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -40,7 +45,7 @@ const useRegistro = () => {
   const [valorDomiciliar, setValorDomiciliar] = useState('');
   const [diasAtendimento, setDiasAtendimento] = useState([]);
   const [horariosAtendimento, setHorariosAtendimento] = useState({});
-  const [cpf, setCpf] = useState('');
+  const [cpf, setCpf] = useState(user?.cpf ? formatarCPF(user.cpf) : '');
   const [abordagemTerapeutica, setAbordagemTerapeutica] = useState('');
   const [areaAtuacaoPsi, setAreaAtuacaoPsi] = useState('');
   const [fieldErrors, setFieldErrors] = useState({ cpf: '', email: '', senha: '', numeroConselho: '' });
@@ -182,6 +187,7 @@ const useRegistro = () => {
       const dados = {
         nome, sobrenome, telefone, email, senha,
         cpf: cpf.replace(/\D/g, ''),
+        genero: genero || null,
         tipoUsuario: tipoUsuario || 'paciente',
         ...(tipoUsuario === 'profissional' && {
           tipoProfissional,
@@ -211,6 +217,7 @@ const useRegistro = () => {
 
   return {
     nome, setNome, sobrenome, setSobrenome, telefone, email, setEmail,
+    genero, setGenero, dadosBloqueados, cpfBloqueado, generoBloqueado,
     senha, setSenha, confirmarSenha, showPassword, showConfirmPassword,
     passwordsMatch, tipoUsuario, setTipoUsuario, tipoProfissional, setTipoProfissional,
     especialidadeMedica, setEspecialidadeMedica,

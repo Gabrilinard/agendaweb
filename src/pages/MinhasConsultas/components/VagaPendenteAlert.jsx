@@ -1,4 +1,6 @@
 import { Calendar } from 'lucide-react';
+import { getNomeComTitulo } from '../../../utils/titulo';
+import { formatarDataExibicao } from '../../../utils/formatters';
 
 const VagaPendenteAlert = ({ notif, onAceitar, onRecusar, aceitando }) => (
   <div style={{
@@ -17,7 +19,7 @@ const VagaPendenteAlert = ({ notif, onAceitar, onRecusar, aceitando }) => (
         Uma vaga se abriu!
       </p>
       <p style={{ margin: '2px 0 0', fontSize: '13px', color: '#7C2D12' }}>
-        Dr. {notif.prof_nome} {notif.prof_sobrenome} · {notif.dia} às {notif.horario}
+        {getNomeComTitulo(notif.prof_genero, `${notif.prof_nome} ${notif.prof_sobrenome}`)} · {formatarDataExibicao(notif.dia)} às {notif.horario}
       </p>
     </div>
     <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>

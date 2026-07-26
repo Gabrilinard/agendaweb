@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import Footer from '../../components/Footer';
 import Header from '../../components/Header';
 import { DIAS_SEMANA, ESPECIALIDADES_MEDICAS } from './utils/constantes';
+import { OPCOES_GENERO } from '../../utils/titulo';
 import HorariosSetup from './components/HorariosSetup';
 import LocationPicker from './components/LocationPicker';
 import useRegistro from './hooks/useRegistro';
@@ -46,11 +47,17 @@ const Registro = () => {
             </RadioGroup>
           </div>
 
-          <Input type="text" placeholder="Nome" value={r.nome} onChange={e => r.setNome(e.target.value)} required />
-          <Input type="text" placeholder="Sobrenome" value={r.sobrenome} onChange={e => r.setSobrenome(e.target.value)} required />
+          {r.dadosBloqueados && (
+            <p style={{ fontSize: '12px', color: '#666', margin: 0, textAlign: 'left' }}>
+              Esses dados já estão cadastrados na sua conta e não podem ser alterados aqui.
+            </p>
+          )}
+
+          <Input type="text" placeholder="Nome" value={r.nome} onChange={e => r.setNome(e.target.value)} required disabled={r.dadosBloqueados} />
+          <Input type="text" placeholder="Sobrenome" value={r.sobrenome} onChange={e => r.setSobrenome(e.target.value)} required disabled={r.dadosBloqueados} />
 
           <div style={{ width: '100%' }}>
-            <Input type="text" placeholder="CPF" value={r.cpf} maxLength={14} required
+            <Input type="text" placeholder="CPF" value={r.cpf} maxLength={14} required disabled={r.cpfBloqueado}
               onChange={e => { r.handleCPFChange(e); r.clearFieldError('cpf'); }}
               style={r.fieldErrors.cpf ? { borderColor: '#dc3545' } : {}} />
             {r.fieldErrors.cpf && <FieldError>{r.fieldErrors.cpf}</FieldError>}
@@ -59,7 +66,15 @@ const Registro = () => {
           <Input type="text" placeholder="Telefone" value={r.telefone} onChange={r.handleTelefoneChange} maxLength="15" required />
 
           <div style={{ width: '100%' }}>
-            <Input type="email" placeholder="Email" value={r.email} required
+            <label style={{ display: 'block', marginBottom: '6px', textAlign: 'left', fontWeight: 'bold' }}>Gênero:</label>
+            <Select value={r.genero} onChange={e => r.setGenero(e.target.value)} disabled={r.generoBloqueado}>
+              <option value="">Selecione...</option>
+              {OPCOES_GENERO.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </Select>
+          </div>
+
+          <div style={{ width: '100%' }}>
+            <Input type="email" placeholder="Email" value={r.email} required disabled={r.dadosBloqueados}
               onChange={e => { r.setEmail(e.target.value); r.clearFieldError('email'); }}
               style={r.fieldErrors.email ? { borderColor: '#dc3545' } : {}} />
             {r.fieldErrors.email && <FieldError>{r.fieldErrors.email}</FieldError>}

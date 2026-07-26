@@ -2,6 +2,7 @@ import { MapPin, MonitorPlay, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { OPCOES_GENERO } from '../../../utils/titulo';
 import { ESPECIALIDADES_MEDICAS } from '../../Registrar/utils/constantes';
 import { updateInformacoes } from '../api';
 
@@ -123,6 +124,7 @@ const EditarInformacoes = ({
   const [nomeCompleto, setNomeCompleto] = useState(`${user?.nome || ''} ${user?.sobrenome || ''}`.trim());
   const [especialidade, setEspecialidade] = useState(tipoProfissionalAtual);
   const [registro, setRegistro] = useState(user?.registroProfissional || '');
+  const [genero, setGenero] = useState(user?.genero || '');
   const [sobre, setSobre] = useState(editDescricao || '');
   const [aceitarEmergentes, setAceitarEmergentes] = useState(true);
   
@@ -170,6 +172,7 @@ const EditarInformacoes = ({
     try {
       await updateInformacoes(user?.id, {
         ...(isMedico ? { tipoProfissional: especialidade } : {}),
+        genero: genero || null,
         descricao: sobre,
         publicoAtendido: publicoSel.join(','),
         modalidade: modalStr,
@@ -187,6 +190,7 @@ const EditarInformacoes = ({
     setNomeCompleto(`${user?.nome || ''} ${user?.sobrenome || ''}`.trim());
     setEspecialidade(user?.tipoProfissional || '');
     setRegistro(user?.registroProfissional || '');
+    setGenero(user?.genero || '');
     setPublicoSel(editPublicoAtendido ? editPublicoAtendido.split(',').map(s => s.trim()).filter(Boolean) : []);
   };
 
@@ -263,6 +267,15 @@ const EditarInformacoes = ({
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Gênero */}
+            <div>
+              <label style={labelS}>Gênero</label>
+              <select value={genero} onChange={e => setGenero(e.target.value)} style={{ ...inputS, cursor: 'pointer' }}>
+                <option value="">Selecione...</option>
+                {OPCOES_GENERO.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
             </div>
 
             {/* Sobre você */}
