@@ -33,7 +33,7 @@ import {
   TextArea,
 } from '../style';
 
-const Fonoaudiologia = ({ nomeProfissional, reservaIds, pendingReservas }) => {
+const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReservas }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { success, error: showError } = useNotification();
@@ -153,6 +153,7 @@ const Fonoaudiologia = ({ nomeProfissional, reservaIds, pendingReservas }) => {
               dia: r.dia, horario: r.horario, horarioFinal: r.horarioFinal,
               qntd_pessoa: 1, usuario_id: user.id,
               nomeProfissional: nomeProfissional || null,
+              profissional_id: profissionalId || null,
               modalidade: r.modalidade, valor: r.valor,
             })
           )

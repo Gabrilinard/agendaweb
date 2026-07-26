@@ -1,7 +1,28 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { agendarService } from '../../Agendar/services/api';
 import { useNotification } from '../../../contexts/NotificationContext';
-import { parseDia } from '../../../utils/formatters';
+import { formatarDataBrasil, formatarHorarioBrasil, parseDia } from '../../../utils/formatters';
 import { editReserva } from '../api';
+
+const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
+const normalizarDiaSemana = (dia) => (
+  String(dia || '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/-?feira/g, '')
+    .replace(/\s+/g, '')
+    .trim()
+);
+
+const normalizarDataISO = (data) => {
+  if (!data) return '';
+  let raw = String(data).trim();
+  if (raw.includes('T')) raw = raw.split('T')[0];
+  if (raw.includes(' ')) raw = raw.split(' ')[0];
+  return raw;
+};
 
 export const useEditConsulta = ({ onSaved }) => {
   const { success, error: showError } = useNotification();
@@ -11,16 +32,83 @@ export const useEditConsulta = ({ onSaved }) => {
   const [novaData, setNovaData] = useState(new Date());
   const [novoHorario, setNovoHorario] = useState('');
 
-  const handleEditar = (c) => {
+  const [horariosAtendimento, setHorariosAtendimento] = useState({});
+  const [reservasProfissional, setReservasProfissional] = useState([]);
+  const [horariosDisponiveis, setHorariosDisponiveis] = useState([]);
+  const [carregandoHorarios, setCarregandoHorarios] = useState(false);
+
+  const handleEditar = async (c) => {
     setConsultaEditando(c);
     setNovaData(parseDia(c.dia) || new Date());
-    setNovoHorario(c.horario || '');
+    setNovoHorario(formatarHorarioBrasil(c.horario) || '');
+    setHorariosAtendimento({});
+    setReservasProfissional([]);
     setEditDrawerOpen(true);
+
+    if (!c.profissional_id) return;
+
+    setCarregandoHorarios(true);
+    try {
+      const [{ data: prof }, { data: reservas }] = await Promise.all([
+        agendarService.getProfissionalById(c.profissional_id),
+        agendarService.getReservasProfissional(c.profissional_id),
+      ]);
+
+      let horarios = {};
+      try {
+        horarios = typeof prof?.horariosAtendimento === 'string'
+          ? JSON.parse(prof.horariosAtendimento)
+          : prof?.horariosAtendimento || {};
+      } catch { horarios = {}; }
+
+      setHorariosAtendimento(horarios);
+      setReservasProfissional(reservas || []);
+    } catch {
+      setHorariosAtendimento({});
+      setReservasProfissional([]);
+    } finally {
+      setCarregandoHorarios(false);
+    }
   };
+
+  useEffect(() => {
+    if (!novaData || !consultaEditando) { setHorariosDisponiveis([]); return; }
+
+    const diaSemana = DIAS_SEMANA[novaData.getDay()];
+    const chaveExata = Object.keys(horariosAtendimento).find(
+      (k) => normalizarDiaSemana(k) === normalizarDiaSemana(diaSemana)
+    );
+    const horariosDoDia = (chaveExata ? horariosAtendimento[chaveExata] : horariosAtendimento[diaSemana]) || [];
+    const dataFormatada = formatarDataBrasil(novaData);
+
+    const formatados = (Array.isArray(horariosDoDia) ? horariosDoDia : [])
+      .map((h) => formatarHorarioBrasil(h))
+      .filter(Boolean);
+
+    const livres = formatados.filter((hFormatado) => {
+      const ocupado = reservasProfissional.some((r) => {
+        if (r.id === consultaEditando.id && consultaEditando.status !== 'liberado') return false;
+        const dataReserva = normalizarDataISO(r?.dia);
+        const horarioReserva = formatarHorarioBrasil(r?.horario);
+        return dataReserva === dataFormatada &&
+          horarioReserva === hFormatado &&
+          r?.status !== 'cancelado' &&
+          r?.status !== 'recusado' &&
+          r?.status !== 'negado';
+      });
+      return !ocupado;
+    });
+
+    setHorariosDisponiveis(livres);
+
+    if (!carregandoHorarios && novoHorario && !livres.includes(novoHorario)) {
+      setNovoHorario('');
+    }
+  }, [novaData, horariosAtendimento, reservasProfissional, consultaEditando, carregandoHorarios]);
 
   const handleSalvar = async () => {
     if (!novaData || !/^([01]?\d|2[0-3]):([0-5]\d)$/.test(novoHorario)) {
-      showError('Data ou horário inválido.'); return;
+      showError('Escolha um dia e um horário disponível.'); return;
     }
     const y  = novaData.getFullYear();
     const m  = String(novaData.getMonth() + 1).padStart(2, '0');
@@ -48,6 +136,8 @@ export const useEditConsulta = ({ onSaved }) => {
     setNovaData,
     novoHorario,
     setNovoHorario,
+    horariosDisponiveis,
+    carregandoHorarios,
     handleEditar,
     handleSalvar,
   };

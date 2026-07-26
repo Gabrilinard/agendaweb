@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useNotification } from '../../../contexts/NotificationContext';
+import { parseDia } from '../../../utils/formatters';
 import { agendarService } from '../services/api';
 import { formatarDataBrasil, formatarHorarioBrasil } from '../utils/formatters';
 
-export const useAgendamento = (user, profissionalInfo, reservasProfissional, nomeProfissional, emailNotification) => {
+export const useAgendamento = (user, profissionalInfo, reservasProfissional, nomeProfissional, emailNotification, sugestaoInicial) => {
   const { success, error: showError, warning } = useNotification();
-  const [dataSelecionada, setDataSelecionada] = useState(new Date());
-  const [horario, setHorario] = useState('');
+  const [dataSelecionada, setDataSelecionada] = useState(() => {
+    const sugerida = sugestaoInicial?.dia ? parseDia(sugestaoInicial.dia) : null;
+    return sugerida && !isNaN(sugerida.getTime()) ? sugerida : new Date();
+  });
+  const [horario, setHorario] = useState(sugestaoInicial?.horario || '');
   const [horarioFinal, setHorarioFinal] = useState('');
   const [horariosDisponiveis, setHorariosDisponiveis] = useState([]);
-  const [modalidadeSelecionada, setModalidadeSelecionada] = useState('');
+  const [modalidadeSelecionada, setModalidadeSelecionada] = useState(sugestaoInicial?.modalidade || '');
 
   const [reservasTemporarias, setReservasTemporarias] = useState([]);
   const [datasSelecionadas, setDatasSelecionadas] = useState([]);
@@ -156,6 +160,7 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
         qntd_pessoa: 1,
         usuario_id: user.id,
         nomeProfissional: nomeProfissional || null,
+        profissional_id: profissionalInfo?.id || null,
         modalidade: modalidadeSelecionada,
         valor: getValorModalidade(modalidadeSelecionada),
       });
@@ -265,6 +270,7 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
           qntd_pessoa: 1,
           usuario_id: user.id,
           nomeProfissional: nomeProfissional || null,
+          profissional_id: profissionalInfo?.id || null,
           modalidade: modalidadeSelecionada,
           valor: getValorModalidade(modalidadeSelecionada),
         });

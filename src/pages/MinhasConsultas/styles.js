@@ -473,6 +473,21 @@ export const FieldInput = styled.input`
   &:focus { border-color: ${MID_GREEN}; }
 `;
 
+export const FieldSelect = styled.select`
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid ${BORDER};
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-family: 'Figtree', sans-serif;
+  outline: none;
+  box-sizing: border-box;
+  background: #fff;
+  color: ${TEXT};
+  &:focus { border-color: ${MID_GREEN}; }
+  &:disabled { color: ${MUTED}; background: #FAFAF8; cursor: not-allowed; }
+`;
+
 export const SaveBtn = styled.button`
   display: flex;
   align-items: center;

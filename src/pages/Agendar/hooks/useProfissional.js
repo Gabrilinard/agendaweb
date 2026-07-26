@@ -1,111 +1,121 @@
 import { useState, useEffect } from 'react';
 import { agendarService } from '../services/api';
 
-export const useProfissional = (nomeProfissional) => {
+export const useProfissional = (nomeProfissional, profissionalIdSugerido) => {
   const [profissionalInfo, setProfissionalInfo] = useState(null);
   const [profissionalLocation, setProfissionalLocation] = useState(null);
   const [enderecoCompleto, setEnderecoCompleto] = useState('');
   const [reservasProfissional, setReservasProfissional] = useState([]);
 
   useEffect(() => {
-    if (!nomeProfissional) return;
+    if (!nomeProfissional && !profissionalIdSugerido) return;
 
     const fetchProfissional = async () => {
       try {
-        const response = await agendarService.getProfissionais();
-        const partes = nomeProfissional.trim().split(' ');
-        const nomeProf = partes[0] || '';
-        const sobrenomeProf = partes.slice(1).join(' ') || '';
+        let profissionalId = profissionalIdSugerido || null;
+        let tipoProfissionalLista = null;
 
-        const profissional = response.data.find(p => 
-          p.nomeCompleto === nomeProfissional || 
-          (p.nome === nomeProf && p.sobrenome === sobrenomeProf)
-        );
+        if (!profissionalId && nomeProfissional) {
+          const response = await agendarService.getProfissionais();
+          const partes = nomeProfissional.trim().split(' ');
+          const nomeProf = partes[0] || '';
+          const sobrenomeProf = partes.slice(1).join(' ') || '';
 
-        if (profissional && profissional.id) {
-          const profResponse = await agendarService.getProfissionalById(profissional.id);
-          const profData = profResponse.data;
-          
-          let diasAtendimento = [];
-          try {
-            diasAtendimento = typeof profData.diasAtendimento === 'string' 
-              ? JSON.parse(profData.diasAtendimento) 
-              : profData.diasAtendimento || [];
-          } catch (e) {
-            diasAtendimento = profData.diasAtendimento ? [profData.diasAtendimento] : [];
+          const profissional = response.data.find(p =>
+            p.nomeCompleto === nomeProfissional ||
+            (p.nome === nomeProf && p.sobrenome === sobrenomeProf)
+          );
+
+          if (profissional?.id) {
+            profissionalId = profissional.id;
+            tipoProfissionalLista = profissional.tipoProfissional;
           }
+        }
 
-          let horariosAtendimento = {};
-          try {
-            horariosAtendimento = typeof profData.horariosAtendimento === 'string'
-              ? JSON.parse(profData.horariosAtendimento)
-              : profData.horariosAtendimento || {};
-          } catch (e) {
-            console.error('Erro ao parsear horariosAtendimento:', e);
-          }
+        if (!profissionalId) return;
 
-          setProfissionalInfo({
-            id: profissional.id,
-            tipoProfissional: profissional.tipoProfissional,
-            nome: profData.nome,
-            sobrenome: profData.sobrenome,
-            descricao: profData.descricao,
-            publicoAtendido: profData.publicoAtendido,
-            modalidade: profData.modalidade,
+        const profResponse = await agendarService.getProfissionalById(profissionalId);
+        const profData = profResponse.data;
+
+        let diasAtendimento = [];
+        try {
+          diasAtendimento = typeof profData.diasAtendimento === 'string'
+            ? JSON.parse(profData.diasAtendimento)
+            : profData.diasAtendimento || [];
+        } catch (e) {
+          diasAtendimento = profData.diasAtendimento ? [profData.diasAtendimento] : [];
+        }
+
+        let horariosAtendimento = {};
+        try {
+          horariosAtendimento = typeof profData.horariosAtendimento === 'string'
+            ? JSON.parse(profData.horariosAtendimento)
+            : profData.horariosAtendimento || {};
+        } catch (e) {
+          console.error('Erro ao parsear horariosAtendimento:', e);
+        }
+
+        setProfissionalInfo({
+          id: profissionalId,
+          tipoProfissional: tipoProfissionalLista || profData.tipoProfissional,
+          nome: profData.nome,
+          sobrenome: profData.sobrenome,
+          descricao: profData.descricao,
+          publicoAtendido: profData.publicoAtendido,
+          modalidade: profData.modalidade,
+          cidade: profData.cidade,
+          ufRegiao: profData.ufRegiao,
+          valorConsulta: profData.valorConsulta,
+          valorPresencial: profData.valorPresencial,
+          valorOnline: profData.valorOnline,
+          valorDomiciliar: profData.valorDomiciliar,
+          diasAtendimento: diasAtendimento,
+          horariosAtendimento: horariosAtendimento
+        });
+
+        // Fetch reservations
+        try {
+          const resReservas = await agendarService.getReservasProfissional(profissionalId);
+          setReservasProfissional(resReservas.data);
+        } catch (err) {
+          console.error('Erro ao buscar reservas do profissional:', err);
+        }
+
+        // Handle Location
+        if (profData.latitude && profData.longitude) {
+          const lat = parseFloat(profData.latitude);
+          const lng = parseFloat(profData.longitude);
+
+          setProfissionalLocation({
+            lat: lat,
+            lng: lng,
             cidade: profData.cidade,
-            ufRegiao: profData.ufRegiao,
-            valorConsulta: profData.valorConsulta,
-            valorPresencial: profData.valorPresencial,
-            valorOnline: profData.valorOnline,
-            valorDomiciliar: profData.valorDomiciliar,
-            diasAtendimento: diasAtendimento,
-            horariosAtendimento: horariosAtendimento
+            ufRegiao: profData.ufRegiao
           });
 
-          // Fetch reservations
           try {
-            const resReservas = await agendarService.getReservasProfissional(profissional.id);
-            setReservasProfissional(resReservas.data);
-          } catch (err) {
-            console.error('Erro ao buscar reservas do profissional:', err);
-          }
-
-          // Handle Location
-          if (profData.latitude && profData.longitude) {
-            const lat = parseFloat(profData.latitude);
-            const lng = parseFloat(profData.longitude);
-            
-            setProfissionalLocation({
-              lat: lat,
-              lng: lng,
-              cidade: profData.cidade,
-              ufRegiao: profData.ufRegiao
-            });
-
-            try {
-              const geoRaw = await fetch(
-                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=pt-BR`
-              );
-              const data = geoRaw.ok ? await geoRaw.json() : null;
-              if (data && data.address) {
-                const endereco = [];
-                if (data.address.road) endereco.push(data.address.road);
-                if (data.address.house_number) endereco.push(data.address.house_number);
-                if (data.address.neighbourhood) endereco.push(data.address.neighbourhood);
-                if (data.address.city || data.address.town || data.address.village) {
-                  endereco.push(data.address.city || data.address.town || data.address.village);
-                }
-                if (data.address.state) endereco.push(data.address.state);
-                if (data.address.postcode) endereco.push(`CEP: ${data.address.postcode}`);
-                
-                setEnderecoCompleto(endereco.length > 0 ? endereco.join(', ') : data.display_name || '');
-              } else {
-                setEnderecoCompleto('');
+            const geoRaw = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=pt-BR`
+            );
+            const data = geoRaw.ok ? await geoRaw.json() : null;
+            if (data && data.address) {
+              const endereco = [];
+              if (data.address.road) endereco.push(data.address.road);
+              if (data.address.house_number) endereco.push(data.address.house_number);
+              if (data.address.neighbourhood) endereco.push(data.address.neighbourhood);
+              if (data.address.city || data.address.town || data.address.village) {
+                endereco.push(data.address.city || data.address.town || data.address.village);
               }
-            } catch (error) {
-              console.error('Erro ao buscar endereço:', error);
+              if (data.address.state) endereco.push(data.address.state);
+              if (data.address.postcode) endereco.push(`CEP: ${data.address.postcode}`);
+
+              setEnderecoCompleto(endereco.length > 0 ? endereco.join(', ') : data.display_name || '');
+            } else {
               setEnderecoCompleto('');
             }
+          } catch (error) {
+            console.error('Erro ao buscar endereço:', error);
+            setEnderecoCompleto('');
           }
         }
       } catch (error) {
@@ -114,12 +124,12 @@ export const useProfissional = (nomeProfissional) => {
     };
 
     fetchProfissional();
-  }, [nomeProfissional]);
+  }, [nomeProfissional, profissionalIdSugerido]);
 
-  return { 
-    profissionalInfo, 
-    profissionalLocation, 
+  return {
+    profissionalInfo,
+    profissionalLocation,
     enderecoCompleto,
-    reservasProfissional 
+    reservasProfissional
   };
 };

@@ -1,23 +1,77 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { agendarService } from '../services/api';
 import { formatarDataBrasil, formatarHorarioBrasil } from '../utils/formatters';
 
-export const useReservaActions = (user, fetchReservas, emailNotification) => {
+const DIAS_SEMANA = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
+const normalizarDiaSemana = (dia) => (
+  String(dia || '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/-?feira/g, '')
+    .replace(/\s+/g, '')
+    .trim()
+);
+
+const normalizarDataISO = (data) => {
+  if (!data) return '';
+  let raw = String(data).trim();
+  if (raw.includes('T')) raw = raw.split('T')[0];
+  if (raw.includes(' ')) raw = raw.split(' ')[0];
+  return raw;
+};
+
+export const useReservaActions = (user, fetchReservas, emailNotification, profissionalInfo, reservasProfissional = []) => {
   const { success, error: showError } = useNotification();
-  const { 
-    setFaltasCount, 
-    setEdicoesCount, 
-    sendEmailNotification, 
-    solicitCount, 
-    faltasCount, 
-    edicoesCount 
+  const {
+    setFaltasCount,
+    setEdicoesCount,
+    sendEmailNotification,
+    solicitCount,
+    faltasCount,
+    edicoesCount
   } = emailNotification;
 
   const [reservaEditando, setReservaEditando] = useState(null);
   const [novaData, setNovaData] = useState(new Date());
   const [novoHorario, setNovoHorario] = useState('');
   const [tempoFalta, setTempoFalta] = useState({});
+  const [horariosDisponiveis, setHorariosDisponiveis] = useState([]);
+
+  useEffect(() => {
+    if (!novaData || !reservaEditando || !profissionalInfo) { setHorariosDisponiveis([]); return; }
+
+    const diaSemana = DIAS_SEMANA[novaData.getDay()];
+    const horariosAtendimento = profissionalInfo.horariosAtendimento || {};
+    const chaveExata = Object.keys(horariosAtendimento).find(
+      (k) => normalizarDiaSemana(k) === normalizarDiaSemana(diaSemana)
+    );
+    const horariosDoDia = (chaveExata ? horariosAtendimento[chaveExata] : horariosAtendimento[diaSemana]) || [];
+    const dataFormatada = formatarDataBrasil(novaData);
+
+    const formatados = (Array.isArray(horariosDoDia) ? horariosDoDia : [])
+      .map((h) => formatarHorarioBrasil(h))
+      .filter(Boolean);
+
+    const livres = formatados.filter((hFormatado) => {
+      const ocupado = (reservasProfissional || []).some((r) => {
+        if (r.id === reservaEditando.id && reservaEditando.status !== 'liberado') return false;
+        const dataReserva = normalizarDataISO(r?.dia);
+        const horarioReserva = formatarHorarioBrasil(r?.horario);
+        return dataReserva === dataFormatada &&
+          horarioReserva === hFormatado &&
+          r?.status !== 'cancelado' &&
+          r?.status !== 'recusado' &&
+          r?.status !== 'negado';
+      });
+      return !ocupado;
+    });
+
+    setHorariosDisponiveis(livres);
+    if (novoHorario && !livres.includes(novoHorario)) setNovoHorario('');
+  }, [novaData, profissionalInfo, reservasProfissional, reservaEditando]);
 
   const handleFaltar = async (id) => {
     const tempo = tempoFalta[id];
@@ -114,7 +168,7 @@ export const useReservaActions = (user, fetchReservas, emailNotification) => {
       horarioObj.setHours(horarioObj.getHours() + 1);
       const novoHorarioFinal = horarioObj.toTimeString().slice(0, 5);
 
-      await agendarService.editarReserva(reservaId, {
+      await agendarService.editReserva(reservaId, {
         dia: dataFormatada,
         horario: novoHorario,
         horarioFinal: novoHorarioFinal,
@@ -166,6 +220,7 @@ export const useReservaActions = (user, fetchReservas, emailNotification) => {
     setNovoHorario,
     tempoFalta,
     setTempoFalta,
+    horariosDisponiveis,
     handleFaltar,
     handleEditar,
     handleSalvarEdicao,

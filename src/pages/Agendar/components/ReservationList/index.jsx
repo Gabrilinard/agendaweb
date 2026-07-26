@@ -4,7 +4,7 @@ import DatePicker from 'react-datepicker';
 import {
   ContainerEdicao,
   DatePickerWrapper,
-  Input,
+  Select,
   Label,
   Button,
 } from '../../style';
@@ -30,37 +30,11 @@ const ReservationItem = ({ reserva, actions }) => {
     setNovaData,
     novoHorario,
     setNovoHorario,
+    horariosDisponiveis,
   } = actions;
 
   const isEditing = reservaEditando?.id === reserva.id;
   const status = getStatus(reserva.status);
-
-  const handleHorarioChange = (e) => {
-    let valor = e.target.value.replace(/\D/g, '');
-    if (valor.length <= 2) setNovoHorario(valor);
-    else if (valor.length <= 4) setNovoHorario(valor.slice(0, 2) + ':' + valor.slice(2));
-    else setNovoHorario(valor.slice(0, 2) + ':' + valor.slice(2, 4));
-  };
-
-  const handleHorarioBlur = (e) => {
-    let valor = e.target.value;
-    if (!valor) return;
-    if (valor.includes(' ')) {
-      const [horaMinuto, periodo] = valor.split(' ');
-      const [hora, minuto] = horaMinuto.split(':');
-      let h = parseInt(hora, 10);
-      if (periodo?.toUpperCase() === 'PM' && h !== 12) h += 12;
-      if (periodo?.toUpperCase() === 'AM' && h === 12) h = 0;
-      valor = `${String(h).padStart(2, '0')}:${minuto || '00'}`;
-    }
-    try {
-      const fmt = formatarHorarioBrasil(valor);
-      if (fmt?.match(/^\d{2}:\d{2}$/)) {
-        const [h, m] = fmt.split(':');
-        if (+h >= 0 && +h <= 23 && +m >= 0 && +m <= 59) setNovoHorario(fmt);
-      }
-    } catch {}
-  };
 
   return (
     <div style={{
@@ -153,13 +127,22 @@ const ReservationItem = ({ reserva, actions }) => {
             />
           </DatePickerWrapper>
           <Label>Horário:</Label>
-          <Input
-            type="text"
-            placeholder="HH:MM (ex: 14:30)"
+          <Select
             value={novoHorario || ''}
-            onChange={handleHorarioChange}
-            onBlur={handleHorarioBlur}
-          />
+            onChange={(e) => setNovoHorario(e.target.value)}
+            disabled={!horariosDisponiveis || horariosDisponiveis.length === 0}
+          >
+            {!horariosDisponiveis || horariosDisponiveis.length === 0 ? (
+              <option value="">Nenhum horário disponível neste dia</option>
+            ) : (
+              <>
+                <option value="">Selecione um horário</option>
+                {horariosDisponiveis.map((h) => (
+                  <option key={h} value={h}>{h}</option>
+                ))}
+              </>
+            )}
+          </Select>
           <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
             <Button onClick={handleSalvarEdicao} style={{ backgroundColor: '#4CAF50', color: 'white' }}>
               Salvar

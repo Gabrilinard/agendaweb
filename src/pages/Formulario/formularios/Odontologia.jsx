@@ -19,7 +19,7 @@ import {
   TextArea,
 } from '../style';
 
-const Odontologia = ({ nomeProfissional, reservaIds, pendingReservas }) => {
+const Odontologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReservas }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { success, error: showError } = useNotification();
@@ -101,6 +101,7 @@ const Odontologia = ({ nomeProfissional, reservaIds, pendingReservas }) => {
               dia: r.dia, horario: r.horario, horarioFinal: r.horarioFinal,
               qntd_pessoa: 1, usuario_id: user.id,
               nomeProfissional: nomeProfissional || null,
+              profissional_id: profissionalId || null,
               modalidade: r.modalidade, valor: r.valor,
             })
           )

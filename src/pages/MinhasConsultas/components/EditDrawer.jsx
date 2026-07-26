@@ -7,18 +7,24 @@ import {
   Drawer,
   DrawerHeader,
   DrawerTitle,
-  FieldInput,
   FieldLabel,
+  FieldSelect,
   Overlay,
   SaveBtn,
 } from '../styles';
 
-const EditDrawer = ({ open, onClose, novaData, setNovaData, novoHorario, setNovoHorario, onSalvar }) => {
-  const handleHorarioChange = (e) => {
-    let v = e.target.value.replace(/\D/g, '');
-    if (v.length <= 2) setNovoHorario(v);
-    else setNovoHorario(v.slice(0, 2) + ':' + v.slice(2, 4));
-  };
+const EditDrawer = ({
+  open,
+  onClose,
+  novaData,
+  setNovaData,
+  novoHorario,
+  setNovoHorario,
+  horariosDisponiveis = [],
+  carregandoHorarios = false,
+  onSalvar,
+}) => {
+  const semHorarios = !carregandoHorarios && horariosDisponiveis.length === 0;
 
   return (
     <>
@@ -45,12 +51,24 @@ const EditDrawer = ({ open, onClose, novaData, setNovaData, novoHorario, setNovo
 
         <div>
           <FieldLabel>Horário</FieldLabel>
-          <FieldInput
-            type="text"
-            placeholder="HH:MM"
+          <FieldSelect
             value={novoHorario}
-            onChange={handleHorarioChange}
-          />
+            onChange={(e) => setNovoHorario(e.target.value)}
+            disabled={carregandoHorarios || semHorarios}
+          >
+            {carregandoHorarios ? (
+              <option value="">Carregando horários…</option>
+            ) : semHorarios ? (
+              <option value="">Nenhum horário disponível neste dia</option>
+            ) : (
+              <>
+                <option value="">Selecione um horário</option>
+                {horariosDisponiveis.map((h) => (
+                  <option key={h} value={h}>{h}</option>
+                ))}
+              </>
+            )}
+          </FieldSelect>
         </div>
 
         <SaveBtn onClick={onSalvar}>Salvar alteração</SaveBtn>

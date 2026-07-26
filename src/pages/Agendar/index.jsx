@@ -26,15 +26,23 @@ const Agendar = () => {
     const { warning } = useNotification();
     const navigate = useNavigate();
     const location = useLocation();
-    const { nome: nomeProfissional, tipo, categoria } = location.state || {};
+    const {
+        nome: nomeProfissional,
+        tipo,
+        categoria,
+        profissionalId: profissionalIdSugerido,
+        diaSugerido,
+        horarioSugerido,
+        modalidadeSugerida,
+    } = location.state || {};
     const emailNotification = useEmailNotification(user);
 
-    const { 
-        profissionalInfo, 
-        profissionalLocation, 
-        enderecoCompleto, 
-        reservasProfissional 
-    } = useProfissional(nomeProfissional);
+    const {
+        profissionalInfo,
+        profissionalLocation,
+        enderecoCompleto,
+        reservasProfissional
+    } = useProfissional(nomeProfissional, profissionalIdSugerido);
 
     const {
         dataSelecionada,
@@ -50,7 +58,11 @@ const Agendar = () => {
         enviarReservasEmLote,
         reservasTemporarias,
         datasSelecionadas
-    } = useAgendamento(user, profissionalInfo, reservasProfissional, nomeProfissional, emailNotification);
+    } = useAgendamento(user, profissionalInfo, reservasProfissional, nomeProfissional, emailNotification, {
+        dia: diaSugerido,
+        horario: horarioSugerido,
+        modalidade: modalidadeSugerida,
+    });
 
     const {
         reservas,
@@ -58,7 +70,7 @@ const Agendar = () => {
         loading: reservasLoading
     } = useReservas(user, profissionalInfo?.id);
 
-    const reservaActions = useReservaActions(user, fetchReservas, emailNotification);
+    const reservaActions = useReservaActions(user, fetchReservas, emailNotification, profissionalInfo, reservasProfissional);
 
     const {
         showEmergencyModal,
@@ -178,7 +190,12 @@ const Agendar = () => {
             }));
 
             navigate('/Formulario', {
-                state: { nomeProfissional, tipoProfissional, pendingReservas: pendingReservasComModalidade }
+                state: {
+                    nomeProfissional,
+                    tipoProfissional,
+                    profissionalId: profissionalInfo?.id,
+                    pendingReservas: pendingReservasComModalidade,
+                }
             });
         } else {
             await enviarReservasEmLote();
@@ -208,8 +225,35 @@ const Agendar = () => {
                         ← Voltar para lista
                     </button>
 
+                    {diaSugerido && (
+                        <div style={{
+                            display: 'flex', alignItems: 'center', gap: '14px',
+                            background: 'linear-gradient(135deg, #FFF7F0, #FFEFE0)',
+                            border: '1.5px solid #FBD9A5', borderRadius: '12px',
+                            padding: '16px 20px', marginBottom: '20px',
+                            fontFamily: 'Figtree, sans-serif',
+                            boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+                        }}>
+                            <div style={{
+                                width: '38px', height: '38px', borderRadius: '10px', flexShrink: 0,
+                                background: '#FFE3C2', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: '18px',
+                            }}>
+                                🗓️
+                            </div>
+                            <div>
+                                <p style={{ margin: 0, fontSize: '14.5px', fontWeight: '700', color: '#7A4100' }}>
+                                    Horário anterior liberado
+                                </p>
+                                <p style={{ margin: '2px 0 0', fontSize: '13px', color: '#9A5B14' }}>
+                                    Escolha abaixo um novo dia e horário para marcar sua consulta novamente.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     <Container_Important>
-                        {profissionalInfo && nomeProfissional && (
+                        {profissionalInfo && (
                             <ProfessionalInfo
                                 profissionalInfo={profissionalInfo}
                                 location={profissionalLocation}

@@ -17,7 +17,7 @@ const Formulario = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { nomeProfissional, tipoProfissional, reservaIds, pendingReservas } = location.state || {};
+  const { nomeProfissional, tipoProfissional, profissionalId, reservaIds, pendingReservas } = location.state || {};
 
   if (!user) {
     warning('Você precisa estar logado.');
@@ -104,17 +104,17 @@ const Formulario = () => {
           <hr style={{ border: 'none', borderTop: '1px solid #E2E8E5', margin: '0 0 4px' }} />
 
           {tipo === 'dentista' ? (
-            <Odontologia nomeProfissional={nomeProfissional} reservaIds={reservaIds} pendingReservas={pendingReservas} />
+            <Odontologia nomeProfissional={nomeProfissional} profissionalId={profissionalId} reservaIds={reservaIds} pendingReservas={pendingReservas} />
           ) : tipo === 'nutricionista' ? (
-            <Nutricao nomeProfissional={nomeProfissional} reservaIds={reservaIds} pendingReservas={pendingReservas} />
+            <Nutricao nomeProfissional={nomeProfissional} profissionalId={profissionalId} reservaIds={reservaIds} pendingReservas={pendingReservas} />
           ) : tipo === 'psicologo' ? (
-            <Psicologia nomeProfissional={nomeProfissional} reservaIds={reservaIds} pendingReservas={pendingReservas} />
+            <Psicologia nomeProfissional={nomeProfissional} profissionalId={profissionalId} reservaIds={reservaIds} pendingReservas={pendingReservas} />
           ) : tipo === 'fisioterapeuta' ? (
-            <Fisioterapia nomeProfissional={nomeProfissional} reservaIds={reservaIds} pendingReservas={pendingReservas} />
+            <Fisioterapia nomeProfissional={nomeProfissional} profissionalId={profissionalId} reservaIds={reservaIds} pendingReservas={pendingReservas} />
           ) : tipo === 'fonoaudiologo' ? (
-            <Fonoaudiologia nomeProfissional={nomeProfissional} reservaIds={reservaIds} pendingReservas={pendingReservas} />
+            <Fonoaudiologia nomeProfissional={nomeProfissional} profissionalId={profissionalId} reservaIds={reservaIds} pendingReservas={pendingReservas} />
           ) : tipo === 'medico' ? (
-            <SaudeGeral nomeProfissional={nomeProfissional} reservaIds={reservaIds} pendingReservas={pendingReservas} />
+            <SaudeGeral nomeProfissional={nomeProfissional} profissionalId={profissionalId} reservaIds={reservaIds} pendingReservas={pendingReservas} />
           ) : (
             <Subtitle>Formulário ainda não disponível para este tipo de profissional.</Subtitle>
           )}
