@@ -150,6 +150,14 @@ const STATUS_COLORS = {
   pendente:   { bg: '#FEF3C7', color: '#92400E', border: '#FDE68A' },
   negado:     { bg: '#FEE2E2', color: '#991B1B', border: '#FECACA' },
   aguardando_confirmacao_paciente: { bg: '#DBEAFE', color: '#1D4ED8', border: '#BFDBFE' },
+  liberado:   { bg: '#FFE8CC', color: '#92400E', border: '#FBD0A0' },
+};
+const STATUS_LABELS = {
+  confirmado: 'Confirmado',
+  pendente: 'Pendente',
+  negado: 'Negado',
+  aguardando_confirmacao_paciente: 'Aguardando confirmação',
+  liberado: 'Aguardando horário',
 };
 const getColor = (r) => STATUS_COLORS[r.status] || STATUS_COLORS.confirmado;
 
@@ -160,6 +168,7 @@ const ApptBlock = ({ r, fmt }) => {
   const top = (t - START_HOUR) * HOUR_HEIGHT + 2;
   const height = Math.max((endT - t) * HOUR_HEIGHT - 4, 28);
   const c = getColor(r);
+  const isLiberado = r.status === 'liberado';
   return (
     <div style={{
       position: 'absolute', top, left: 3, right: 3, height,
@@ -169,7 +178,7 @@ const ApptBlock = ({ r, fmt }) => {
       <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: c.color, lineHeight: 1.2 }}>{fmt(r.horario)}</p>
       {height > 36 && (
         <p style={{ margin: 0, fontSize: 11, color: c.color, opacity: 0.8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {r.nome} {r.sobrenome ? r.sobrenome[0] + '.' : ''}
+          {isLiberado ? STATUS_LABELS.liberado : `${r.nome} ${r.sobrenome ? r.sobrenome[0] + '.' : ''}`}
         </p>
       )}
     </div>
@@ -220,6 +229,7 @@ const AgendaView = ({ reservas, formatarHorarioBrasil, irPara }) => {
   const byDay = {};
   reservas.forEach(r => {
     if (!r.dia) return;
+    if (r.status === 'transferido') return;
     const raw = String(r.dia).includes('T') ? String(r.dia).split('T')[0] : String(r.dia);
     if (!byDay[raw]) byDay[raw] = [];
     byDay[raw].push(r);
@@ -528,7 +538,7 @@ const AgendaView = ({ reservas, formatarHorarioBrasil, irPara }) => {
                 const c = getColor(r);
                 const av = getAv(`${r.nome} ${r.sobrenome}`);
                 const initials = getIn(`${r.nome} ${r.sobrenome}`);
-                const statusLabel = { confirmado: 'Confirmado', pendente: 'Pendente', negado: 'Negado', aguardando_confirmacao_paciente: 'Aguardando' }[r.status] || r.status;
+                const statusLabel = STATUS_LABELS[r.status] || r.status;
                 return (
                   <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderBottom: '1px solid #F7F7F4' }}>
                     <div style={{ width: '44px', textAlign: 'center', flexShrink: 0 }}>

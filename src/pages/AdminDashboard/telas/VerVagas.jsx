@@ -1,7 +1,9 @@
 import { getCandidatos, notificarVaga } from '../api';
-import { AlertCircle, Bell, Calendar, Check, Clock, User } from 'lucide-react';
+import { AlertCircle, Bell, Calendar, Check, Clock, RefreshCw, User } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import styled from 'styled-components';
+
+const REFRESH_INTERVAL_MS = 20000;
 
 const PagePad = styled.div`
   padding: 28px 32px;
@@ -40,20 +42,21 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
   const [loadingCandidatos, setLoadingCandidatos] = useState({});
   const [notificando, setNotificando] = useState({});  // { candidatoKey: true }
   const [notificados, setNotificados] = useState({});  // { candidatoKey: true } — já notificados nesta sessão
+  const [notificandoTodos, setNotificandoTodos] = useState({}); // { reservaId: true }
 
   const vagas = reservas.filter(r => r.status === 'liberado');
 
-  const carregarCandidatos = async (reserva) => {
-    if (candidatos[reserva.id]) return;
-    setLoadingCandidatos(p => ({ ...p, [reserva.id]: true }));
+  const carregarCandidatos = async (reserva, { force = false, silent = false } = {}) => {
+    if (!force && candidatos[reserva.id]) return;
+    if (!silent) setLoadingCandidatos(p => ({ ...p, [reserva.id]: true }));
     try {
       const dia = String(reserva.dia).split('T')[0];
       const { data } = await getCandidatos(reserva.profissional_id || user?.id, dia, reserva.usuario_id);
       setCandidatos(p => ({ ...p, [reserva.id]: data }));
     } catch {
-      showError('Erro ao carregar candidatos.');
+      if (!silent) showError('Erro ao carregar candidatos.');
     } finally {
-      setLoadingCandidatos(p => ({ ...p, [reserva.id]: false }));
+      if (!silent) setLoadingCandidatos(p => ({ ...p, [reserva.id]: false }));
     }
   };
 
@@ -62,6 +65,22 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
       if (!candidatos[v.id]) carregarCandidatos(v);
     });
   }, [vagas.map(v => v.id).join(',')]);
+
+  useEffect(() => {
+    if (vagas.length === 0) return;
+    const interval = setInterval(() => {
+      vagas.forEach(v => carregarCandidatos(v, { force: true, silent: true }));
+    }, REFRESH_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [vagas.map(v => v.id).join(',')]);
+
+  useEffect(() => {
+    if (vagas.length === 0 || !buscarReservas) return;
+    const interval = setInterval(() => {
+      buscarReservas();
+    }, REFRESH_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [vagas.map(v => v.id).join(','), buscarReservas]);
 
   const notificarCandidato = async (reserva, candidato) => {
     const key = `${reserva.id}_${candidato.usuario_id}`;
@@ -78,11 +97,32 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
         reserva_candidato_id: candidato.reserva_id,
       });
       setNotificados(p => ({ ...p, [key]: true }));
-      success(`Notificação enviada para ${candidato.nome} ${candidato.sobrenome}!`);
+      return true;
     } catch {
-      showError('Erro ao enviar notificação.');
+      return false;
     } finally {
       setNotificando(p => ({ ...p, [key]: false }));
+    }
+  };
+
+  const notificarUm = async (reserva, candidato) => {
+    const ok = await notificarCandidato(reserva, candidato);
+    if (ok) success(`Notificação enviada para ${candidato.nome} ${candidato.sobrenome}!`);
+    else showError('Erro ao enviar notificação.');
+  };
+
+  const notificarTodos = async (reserva) => {
+    const lista = (candidatos[reserva.id] || []).filter(c => !notificados[`${reserva.id}_${c.usuario_id}`]);
+    if (lista.length === 0) return;
+    setNotificandoTodos(p => ({ ...p, [reserva.id]: true }));
+    try {
+      const resultados = await Promise.all(lista.map(c => notificarCandidato(reserva, c)));
+      const enviados = resultados.filter(Boolean).length;
+      if (enviados === lista.length) success(`Notificação enviada para ${enviados} candidato${enviados !== 1 ? 's' : ''}!`);
+      else if (enviados > 0) showError(`${enviados} de ${lista.length} notificações enviadas — houve falha em algumas.`);
+      else showError('Erro ao enviar notificações.');
+    } finally {
+      setNotificandoTodos(p => ({ ...p, [reserva.id]: false }));
     }
   };
 
@@ -142,9 +182,43 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
 
               {/* Candidates */}
               <div style={{ padding: '16px 24px' }}>
-                <p style={{ margin: '0 0 12px', fontSize: '13px', fontWeight: '600', color: '#555', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                  Candidatos sugeridos
-                </p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', gap: '8px', flexWrap: 'wrap' }}>
+                  <p style={{ margin: 0, fontSize: '13px', fontWeight: '600', color: '#555', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Candidatos sugeridos
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => carregarCandidatos(reserva, { force: true })}
+                      disabled={loading}
+                      title="Atualizar lista de candidatos"
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '5px',
+                        background: 'none', border: '1px solid #E0DFD9', borderRadius: '6px',
+                        padding: '4px 8px', fontSize: '11px', fontWeight: '600', color: '#555',
+                        cursor: loading ? 'default' : 'pointer', fontFamily: 'Figtree, sans-serif',
+                        opacity: loading ? 0.6 : 1,
+                      }}
+                    >
+                      <RefreshCw size={11} /> {loading ? 'Atualizando…' : 'Atualizar'}
+                    </button>
+                    {lista.length > 0 && (
+                      <button
+                        onClick={() => notificarTodos(reserva)}
+                        disabled={notificandoTodos[reserva.id] || lista.every(c => notificados[`${reserva.id}_${c.usuario_id}`])}
+                        title="Notificar todos os candidatos desta vaga de uma vez — o primeiro que aceitar fica com a consulta"
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '5px',
+                          background: '#1B4D3E', border: 'none', borderRadius: '6px',
+                          padding: '4px 10px', fontSize: '11px', fontWeight: '700', color: 'white',
+                          cursor: notificandoTodos[reserva.id] ? 'default' : 'pointer', fontFamily: 'Figtree, sans-serif',
+                          opacity: notificandoTodos[reserva.id] || lista.every(c => notificados[`${reserva.id}_${c.usuario_id}`]) ? 0.6 : 1,
+                        }}
+                      >
+                        <Bell size={11} /> {notificandoTodos[reserva.id] ? 'Notificando…' : 'Notificar todos'}
+                      </button>
+                    )}
+                  </div>
+                </div>
 
                 {loading ? (
                   <div style={{ padding: '20px', textAlign: 'center', color: '#aaa', fontSize: '13px' }}>Carregando candidatos…</div>
@@ -193,7 +267,7 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
                           </div>
 
                           <button
-                            onClick={() => notificarCandidato(reserva, c)}
+                            onClick={() => notificarUm(reserva, c)}
                             disabled={jaNotificado || enviando}
                             style={{
                               display: 'flex', alignItems: 'center', gap: '6px',
