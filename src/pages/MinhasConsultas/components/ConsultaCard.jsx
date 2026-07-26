@@ -115,6 +115,15 @@ const ConsultaCard = ({
   const isRescheduled = c.status === 'aguardando_confirmacao_paciente';
   const isUrgente = Number(c.is_urgente) === 1;
   const isPast = c.status === 'confirmado' && dia && dia < today;
+
+  const dataHoraConsulta = (() => {
+    if (!dia || !c.horario) return null;
+    const [h, m] = String(c.horario).split(':').map(Number);
+    const dt = new Date(dia);
+    dt.setHours(h || 0, m || 0, 0, 0);
+    return dt;
+  })();
+  const faltaMenosDe24h = !!dataHoraConsulta && (dataHoraConsulta.getTime() - Date.now()) < 24 * 60 * 60 * 1000;
   const jaAvaliou = avaliacoesFeitas.has(c.id);
   const isAvaliando = avaliandoId === c.id;
   const valor = c.valorConsulta ? `· R$ ${Number(c.valorConsulta).toFixed(0)}` : '';
@@ -159,9 +168,11 @@ const ConsultaCard = ({
                   <Edit2 size={14} /> Editar
                 </ActionBtn>
               )}
-              <ActionBtn $danger onClick={() => onCancelar(c.id)}>
-                <X size={14} /> Cancelar
-              </ActionBtn>
+              {!faltaMenosDe24h && (
+                <ActionBtn $danger onClick={() => onCancelar(c.id)}>
+                  <X size={14} /> Cancelar
+                </ActionBtn>
+              )}
             </ActionsRow>
           )}
         </CardMain>
@@ -195,7 +206,9 @@ const ConsultaCard = ({
           <CardFooter>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <Calendar size={13} />
-              Não vai poder ir?&nbsp;
+              {faltaMenosDe24h
+                ? 'Faltam menos de 24h — não é mais possível cancelar, mas você pode '
+                : 'Não vai poder ir? '}
               <LibeLink onClick={() => onLiberarHorario(c.id)}>Liberar horário</LibeLink>
               &nbsp;— outro paciente pode aproveitá-lo.
             </span>
