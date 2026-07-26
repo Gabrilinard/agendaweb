@@ -44,6 +44,12 @@ export const Input = styled.input`
   border: 1px solid #ccc;
   border-radius: 4px;
   width: 100%;
+
+  &:disabled {
+    background-color: #e9e9e9;
+    color: #666;
+    cursor: not-allowed;
+  }
 `;
 
 export const Select = styled.select`
@@ -52,6 +58,12 @@ export const Select = styled.select`
   border-radius: 4px;
   width: 100%;
   background-color: white;
+
+  &:disabled {
+    background-color: #e9e9e9;
+    color: #666;
+    cursor: not-allowed;
+  }
 `;
 
 export const RadioGroup = styled.div`
