@@ -160,10 +160,12 @@ const ConsultaCard = ({
 
           {isActive && (
             <ActionsRow>
-              <ActionBtn onClick={() => onVerFormulario(c)}>
-                <FileText size={14} /> Formulário
-              </ActionBtn>
-              {!isRescheduled && (
+              {!isPast && (
+                <ActionBtn onClick={() => onVerFormulario(c)}>
+                  <FileText size={14} /> Formulário
+                </ActionBtn>
+              )}
+              {!isRescheduled && !isPast && (
                 <ActionBtn onClick={() => onEditar(c)}>
                   <Edit2 size={14} /> Editar
                 </ActionBtn>
