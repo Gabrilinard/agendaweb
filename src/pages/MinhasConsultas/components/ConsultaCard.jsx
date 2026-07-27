@@ -187,7 +187,9 @@ const ConsultaCard = ({
           </ConfirmBar>
         ) : isActive && liberandoId === c.id ? (
           <ConfirmBar style={{ background: '#FFF7F0', borderColor: '#FED7B0' }}>
-            Liberar abre seu horário para outro paciente ser atendido. Deseja confirmar?
+            <span style={{ flex: '1 1 auto', minWidth: 0 }}>
+              Esse horário será liberado para que outro paciente possa ocupá-lo. Em seguida, você será redirecionado para marcar uma nova consulta ou editar esta para outro horário. Deseja confirmar?
+            </span>
             <ConfirmBtns>
               <ConfirmNo onClick={() => setLiberandoId(null)}>Voltar</ConfirmNo>
               <ConfirmYes style={{ background: '#E8611A' }} onClick={onConfirmarLiberacao}>Sim, liberar</ConfirmYes>

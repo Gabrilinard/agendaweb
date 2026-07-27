@@ -366,6 +366,7 @@ export const ConfirmBtns = styled.div`
   display: flex;
   gap: 8px;
   margin-left: auto;
+  flex-shrink: 0;
 `;
 
 export const ConfirmYes = styled.button`
@@ -378,6 +379,7 @@ export const ConfirmYes = styled.button`
   font-weight: 600;
   cursor: pointer;
   font-family: 'Figtree', sans-serif;
+  white-space: nowrap;
   &:hover { background: #A02828; }
 `;
 

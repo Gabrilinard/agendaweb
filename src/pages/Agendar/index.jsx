@@ -246,7 +246,18 @@ const Agendar = () => {
                                     Horário anterior liberado
                                 </p>
                                 <p style={{ margin: '2px 0 0', fontSize: '13px', color: '#9A5B14' }}>
-                                    Escolha abaixo um novo dia e horário para marcar sua consulta novamente.
+                                    Escolha abaixo um novo dia e horário para marcar sua consulta novamente, ou{' '}
+                                    <button
+                                        onClick={() => document.getElementById('reservation-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                                        style={{
+                                            background: 'none', border: 'none', padding: 0, margin: 0,
+                                            color: '#7A4100', fontWeight: '700', fontSize: '13px',
+                                            textDecoration: 'underline', cursor: 'pointer',
+                                            fontFamily: 'Figtree, sans-serif',
+                                        }}
+                                    >
+                                        role até o final da página para editar seu horário liberado
+                                    </button>.
                                 </p>
                             </div>
                         </div>
@@ -281,11 +292,13 @@ const Agendar = () => {
                         />
                     </Container_Important>
 
-                    <ReservationList
-                        reservas={reservas}
-                        actions={reservaActions}
-                        nomeProfissional={nomeProfissional}
-                    />
+                    <div id="reservation-form">
+                        <ReservationList
+                            reservas={reservas}
+                            actions={reservaActions}
+                            nomeProfissional={nomeProfissional}
+                        />
+                    </div>
                 </div>
             </Container>
             

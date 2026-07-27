@@ -88,7 +88,7 @@ export const useConsultas = ({ onLoaded } = {}) => {
     const consultaLiberada = consultas.find(c => c.id === liberandoId);
     try {
       await liberarVaga(liberandoId);
-      success('Horário liberado! Escolha um novo dia e horário para sua consulta.');
+      success('Horário liberado para outro paciente! Marque uma nova consulta ou escolha outro horário para esta.');
       setLiberandoId(null);
       buscarConsultas();
 
