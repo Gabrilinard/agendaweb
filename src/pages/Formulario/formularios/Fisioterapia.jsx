@@ -32,6 +32,38 @@ import {
   TextArea,
 } from '../style';
 
+const REQUIRED_FIELDS = [
+  { key: 'motivoPrincipal', label: 'o principal motivo da consulta' },
+  { key: 'sintomas', label: 'os sintomas que está sentindo' },
+  { key: 'inicioSintomas', label: 'há quanto tempo os sintomas começaram' },
+  { key: 'intensidade', label: 'a intensidade' },
+  { key: 'doencaDiagnosticada', label: 'se possui alguma doença diagnosticada' },
+  { key: 'cirurgias', label: 'se já realizou cirurgias' },
+  { key: 'internacao', label: 'se já foi internado' },
+  { key: 'historicoFamiliar', label: 'o histórico familiar de doenças' },
+  { key: 'usaMedicamento', label: 'se usa algum medicamento atualmente' },
+  { key: 'suplementos', label: 'se usa suplementos' },
+  { key: 'alergiaMedicamento', label: 'se possui alergia a medicamentos' },
+  { key: 'alimentacao', label: 'a alimentação' },
+  { key: 'atividadeFisicaFrequencia', label: 'a frequência de atividade física' },
+  { key: 'alcool', label: 'o consumo de álcool' },
+  { key: 'fuma', label: 'se fuma' },
+  { key: 'sono', label: 'a qualidade do sono' },
+  { key: 'estresse', label: 'o nível de estresse' },
+  { key: 'ansiedadeDepressao', label: 'se possui ansiedade ou depressão diagnosticada' },
+  { key: 'acompanhamentoPsicologico', label: 'se faz acompanhamento psicológico' },
+  { key: 'queixaPrincipal', label: 'a queixa principal' },
+  { key: 'localDor', label: 'o local da dor ou limitação' },
+  { key: 'senteDor', label: 'se sente dor' },
+  { key: 'nivelDor', label: 'o nível da dor' },
+  { key: 'pioraMovimento', label: 'se a dor piora com movimento' },
+  { key: 'dificuldadeAtividades', label: 'se tem dificuldade para atividades do dia a dia' },
+  { key: 'lesoesTraumas', label: 'se já sofreu lesões ou traumas' },
+  { key: 'fezFisioAntes', label: 'se já fez fisioterapia antes' },
+  { key: 'diagnostico', label: 'o diagnóstico' },
+  { key: 'observacoes', label: 'as observações' },
+];
+
 const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingReservas }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -123,18 +155,31 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
       return;
     }
 
-    if (!form.motivoPrincipal.trim()) {
-      showError('Informe o principal motivo da consulta.');
+    for (const campo of REQUIRED_FIELDS) {
+      if (!String(form[campo.key]).trim()) {
+        showError(`Informe ${campo.label}.`);
+        return;
+      }
+    }
+
+    if (form.doencaDiagnosticada === 'sim' && !form.doencaQual.trim()) {
+      showError('Informe qual doença foi diagnosticada.');
       return;
     }
 
-    if (!form.inicioSintomas.trim()) {
-      showError('Informe há quanto tempo os sintomas começaram.');
+    if (form.usaMedicamento === 'sim' && !form.medicamentosDetalhe.trim()) {
+      showError('Informe quais medicamentos utiliza e as dosagens.');
       return;
     }
 
-    if (!form.intensidade) {
-      showError('Selecione a intensidade.');
+    if (form.alergiaMedicamento === 'sim' && !form.alergiaMedicamentoDetalhe.trim()) {
+      showError('Informe a qual medicamento tem alergia.');
+      return;
+    }
+
+    const nivelDorNum = Number(form.nivelDor);
+    if (!Number.isInteger(nivelDorNum) || nivelDorNum < 0 || nivelDorNum > 10) {
+      showError('O nível da dor deve ser um número inteiro entre 0 e 10.');
       return;
     }
 
@@ -261,7 +306,7 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
           </Field>
           <Field style={{ gridColumn: '1 / -1' }}>
             <Label>Quais sintomas você está sentindo?</Label>
-            <TextArea value={form.sintomas} onChange={updateField('sintomas')} />
+            <TextArea value={form.sintomas} onChange={updateField('sintomas')} required />
           </Field>
           <Field>
             <Label>Há quanto tempo os sintomas começaram?</Label>
@@ -289,7 +334,7 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
         <Grid>
           <Field>
             <Label>Possui alguma doença diagnosticada?</Label>
-            <Select value={form.doencaDiagnosticada} onChange={updateField('doencaDiagnosticada')}>
+            <Select value={form.doencaDiagnosticada} onChange={updateField('doencaDiagnosticada')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -300,17 +345,18 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
             <Input
               value={form.doencaQual}
               onChange={updateField('doencaQual')}
-              placeholder="Opcional"
+              placeholder={form.doencaDiagnosticada === 'sim' ? '' : 'Não se aplica'}
               disabled={form.doencaDiagnosticada !== 'sim'}
+              required={form.doencaDiagnosticada === 'sim'}
             />
           </Field>
           <Field style={{ gridColumn: '1 / -1' }}>
             <Label>Já realizou cirurgias? Quais?</Label>
-            <TextArea value={form.cirurgias} onChange={updateField('cirurgias')} placeholder="Opcional" />
+            <TextArea value={form.cirurgias} onChange={updateField('cirurgias')} required />
           </Field>
           <Field>
             <Label>Já foi internado?</Label>
-            <Select value={form.internacao} onChange={updateField('internacao')}>
+            <Select value={form.internacao} onChange={updateField('internacao')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -318,7 +364,7 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
           </Field>
           <Field style={{ gridColumn: '1 / -1' }}>
             <Label>Histórico familiar de doenças importantes</Label>
-            <TextArea value={form.historicoFamiliar} onChange={updateField('historicoFamiliar')} placeholder="Opcional" />
+            <TextArea value={form.historicoFamiliar} onChange={updateField('historicoFamiliar')} required />
           </Field>
         </Grid>
       </SectionBlock>
@@ -328,7 +374,7 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
         <Grid>
           <Field>
             <Label>Usa algum medicamento atualmente?</Label>
-            <Select value={form.usaMedicamento} onChange={updateField('usaMedicamento')}>
+            <Select value={form.usaMedicamento} onChange={updateField('usaMedicamento')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -339,17 +385,18 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
             <Input
               value={form.medicamentosDetalhe}
               onChange={updateField('medicamentosDetalhe')}
-              placeholder="Opcional"
+              placeholder={form.usaMedicamento === 'sim' ? '' : 'Não se aplica'}
               disabled={form.usaMedicamento !== 'sim'}
+              required={form.usaMedicamento === 'sim'}
             />
           </Field>
           <Field>
             <Label>Usa suplementos?</Label>
-            <Input value={form.suplementos} onChange={updateField('suplementos')} placeholder="Opcional" />
+            <Input value={form.suplementos} onChange={updateField('suplementos')} required />
           </Field>
           <Field>
             <Label>Possui alergia a medicamentos?</Label>
-            <Select value={form.alergiaMedicamento} onChange={updateField('alergiaMedicamento')}>
+            <Select value={form.alergiaMedicamento} onChange={updateField('alergiaMedicamento')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -360,8 +407,9 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
             <Input
               value={form.alergiaMedicamentoDetalhe}
               onChange={updateField('alergiaMedicamentoDetalhe')}
-              placeholder="Opcional"
+              placeholder={form.alergiaMedicamento === 'sim' ? '' : 'Não se aplica'}
               disabled={form.alergiaMedicamento !== 'sim'}
+              required={form.alergiaMedicamento === 'sim'}
             />
           </Field>
         </Grid>
@@ -372,7 +420,7 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
         <Grid>
           <Field>
             <Label>Alimentação</Label>
-            <Select value={form.alimentacao} onChange={updateField('alimentacao')}>
+            <Select value={form.alimentacao} onChange={updateField('alimentacao')} required>
               <option value="">Selecione...</option>
               <option value="boa">Boa</option>
               <option value="regular">Regular</option>
@@ -385,11 +433,12 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
               value={form.atividadeFisicaFrequencia}
               onChange={updateField('atividadeFisicaFrequencia')}
               placeholder="Ex: 3x por semana"
+              required
             />
           </Field>
           <Field>
             <Label>Consumo de álcool</Label>
-            <Select value={form.alcool} onChange={updateField('alcool')}>
+            <Select value={form.alcool} onChange={updateField('alcool')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -397,7 +446,7 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
           </Field>
           <Field>
             <Label>Fuma</Label>
-            <Select value={form.fuma} onChange={updateField('fuma')}>
+            <Select value={form.fuma} onChange={updateField('fuma')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -405,7 +454,7 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
           </Field>
           <Field>
             <Label>Qualidade do sono</Label>
-            <Select value={form.sono} onChange={updateField('sono')}>
+            <Select value={form.sono} onChange={updateField('sono')} required>
               <option value="">Selecione...</option>
               <option value="boa">Boa</option>
               <option value="regular">Regular</option>
@@ -420,7 +469,7 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
         <Grid>
           <Field>
             <Label>Nível de estresse</Label>
-            <Select value={form.estresse} onChange={updateField('estresse')}>
+            <Select value={form.estresse} onChange={updateField('estresse')} required>
               <option value="">Selecione...</option>
               <option value="baixo">Baixo</option>
               <option value="medio">Médio</option>
@@ -429,7 +478,7 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
           </Field>
           <Field>
             <Label>Ansiedade ou depressão diagnosticada?</Label>
-            <Select value={form.ansiedadeDepressao} onChange={updateField('ansiedadeDepressao')}>
+            <Select value={form.ansiedadeDepressao} onChange={updateField('ansiedadeDepressao')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -437,7 +486,7 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
           </Field>
           <Field>
             <Label>Faz acompanhamento psicológico?</Label>
-            <Select value={form.acompanhamentoPsicologico} onChange={updateField('acompanhamentoPsicologico')}>
+            <Select value={form.acompanhamentoPsicologico} onChange={updateField('acompanhamentoPsicologico')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -451,7 +500,7 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
         <Grid>
           <Field style={{ gridColumn: '1 / -1' }}>
             <Label>Queixa principal</Label>
-            <TextArea value={form.queixaPrincipal} onChange={updateField('queixaPrincipal')} placeholder="Opcional" />
+            <TextArea value={form.queixaPrincipal} onChange={updateField('queixaPrincipal')} required />
           </Field>
           <Field>
             <Label>Local da dor ou limitação</Label>
@@ -459,11 +508,12 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
               value={form.localDor}
               onChange={updateField('localDor')}
               placeholder="Coluna, joelho, ombro..."
+              required
             />
           </Field>
           <Field>
             <Label>Sente dor?</Label>
-            <Select value={form.senteDor} onChange={updateField('senteDor')}>
+            <Select value={form.senteDor} onChange={updateField('senteDor')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -478,23 +528,24 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
               value={form.nivelDor}
               onChange={updateField('nivelDor')}
               placeholder="0–10"
+              required
             />
           </Field>
           <Field style={{ gridColumn: '1 / -1' }}>
             <Label>A dor piora com movimento?</Label>
-            <Input value={form.pioraMovimento} onChange={updateField('pioraMovimento')} placeholder="Opcional" />
+            <Input value={form.pioraMovimento} onChange={updateField('pioraMovimento')} required />
           </Field>
           <Field style={{ gridColumn: '1 / -1' }}>
             <Label>Tem dificuldade para realizar atividades do dia a dia?</Label>
-            <TextArea value={form.dificuldadeAtividades} onChange={updateField('dificuldadeAtividades')} placeholder="Opcional" />
+            <TextArea value={form.dificuldadeAtividades} onChange={updateField('dificuldadeAtividades')} required />
           </Field>
           <Field style={{ gridColumn: '1 / -1' }}>
             <Label>Já sofreu lesões ou traumas?</Label>
-            <TextArea value={form.lesoesTraumas} onChange={updateField('lesoesTraumas')} placeholder="Opcional" />
+            <TextArea value={form.lesoesTraumas} onChange={updateField('lesoesTraumas')} required />
           </Field>
           <Field>
             <Label>Já fez fisioterapia antes?</Label>
-            <Select value={form.fezFisioAntes} onChange={updateField('fezFisioAntes')}>
+            <Select value={form.fezFisioAntes} onChange={updateField('fezFisioAntes')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -505,7 +556,8 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
             <Input
               value={form.diagnostico}
               onChange={updateField('diagnostico')}
-              placeholder="Hérnia de disco, tendinite... (opcional)"
+              placeholder="Hérnia de disco, tendinite..."
+              required
             />
           </Field>
         </Grid>
@@ -541,10 +593,10 @@ const Fisioterapia = ({ nomeProfissional, profissionalId, reservaIds, pendingRes
         <SectionTitle><FileText size={16} /> Observações</SectionTitle>
         <Field>
           <Label>Informações adicionais</Label>
-          <TextArea value={form.observacoes} onChange={updateField('observacoes')} placeholder="Opcional" />
+          <TextArea value={form.observacoes} onChange={updateField('observacoes')} required />
         </Field>
         <Field style={{ marginTop: 12 }}>
-          <Label>Anexar exame recente (se tiver)</Label>
+          <Label>Anexar exame recente (opcional)</Label>
           <AttachmentBox
             onClick={handleFileClick}
             onDrop={handleFileDrop}

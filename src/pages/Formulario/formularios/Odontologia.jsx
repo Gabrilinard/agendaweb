@@ -19,6 +19,26 @@ import {
   TextArea,
 } from '../style';
 
+const REQUIRED_FIELDS = [
+  { key: 'motivoConsulta', label: 'o motivo da consulta' },
+  { key: 'escovacaoFrequencia', label: 'a frequência de escovação diária' },
+  { key: 'dor', label: 'se sente dor nos dentes ou gengiva' },
+  { key: 'sangramento', label: 'se há sangramento gengival' },
+  { key: 'sensibilidade', label: 'se há sensibilidade a frio ou quente' },
+  { key: 'fioDental', label: 'se usa fio dental' },
+  { key: 'ultimaConsulta', label: 'a data da última consulta ao dentista' },
+  { key: 'tratamentoCanal', label: 'se já fez tratamento de canal' },
+  { key: 'aparelhoOrto', label: 'se usa aparelho ortodôntico' },
+  { key: 'bruxismo', label: 'se possui bruxismo' },
+  { key: 'alergiaAnestesia', label: 'se possui alergia a anestesia' },
+  { key: 'problemasCardiacos', label: 'se possui problemas cardíacos' },
+  { key: 'anticoagulantes', label: 'se usa medicamentos anticoagulantes' },
+];
+
+const hoje = new Date();
+const DATA_MIN = new Date(hoje.getFullYear() - 120, hoje.getMonth(), hoje.getDate()).toISOString().slice(0, 10);
+const DATA_MAX = hoje.toISOString().slice(0, 10);
+
 const Odontologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReservas }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -73,18 +93,25 @@ const Odontologia = ({ nomeProfissional, profissionalId, reservaIds, pendingRese
       return;
     }
 
-    if (!form.motivoConsulta.trim()) {
-      showError('Preencha o motivo da consulta.');
+    for (const campo of REQUIRED_FIELDS) {
+      if (!String(form[campo.key]).trim()) {
+        showError(`Informe ${campo.label}.`);
+        return;
+      }
+    }
+
+    if (form.alergiaAnestesia === 'sim' && !form.alergiaAnestesiaDetalhe.trim()) {
+      showError('Informe a qual anestesia tem alergia.');
       return;
     }
 
-    if (!form.escovacaoFrequencia) {
-      showError('Informe a frequência de escovação diária.');
+    if (form.anticoagulantes === 'sim' && !form.anticoagulantesDetalhe.trim()) {
+      showError('Informe quais anticoagulantes utiliza.');
       return;
     }
 
-    if (!form.fioDental) {
-      showError('Informe se você usa fio dental.');
+    if (form.ultimaConsulta < DATA_MIN || form.ultimaConsulta > DATA_MAX) {
+      showError('Informe uma data válida para a última consulta ao dentista (não pode ser no futuro nem excessivamente antiga).');
       return;
     }
 
@@ -180,7 +207,7 @@ const Odontologia = ({ nomeProfissional, profissionalId, reservaIds, pendingRese
           </Field>
           <Field>
             <Label>Sente dor nos dentes ou gengiva?</Label>
-            <Select value={form.dor} onChange={updateField('dor')}>
+            <Select value={form.dor} onChange={updateField('dor')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -188,7 +215,7 @@ const Odontologia = ({ nomeProfissional, profissionalId, reservaIds, pendingRese
           </Field>
           <Field>
             <Label>Sangramento gengival?</Label>
-            <Select value={form.sangramento} onChange={updateField('sangramento')}>
+            <Select value={form.sangramento} onChange={updateField('sangramento')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -196,7 +223,7 @@ const Odontologia = ({ nomeProfissional, profissionalId, reservaIds, pendingRese
           </Field>
           <Field>
             <Label>Sensibilidade (frio / quente)?</Label>
-            <Select value={form.sensibilidade} onChange={updateField('sensibilidade')}>
+            <Select value={form.sensibilidade} onChange={updateField('sensibilidade')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -222,11 +249,14 @@ const Odontologia = ({ nomeProfissional, profissionalId, reservaIds, pendingRese
               type="date"
               value={form.ultimaConsulta}
               onChange={updateField('ultimaConsulta')}
+              min={DATA_MIN}
+              max={DATA_MAX}
+              required
             />
           </Field>
           <Field>
             <Label>Já fez tratamento de canal?</Label>
-            <Select value={form.tratamentoCanal} onChange={updateField('tratamentoCanal')}>
+            <Select value={form.tratamentoCanal} onChange={updateField('tratamentoCanal')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -234,7 +264,7 @@ const Odontologia = ({ nomeProfissional, profissionalId, reservaIds, pendingRese
           </Field>
           <Field>
             <Label>Uso de aparelho ortodôntico</Label>
-            <Select value={form.aparelhoOrto} onChange={updateField('aparelhoOrto')}>
+            <Select value={form.aparelhoOrto} onChange={updateField('aparelhoOrto')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -242,7 +272,7 @@ const Odontologia = ({ nomeProfissional, profissionalId, reservaIds, pendingRese
           </Field>
           <Field>
             <Label>Bruxismo (ranger os dentes)</Label>
-            <Select value={form.bruxismo} onChange={updateField('bruxismo')}>
+            <Select value={form.bruxismo} onChange={updateField('bruxismo')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -256,7 +286,7 @@ const Odontologia = ({ nomeProfissional, profissionalId, reservaIds, pendingRese
         <Grid>
           <Field>
             <Label>Alergia a anestesia?</Label>
-            <Select value={form.alergiaAnestesia} onChange={updateField('alergiaAnestesia')}>
+            <Select value={form.alergiaAnestesia} onChange={updateField('alergiaAnestesia')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -267,13 +297,14 @@ const Odontologia = ({ nomeProfissional, profissionalId, reservaIds, pendingRese
             <Input
               value={form.alergiaAnestesiaDetalhe}
               onChange={updateField('alergiaAnestesiaDetalhe')}
-              placeholder="Opcional"
+              placeholder={form.alergiaAnestesia === 'sim' ? '' : 'Não se aplica'}
               disabled={form.alergiaAnestesia !== 'sim'}
+              required={form.alergiaAnestesia === 'sim'}
             />
           </Field>
           <Field>
             <Label>Problemas cardíacos</Label>
-            <Select value={form.problemasCardiacos} onChange={updateField('problemasCardiacos')}>
+            <Select value={form.problemasCardiacos} onChange={updateField('problemasCardiacos')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -281,7 +312,7 @@ const Odontologia = ({ nomeProfissional, profissionalId, reservaIds, pendingRese
           </Field>
           <Field>
             <Label>Uso de medicamentos anticoagulantes</Label>
-            <Select value={form.anticoagulantes} onChange={updateField('anticoagulantes')}>
+            <Select value={form.anticoagulantes} onChange={updateField('anticoagulantes')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -292,12 +323,13 @@ const Odontologia = ({ nomeProfissional, profissionalId, reservaIds, pendingRese
             <Input
               value={form.anticoagulantesDetalhe}
               onChange={updateField('anticoagulantesDetalhe')}
-              placeholder="Opcional"
+              placeholder={form.anticoagulantes === 'sim' ? '' : 'Não se aplica'}
               disabled={form.anticoagulantes !== 'sim'}
+              required={form.anticoagulantes === 'sim'}
             />
           </Field>
           <Field style={{ gridColumn: '1 / -1' }}>
-            <Label>Anexar exame recente (se tiver)</Label>
+            <Label>Anexar exame recente (opcional)</Label>
             <AttachmentBox
               onClick={handleFileClick}
               onDrop={handleFileDrop}

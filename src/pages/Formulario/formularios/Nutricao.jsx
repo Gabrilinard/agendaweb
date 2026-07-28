@@ -19,6 +19,21 @@ import {
   TextArea,
 } from '../style';
 
+const REQUIRED_FIELDS = [
+  { key: 'objetivo', label: 'seu objetivo' },
+  { key: 'refeicoesPorDia', label: 'quantas refeições faz por dia' },
+  { key: 'aguaDiaria', label: 'seu consumo diário de água' },
+  { key: 'restricoes', label: 'suas restrições alimentares' },
+  { key: 'preferenciasAversoes', label: 'suas preferências ou aversões alimentares' },
+  { key: 'atividadeFisica', label: 'sua prática de atividade física' },
+  { key: 'rotinaTrabalho', label: 'sua rotina de trabalho' },
+  { key: 'horariosRefeicoes', label: 'seus horários de refeições' },
+  { key: 'problemasMetabolicos', label: 'problemas metabólicos, se houver' },
+  { key: 'suplementos', label: 'se usa suplementos' },
+  { key: 'pesoAtual', label: 'seu peso atual' },
+  { key: 'altura', label: 'sua altura' },
+];
+
 const Nutricao = ({ nomeProfissional, profissionalId, reservaIds, pendingReservas }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -42,6 +57,8 @@ const Nutricao = ({ nomeProfissional, profissionalId, reservaIds, pendingReserva
     horariosRefeicoes: '',
     problemasMetabolicos: '',
     suplementos: '',
+    pesoAtual: '',
+    altura: '',
   });
   const [examesArquivo, setExamesArquivo] = useState(null);
   const fileInputRef = useRef();
@@ -67,18 +84,22 @@ const Nutricao = ({ nomeProfissional, profissionalId, reservaIds, pendingReserva
       return;
     }
 
-    if (!form.objetivo.trim()) {
-      showError('Informe seu objetivo.');
+    for (const campo of REQUIRED_FIELDS) {
+      if (!String(form[campo.key]).trim()) {
+        showError(`Informe ${campo.label}.`);
+        return;
+      }
+    }
+
+    const pesoNum = Number(form.pesoAtual);
+    if (!Number.isFinite(pesoNum) || pesoNum <= 0 || pesoNum > 300) {
+      showError('Informe um peso válido, entre 1 e 300 kg.');
       return;
     }
 
-    if (!form.refeicoesPorDia) {
-      showError('Informe quantas refeições faz por dia.');
-      return;
-    }
-
-    if (!form.aguaDiaria) {
-      showError('Informe seu consumo diário de água.');
+    const alturaNum = Number(form.altura);
+    if (!Number.isFinite(alturaNum) || alturaNum < 30 || alturaNum > 300) {
+      showError('Informe uma altura válida, entre 30 e 300 cm.');
       return;
     }
 
@@ -193,7 +214,8 @@ const Nutricao = ({ nomeProfissional, profissionalId, reservaIds, pendingReserva
             <Input
               value={form.restricoes}
               onChange={updateField('restricoes')}
-              placeholder="Lactose, glúten, etc. (opcional)"
+              placeholder="Lactose, glúten, etc. Se não houver, informe 'nenhuma'."
+              required
             />
           </Field>
           <Field style={{ gridColumn: '1 / -1' }}>
@@ -201,7 +223,7 @@ const Nutricao = ({ nomeProfissional, profissionalId, reservaIds, pendingReserva
             <TextArea
               value={form.preferenciasAversoes}
               onChange={updateField('preferenciasAversoes')}
-              placeholder="Opcional"
+              required
             />
           </Field>
         </Grid>
@@ -212,7 +234,7 @@ const Nutricao = ({ nomeProfissional, profissionalId, reservaIds, pendingReserva
         <Grid>
           <Field>
             <Label>Prática de atividade física</Label>
-            <Select value={form.atividadeFisica} onChange={updateField('atividadeFisica')}>
+            <Select value={form.atividadeFisica} onChange={updateField('atividadeFisica')} required>
               <option value="">Selecione...</option>
               <option value="nao">Não pratico</option>
               <option value="1_2">1–2x por semana</option>
@@ -222,7 +244,7 @@ const Nutricao = ({ nomeProfissional, profissionalId, reservaIds, pendingReserva
           </Field>
           <Field>
             <Label>Rotina de trabalho</Label>
-            <Select value={form.rotinaTrabalho} onChange={updateField('rotinaTrabalho')}>
+            <Select value={form.rotinaTrabalho} onChange={updateField('rotinaTrabalho')} required>
               <option value="">Selecione...</option>
               <option value="sedentario">Sedentário</option>
               <option value="misto">Misto</option>
@@ -235,6 +257,33 @@ const Nutricao = ({ nomeProfissional, profissionalId, reservaIds, pendingReserva
               value={form.horariosRefeicoes}
               onChange={updateField('horariosRefeicoes')}
               placeholder="Ex: café 07:30, almoço 12:30, jantar 20:00"
+              required
+            />
+          </Field>
+          <Field>
+            <Label>Peso atual, em kg</Label>
+            <Input
+              type="number"
+              step="0.1"
+              min="1"
+              max="300"
+              value={form.pesoAtual}
+              onChange={updateField('pesoAtual')}
+              placeholder="Ex: 68.5"
+              required
+            />
+          </Field>
+          <Field>
+            <Label>Altura, em cm</Label>
+            <Input
+              type="number"
+              step="0.1"
+              min="30"
+              max="300"
+              value={form.altura}
+              onChange={updateField('altura')}
+              placeholder="Ex: 170"
+              required
             />
           </Field>
         </Grid>
@@ -248,11 +297,12 @@ const Nutricao = ({ nomeProfissional, profissionalId, reservaIds, pendingReserva
             <TextArea
               value={form.problemasMetabolicos}
               onChange={updateField('problemasMetabolicos')}
-              placeholder="Opcional"
+              placeholder="Se não houver, informe 'nenhum'."
+              required
             />
           </Field>
           <Field style={{ gridColumn: '1 / -1' }}>
-            <Label>Exames recentes (se tiver)</Label>
+            <Label>Exames recentes (opcional)</Label>
             <AttachmentBox
               onClick={handleFileClick}
               onDrop={handleFileDrop}
@@ -277,7 +327,8 @@ const Nutricao = ({ nomeProfissional, profissionalId, reservaIds, pendingReserva
             <Input
               value={form.suplementos}
               onChange={updateField('suplementos')}
-              placeholder="Opcional"
+              placeholder="Se não usar, informe 'nenhum'."
+              required
             />
           </Field>
         </Grid>

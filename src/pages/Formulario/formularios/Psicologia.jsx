@@ -19,6 +19,30 @@ import {
   TextArea,
 } from '../style';
 
+const REQUIRED_FIELDS = [
+  { key: 'motivoBusca', label: 'o motivo da busca por atendimento' },
+  { key: 'tempoSintomas', label: 'há quanto tempo está vivenciando isso' },
+  { key: 'intensidade', label: 'o impacto disso no seu dia a dia' },
+  { key: 'diagnosticoPrevio', label: 'se possui diagnóstico psicológico ou psiquiátrico' },
+  { key: 'jaFezTerapia', label: 'se já fez terapia antes' },
+  { key: 'usaMedicamentoPsiq', label: 'se usa medicamento psiquiátrico atualmente' },
+  { key: 'acompanhamentoPsiquiatra', label: 'se está em acompanhamento com psiquiatra' },
+  { key: 'nivelAnsiedade', label: 'o nível de ansiedade' },
+  { key: 'nivelDepressao', label: 'o nível de tristeza ou depressão' },
+  { key: 'qualidadeSono', label: 'a qualidade do sono' },
+  { key: 'nivelEstresse', label: 'o nível de estresse' },
+  { key: 'autoestima', label: 'como está sua autoestima' },
+  { key: 'pensamentosNegativoRecorrente', label: 'se tem pensamentos negativos recorrentes' },
+  { key: 'situacaoTrabalho', label: 'a situação profissional' },
+  { key: 'relacionamentoFamiliar', label: 'como está seu relacionamento familiar' },
+  { key: 'relacionamentoSocial', label: 'se tem rede de apoio social' },
+  { key: 'relacaoAmorosa', label: 'se está em relacionamento amoroso' },
+  { key: 'eventoTraumatico', label: 'se passou por evento traumático ou muito estressante' },
+  { key: 'objetivos', label: 'o que espera alcançar com o acompanhamento' },
+  { key: 'expectativasTerapia', label: 'sua expectativa sobre a terapia' },
+  { key: 'observacoes', label: 'as observações' },
+];
+
 const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReservas }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -89,13 +113,35 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
       return;
     }
 
-    if (!form.motivoBusca.trim()) {
-      showError('Informe o motivo da busca por atendimento.');
+    for (const campo of REQUIRED_FIELDS) {
+      if (!String(form[campo.key]).trim()) {
+        showError(`Informe ${campo.label}.`);
+        return;
+      }
+    }
+
+    if (form.diagnosticoPrevio === 'sim' && !form.diagnosticoQual.trim()) {
+      showError('Informe qual diagnóstico foi identificado.');
       return;
     }
 
-    if (!form.intensidade) {
-      showError('Selecione o nível de impacto na sua vida.');
+    if (form.jaFezTerapia === 'sim' && !form.tempoTerapiaAnterior.trim()) {
+      showError('Informe por quanto tempo fez terapia anteriormente.');
+      return;
+    }
+
+    if (form.jaFezTerapia === 'sim' && !form.motivoEncerramento.trim()) {
+      showError('Informe por que encerrou o atendimento anterior.');
+      return;
+    }
+
+    if (form.usaMedicamentoPsiq === 'sim' && !form.medicamentoPsiqDetalhe.trim()) {
+      showError('Informe quais medicamentos psiquiátricos utiliza.');
+      return;
+    }
+
+    if (form.eventoTraumatico === 'sim' && !form.eventoTraumaticoDetalhe.trim()) {
+      showError('Descreva brevemente o evento traumático.');
       return;
     }
 
@@ -226,6 +272,7 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
               value={form.tempoSintomas}
               onChange={updateField('tempoSintomas')}
               placeholder="Ex: 2 semanas, 6 meses, alguns anos..."
+              required
             />
           </Field>
           <Field>
@@ -246,7 +293,7 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
         <Grid>
           <Field>
             <Label>Possui algum diagnóstico psicológico ou psiquiátrico?</Label>
-            <Select value={form.diagnosticoPrevio} onChange={updateField('diagnosticoPrevio')}>
+            <Select value={form.diagnosticoPrevio} onChange={updateField('diagnosticoPrevio')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -258,13 +305,14 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
             <Input
               value={form.diagnosticoQual}
               onChange={updateField('diagnosticoQual')}
-              placeholder="Ansiedade, depressão, TDAH, TOC... (opcional)"
+              placeholder={form.diagnosticoPrevio === 'sim' ? 'Ansiedade, depressão, TDAH, TOC...' : 'Não se aplica'}
               disabled={form.diagnosticoPrevio !== 'sim'}
+              required={form.diagnosticoPrevio === 'sim'}
             />
           </Field>
           <Field>
             <Label>Já fez terapia antes?</Label>
-            <Select value={form.jaFezTerapia} onChange={updateField('jaFezTerapia')}>
+            <Select value={form.jaFezTerapia} onChange={updateField('jaFezTerapia')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -275,8 +323,9 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
             <Input
               value={form.tempoTerapiaAnterior}
               onChange={updateField('tempoTerapiaAnterior')}
-              placeholder="Ex: 6 meses, 2 anos... (opcional)"
+              placeholder={form.jaFezTerapia === 'sim' ? 'Ex: 6 meses, 2 anos...' : 'Não se aplica'}
               disabled={form.jaFezTerapia !== 'sim'}
+              required={form.jaFezTerapia === 'sim'}
             />
           </Field>
           <Field style={{ gridColumn: '1 / -1' }}>
@@ -284,8 +333,9 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
             <Input
               value={form.motivoEncerramento}
               onChange={updateField('motivoEncerramento')}
-              placeholder="Opcional"
+              placeholder={form.jaFezTerapia === 'sim' ? '' : 'Não se aplica'}
               disabled={form.jaFezTerapia !== 'sim'}
+              required={form.jaFezTerapia === 'sim'}
             />
           </Field>
         </Grid>
@@ -296,7 +346,7 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
         <Grid>
           <Field>
             <Label>Usa algum medicamento psiquiátrico atualmente?</Label>
-            <Select value={form.usaMedicamentoPsiq} onChange={updateField('usaMedicamentoPsiq')}>
+            <Select value={form.usaMedicamentoPsiq} onChange={updateField('usaMedicamentoPsiq')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -307,13 +357,14 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
             <Input
               value={form.medicamentoPsiqDetalhe}
               onChange={updateField('medicamentoPsiqDetalhe')}
-              placeholder="Ex: Sertralina 50mg... (opcional)"
+              placeholder={form.usaMedicamentoPsiq === 'sim' ? 'Ex: Sertralina 50mg...' : 'Não se aplica'}
               disabled={form.usaMedicamentoPsiq !== 'sim'}
+              required={form.usaMedicamentoPsiq === 'sim'}
             />
           </Field>
           <Field>
             <Label>Está em acompanhamento com psiquiatra?</Label>
-            <Select value={form.acompanhamentoPsiquiatra} onChange={updateField('acompanhamentoPsiquiatra')}>
+            <Select value={form.acompanhamentoPsiquiatra} onChange={updateField('acompanhamentoPsiquiatra')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -327,7 +378,7 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
         <Grid>
           <Field>
             <Label>Nível de ansiedade</Label>
-            <Select value={form.nivelAnsiedade} onChange={updateField('nivelAnsiedade')}>
+            <Select value={form.nivelAnsiedade} onChange={updateField('nivelAnsiedade')} required>
               <option value="">Selecione...</option>
               <option value="ausente">Ausente</option>
               <option value="leve">Leve</option>
@@ -337,7 +388,7 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
           </Field>
           <Field>
             <Label>Nível de tristeza / depressão</Label>
-            <Select value={form.nivelDepressao} onChange={updateField('nivelDepressao')}>
+            <Select value={form.nivelDepressao} onChange={updateField('nivelDepressao')} required>
               <option value="">Selecione...</option>
               <option value="ausente">Ausente</option>
               <option value="leve">Leve</option>
@@ -347,7 +398,7 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
           </Field>
           <Field>
             <Label>Qualidade do sono</Label>
-            <Select value={form.qualidadeSono} onChange={updateField('qualidadeSono')}>
+            <Select value={form.qualidadeSono} onChange={updateField('qualidadeSono')} required>
               <option value="">Selecione...</option>
               <option value="boa">Boa</option>
               <option value="regular">Regular</option>
@@ -357,7 +408,7 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
           </Field>
           <Field>
             <Label>Nível de estresse</Label>
-            <Select value={form.nivelEstresse} onChange={updateField('nivelEstresse')}>
+            <Select value={form.nivelEstresse} onChange={updateField('nivelEstresse')} required>
               <option value="">Selecione...</option>
               <option value="baixo">Baixo</option>
               <option value="medio">Médio</option>
@@ -367,7 +418,7 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
           </Field>
           <Field>
             <Label>Como está sua autoestima?</Label>
-            <Select value={form.autoestima} onChange={updateField('autoestima')}>
+            <Select value={form.autoestima} onChange={updateField('autoestima')} required>
               <option value="">Selecione...</option>
               <option value="boa">Boa</option>
               <option value="regular">Regular</option>
@@ -377,7 +428,7 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
           </Field>
           <Field>
             <Label>Tem pensamentos negativos recorrentes?</Label>
-            <Select value={form.pensamentosNegativoRecorrente} onChange={updateField('pensamentosNegativoRecorrente')}>
+            <Select value={form.pensamentosNegativoRecorrente} onChange={updateField('pensamentosNegativoRecorrente')} required>
               <option value="">Selecione...</option>
               <option value="nao">Não</option>
               <option value="raramente">Raramente</option>
@@ -393,7 +444,7 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
         <Grid>
           <Field>
             <Label>Situação profissional</Label>
-            <Select value={form.situacaoTrabalho} onChange={updateField('situacaoTrabalho')}>
+            <Select value={form.situacaoTrabalho} onChange={updateField('situacaoTrabalho')} required>
               <option value="">Selecione...</option>
               <option value="empregado">Empregado(a)</option>
               <option value="autonomo">Autônomo(a) / Freelancer</option>
@@ -405,7 +456,7 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
           </Field>
           <Field>
             <Label>Como está seu relacionamento familiar?</Label>
-            <Select value={form.relacionamentoFamiliar} onChange={updateField('relacionamentoFamiliar')}>
+            <Select value={form.relacionamentoFamiliar} onChange={updateField('relacionamentoFamiliar')} required>
               <option value="">Selecione...</option>
               <option value="muito_bom">Muito bom</option>
               <option value="bom">Bom</option>
@@ -416,7 +467,7 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
           </Field>
           <Field>
             <Label>Tem rede de apoio social (amigos, colegas)?</Label>
-            <Select value={form.relacionamentoSocial} onChange={updateField('relacionamentoSocial')}>
+            <Select value={form.relacionamentoSocial} onChange={updateField('relacionamentoSocial')} required>
               <option value="">Selecione...</option>
               <option value="sim_forte">Sim, tenho boas amizades</option>
               <option value="sim_limitada">Sim, mas é limitada</option>
@@ -425,7 +476,7 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
           </Field>
           <Field>
             <Label>Está em relacionamento amoroso?</Label>
-            <Select value={form.relacaoAmorosa} onChange={updateField('relacaoAmorosa')}>
+            <Select value={form.relacaoAmorosa} onChange={updateField('relacaoAmorosa')} required>
               <option value="">Selecione...</option>
               <option value="sim_bem">Sim, está bem</option>
               <option value="sim_dificuldades">Sim, com dificuldades</option>
@@ -441,7 +492,7 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
         <Grid>
           <Field>
             <Label>Passou por algum evento traumático ou muito estressante?</Label>
-            <Select value={form.eventoTraumatico} onChange={updateField('eventoTraumatico')}>
+            <Select value={form.eventoTraumatico} onChange={updateField('eventoTraumatico')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -453,8 +504,9 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
             <TextArea
               value={form.eventoTraumaticoDetalhe}
               onChange={updateField('eventoTraumaticoDetalhe')}
-              placeholder="Apenas o que você se sentir confortável em compartilhar (opcional)"
+              placeholder={form.eventoTraumatico === 'sim' ? 'Apenas o que você se sentir confortável em compartilhar' : 'Não se aplica'}
               disabled={form.eventoTraumatico !== 'sim'}
+              required={form.eventoTraumatico === 'sim'}
             />
           </Field>
         </Grid>
@@ -469,6 +521,7 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
               value={form.objetivos}
               onChange={updateField('objetivos')}
               placeholder="Ex: Reduzir a ansiedade, melhorar relacionamentos, me conhecer melhor..."
+              required
             />
           </Field>
           <Field style={{ gridColumn: '1 / -1' }}>
@@ -476,7 +529,7 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
             <TextArea
               value={form.expectativasTerapia}
               onChange={updateField('expectativasTerapia')}
-              placeholder="Opcional"
+              required
             />
           </Field>
         </Grid>
@@ -489,11 +542,11 @@ const Psicologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReser
           <TextArea
             value={form.observacoes}
             onChange={updateField('observacoes')}
-            placeholder="Opcional"
+            required
           />
         </Field>
         <Field style={{ marginTop: 12 }}>
-          <Label>Anexar exame ou laudo recente (se tiver)</Label>
+          <Label>Anexar exame ou laudo recente (opcional)</Label>
           <AttachmentBox
             onClick={handleFileClick}
             onDrop={handleFileDrop}

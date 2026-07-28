@@ -33,6 +33,37 @@ import {
   TextArea,
 } from '../style';
 
+const REQUIRED_FIELDS = [
+  { key: 'motivoPrincipal', label: 'o principal motivo da consulta' },
+  { key: 'sintomas', label: 'os sintomas que está sentindo' },
+  { key: 'inicioSintomas', label: 'há quanto tempo os sintomas começaram' },
+  { key: 'intensidade', label: 'a intensidade' },
+  { key: 'doencaDiagnosticada', label: 'se possui alguma doença diagnosticada' },
+  { key: 'cirurgias', label: 'se já realizou cirurgias' },
+  { key: 'internacao', label: 'se já foi internado' },
+  { key: 'historicoFamiliar', label: 'o histórico familiar de doenças' },
+  { key: 'usaMedicamento', label: 'se usa algum medicamento atualmente' },
+  { key: 'suplementos', label: 'se usa suplementos' },
+  { key: 'alergiaMedicamento', label: 'se possui alergia a medicamentos' },
+  { key: 'alimentacao', label: 'a alimentação' },
+  { key: 'atividadeFisicaFrequencia', label: 'a frequência de atividade física' },
+  { key: 'alcool', label: 'o consumo de álcool' },
+  { key: 'fuma', label: 'se fuma' },
+  { key: 'sono', label: 'a qualidade do sono' },
+  { key: 'estresse', label: 'o nível de estresse' },
+  { key: 'ansiedadeDepressao', label: 'se possui ansiedade ou depressão diagnosticada' },
+  { key: 'acompanhamentoPsicologico', label: 'se faz acompanhamento psicológico' },
+  { key: 'dificuldadeFala', label: 'se há dificuldade na fala' },
+  { key: 'trocaOmissao', label: 'se há troca ou omissão de letras' },
+  { key: 'dificuldadeCompreensao', label: 'se há dificuldade de compreensão' },
+  { key: 'suspeitaPerdaAuditiva', label: 'se há suspeita de perda auditiva' },
+  { key: 'exameAuditivo', label: 'se já realizou exame auditivo' },
+  { key: 'mastigarEngolir', label: 'se há dificuldade para mastigar ou engolir' },
+  { key: 'respiraBoca', label: 'se respira pela boca' },
+  { key: 'ehCrianca', label: 'se é criança' },
+  { key: 'observacoes', label: 'as observações' },
+];
+
 const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingReservas }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -125,18 +156,35 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
       return;
     }
 
-    if (!form.motivoPrincipal.trim()) {
-      showError('Informe o principal motivo da consulta.');
+    for (const campo of REQUIRED_FIELDS) {
+      if (!String(form[campo.key]).trim()) {
+        showError(`Informe ${campo.label}.`);
+        return;
+      }
+    }
+
+    if (form.doencaDiagnosticada === 'sim' && !form.doencaQual.trim()) {
+      showError('Informe qual doença foi diagnosticada.');
       return;
     }
 
-    if (!form.inicioSintomas.trim()) {
-      showError('Informe há quanto tempo os sintomas começaram.');
+    if (form.usaMedicamento === 'sim' && !form.medicamentosDetalhe.trim()) {
+      showError('Informe quais medicamentos utiliza e as dosagens.');
       return;
     }
 
-    if (!form.intensidade) {
-      showError('Selecione a intensidade.');
+    if (form.alergiaMedicamento === 'sim' && !form.alergiaMedicamentoDetalhe.trim()) {
+      showError('Informe a qual medicamento tem alergia.');
+      return;
+    }
+
+    if (form.ehCrianca === 'sim' && !form.idadeComecouFalar.trim()) {
+      showError('Informe a idade em que a criança começou a falar.');
+      return;
+    }
+
+    if (form.ehCrianca === 'sim' && !form.linguagemAdequada) {
+      showError('Informe se o desenvolvimento da linguagem está adequado.');
       return;
     }
 
@@ -272,7 +320,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
           </Field>
           <Field style={{ gridColumn: '1 / -1' }}>
             <Label>Quais sintomas você está sentindo?</Label>
-            <TextArea value={form.sintomas} onChange={updateField('sintomas')} />
+            <TextArea value={form.sintomas} onChange={updateField('sintomas')} required />
           </Field>
           <Field>
             <Label>Há quanto tempo os sintomas começaram?</Label>
@@ -300,7 +348,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
         <Grid>
           <Field>
             <Label>Possui alguma doença diagnosticada?</Label>
-            <Select value={form.doencaDiagnosticada} onChange={updateField('doencaDiagnosticada')}>
+            <Select value={form.doencaDiagnosticada} onChange={updateField('doencaDiagnosticada')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -311,17 +359,18 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
             <Input
               value={form.doencaQual}
               onChange={updateField('doencaQual')}
-              placeholder="Opcional"
+              placeholder={form.doencaDiagnosticada === 'sim' ? '' : 'Não se aplica'}
               disabled={form.doencaDiagnosticada !== 'sim'}
+              required={form.doencaDiagnosticada === 'sim'}
             />
           </Field>
           <Field style={{ gridColumn: '1 / -1' }}>
             <Label>Já realizou cirurgias? Quais?</Label>
-            <TextArea value={form.cirurgias} onChange={updateField('cirurgias')} placeholder="Opcional" />
+            <TextArea value={form.cirurgias} onChange={updateField('cirurgias')} required />
           </Field>
           <Field>
             <Label>Já foi internado?</Label>
-            <Select value={form.internacao} onChange={updateField('internacao')}>
+            <Select value={form.internacao} onChange={updateField('internacao')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -329,7 +378,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
           </Field>
           <Field style={{ gridColumn: '1 / -1' }}>
             <Label>Histórico familiar de doenças importantes</Label>
-            <TextArea value={form.historicoFamiliar} onChange={updateField('historicoFamiliar')} placeholder="Opcional" />
+            <TextArea value={form.historicoFamiliar} onChange={updateField('historicoFamiliar')} required />
           </Field>
         </Grid>
       </SectionBlock>
@@ -339,7 +388,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
         <Grid>
           <Field>
             <Label>Usa algum medicamento atualmente?</Label>
-            <Select value={form.usaMedicamento} onChange={updateField('usaMedicamento')}>
+            <Select value={form.usaMedicamento} onChange={updateField('usaMedicamento')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -350,17 +399,18 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
             <Input
               value={form.medicamentosDetalhe}
               onChange={updateField('medicamentosDetalhe')}
-              placeholder="Opcional"
+              placeholder={form.usaMedicamento === 'sim' ? '' : 'Não se aplica'}
               disabled={form.usaMedicamento !== 'sim'}
+              required={form.usaMedicamento === 'sim'}
             />
           </Field>
           <Field>
             <Label>Usa suplementos?</Label>
-            <Input value={form.suplementos} onChange={updateField('suplementos')} placeholder="Opcional" />
+            <Input value={form.suplementos} onChange={updateField('suplementos')} required />
           </Field>
           <Field>
             <Label>Possui alergia a medicamentos?</Label>
-            <Select value={form.alergiaMedicamento} onChange={updateField('alergiaMedicamento')}>
+            <Select value={form.alergiaMedicamento} onChange={updateField('alergiaMedicamento')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -371,8 +421,9 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
             <Input
               value={form.alergiaMedicamentoDetalhe}
               onChange={updateField('alergiaMedicamentoDetalhe')}
-              placeholder="Opcional"
+              placeholder={form.alergiaMedicamento === 'sim' ? '' : 'Não se aplica'}
               disabled={form.alergiaMedicamento !== 'sim'}
+              required={form.alergiaMedicamento === 'sim'}
             />
           </Field>
         </Grid>
@@ -383,7 +434,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
         <Grid>
           <Field>
             <Label>Alimentação</Label>
-            <Select value={form.alimentacao} onChange={updateField('alimentacao')}>
+            <Select value={form.alimentacao} onChange={updateField('alimentacao')} required>
               <option value="">Selecione...</option>
               <option value="boa">Boa</option>
               <option value="regular">Regular</option>
@@ -396,11 +447,12 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
               value={form.atividadeFisicaFrequencia}
               onChange={updateField('atividadeFisicaFrequencia')}
               placeholder="Ex: 3x por semana"
+              required
             />
           </Field>
           <Field>
             <Label>Consumo de álcool</Label>
-            <Select value={form.alcool} onChange={updateField('alcool')}>
+            <Select value={form.alcool} onChange={updateField('alcool')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -408,7 +460,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
           </Field>
           <Field>
             <Label>Fuma</Label>
-            <Select value={form.fuma} onChange={updateField('fuma')}>
+            <Select value={form.fuma} onChange={updateField('fuma')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -416,7 +468,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
           </Field>
           <Field>
             <Label>Qualidade do sono</Label>
-            <Select value={form.sono} onChange={updateField('sono')}>
+            <Select value={form.sono} onChange={updateField('sono')} required>
               <option value="">Selecione...</option>
               <option value="boa">Boa</option>
               <option value="regular">Regular</option>
@@ -431,7 +483,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
         <Grid>
           <Field>
             <Label>Nível de estresse</Label>
-            <Select value={form.estresse} onChange={updateField('estresse')}>
+            <Select value={form.estresse} onChange={updateField('estresse')} required>
               <option value="">Selecione...</option>
               <option value="baixo">Baixo</option>
               <option value="medio">Médio</option>
@@ -440,7 +492,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
           </Field>
           <Field>
             <Label>Ansiedade ou depressão diagnosticada?</Label>
-            <Select value={form.ansiedadeDepressao} onChange={updateField('ansiedadeDepressao')}>
+            <Select value={form.ansiedadeDepressao} onChange={updateField('ansiedadeDepressao')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -448,7 +500,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
           </Field>
           <Field>
             <Label>Faz acompanhamento psicológico?</Label>
-            <Select value={form.acompanhamentoPsicologico} onChange={updateField('acompanhamentoPsicologico')}>
+            <Select value={form.acompanhamentoPsicologico} onChange={updateField('acompanhamentoPsicologico')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -462,7 +514,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
         <Grid>
           <Field>
             <Label>Dificuldade na fala?</Label>
-            <Select value={form.dificuldadeFala} onChange={updateField('dificuldadeFala')}>
+            <Select value={form.dificuldadeFala} onChange={updateField('dificuldadeFala')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -470,7 +522,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
           </Field>
           <Field>
             <Label>Troca ou omissão de letras?</Label>
-            <Select value={form.trocaOmissao} onChange={updateField('trocaOmissao')}>
+            <Select value={form.trocaOmissao} onChange={updateField('trocaOmissao')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -478,7 +530,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
           </Field>
           <Field>
             <Label>Dificuldade de compreensão?</Label>
-            <Select value={form.dificuldadeCompreensao} onChange={updateField('dificuldadeCompreensao')}>
+            <Select value={form.dificuldadeCompreensao} onChange={updateField('dificuldadeCompreensao')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -492,7 +544,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
         <Grid>
           <Field>
             <Label>Suspeita de perda auditiva?</Label>
-            <Select value={form.suspeitaPerdaAuditiva} onChange={updateField('suspeitaPerdaAuditiva')}>
+            <Select value={form.suspeitaPerdaAuditiva} onChange={updateField('suspeitaPerdaAuditiva')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -500,7 +552,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
           </Field>
           <Field>
             <Label>Já realizou exame auditivo?</Label>
-            <Select value={form.exameAuditivo} onChange={updateField('exameAuditivo')}>
+            <Select value={form.exameAuditivo} onChange={updateField('exameAuditivo')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -514,7 +566,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
         <Grid>
           <Field>
             <Label>Dificuldade para mastigar ou engolir?</Label>
-            <Select value={form.mastigarEngolir} onChange={updateField('mastigarEngolir')}>
+            <Select value={form.mastigarEngolir} onChange={updateField('mastigarEngolir')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -522,7 +574,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
           </Field>
           <Field>
             <Label>Respira pela boca?</Label>
-            <Select value={form.respiraBoca} onChange={updateField('respiraBoca')}>
+            <Select value={form.respiraBoca} onChange={updateField('respiraBoca')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -536,7 +588,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
         <Grid>
           <Field>
             <Label>É criança?</Label>
-            <Select value={form.ehCrianca} onChange={updateField('ehCrianca')}>
+            <Select value={form.ehCrianca} onChange={updateField('ehCrianca')} required>
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
               <option value="nao">Não</option>
@@ -547,8 +599,9 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
             <Input
               value={form.idadeComecouFalar}
               onChange={updateField('idadeComecouFalar')}
-              placeholder="Opcional"
+              placeholder={form.ehCrianca === 'sim' ? '' : 'Não se aplica'}
               disabled={form.ehCrianca !== 'sim'}
+              required={form.ehCrianca === 'sim'}
             />
           </Field>
           <Field>
@@ -557,6 +610,7 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
               value={form.linguagemAdequada}
               onChange={updateField('linguagemAdequada')}
               disabled={form.ehCrianca !== 'sim'}
+              required={form.ehCrianca === 'sim'}
             >
               <option value="">Selecione...</option>
               <option value="sim">Sim</option>
@@ -596,10 +650,10 @@ const Fonoaudiologia = ({ nomeProfissional, profissionalId, reservaIds, pendingR
         <SectionTitle><FileText size={16} /> Observações</SectionTitle>
         <Field>
           <Label>Informações adicionais</Label>
-          <TextArea value={form.observacoes} onChange={updateField('observacoes')} placeholder="Opcional" />
+          <TextArea value={form.observacoes} onChange={updateField('observacoes')} required />
         </Field>
         <Field style={{ marginTop: 12 }}>
-          <Label>Anexar exame recente (se tiver)</Label>
+          <Label>Anexar exame recente (opcional)</Label>
           <AttachmentBox
             onClick={handleFileClick}
             onDrop={handleFileDrop}
