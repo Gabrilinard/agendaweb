@@ -253,6 +253,16 @@ const VerUrgencias = ({
         </div>
       </div>
 
+      <div style={{ background: '#FFF3EE', border: '1px solid #FED7B0', borderRadius: '12px', padding: '14px 18px', marginBottom: '20px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+        <Zap size={18} color="#E8611A" style={{ flexShrink: 0, marginTop: '2px' }} />
+        <p style={{ margin: 0, fontSize: '13px', color: '#7A3510', lineHeight: '1.6' }}>
+          <strong>O que é uma urgência?</strong> É a solicitação de um paciente com um caso mais grave, que precisa ser atendido o quanto antes, mas que não quer (ou não precisa) recorrer a um pronto-socorro/emergência hospitalar.
+          Toda solicitação marcada assim pelo paciente cai nesta aba, ainda pendente de confirmação sua.
+          Use <strong>"Solicitadas"</strong> para ver quem espera uma resposta sua, <strong>"Propor horário ao paciente"</strong> para sugerir data e horário (ela some daqui só depois que ele confirmar),
+          ou <strong>"Aceitar urgência"</strong> para confirmar direto no horário pedido pelo paciente. Urgências sem resposta há mais de 1h geram um lembrete automático por e-mail.
+        </p>
+      </div>
+
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
         {STATUS_TABS.map(t => {
           const count = urgenciasBase.filter(t.match).length;
