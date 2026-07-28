@@ -51,8 +51,13 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
     if (!silent) setLoadingCandidatos(p => ({ ...p, [reserva.id]: true }));
     try {
       const dia = String(reserva.dia).split('T')[0];
-      const { data } = await getCandidatos(reserva.profissional_id || user?.id, dia, reserva.usuario_id);
+      const { data } = await getCandidatos(reserva.profissional_id || user?.id, dia, reserva.usuario_id, reserva.id);
       setCandidatos(p => ({ ...p, [reserva.id]: data }));
+      setNotificados(p => {
+        const next = { ...p };
+        data.forEach(c => { if (c.notificado) next[`${reserva.id}_${c.usuario_id}`] = true; });
+        return next;
+      });
     } catch {
       if (!silent) showError('Erro ao carregar candidatos.');
     } finally {
@@ -73,14 +78,6 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
     }, REFRESH_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [vagas.map(v => v.id).join(',')]);
-
-  useEffect(() => {
-    if (vagas.length === 0 || !buscarReservas) return;
-    const interval = setInterval(() => {
-      buscarReservas();
-    }, REFRESH_INTERVAL_MS);
-    return () => clearInterval(interval);
-  }, [vagas.map(v => v.id).join(','), buscarReservas]);
 
   const notificarCandidato = async (reserva, candidato) => {
     const key = `${reserva.id}_${candidato.usuario_id}`;
@@ -126,6 +123,19 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
     }
   };
 
+  const ExplicacaoVagas = () => (
+    <div style={{ background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: '12px', padding: '14px 18px', marginBottom: '20px', display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+      <AlertCircle size={18} color="#92400E" style={{ flexShrink: 0, marginTop: '2px' }} />
+      <p style={{ margin: 0, fontSize: '13px', color: '#78350F', lineHeight: '1.6' }}>
+        <strong>O que é uma vaga?</strong> Um horário que ficou livre e está pronto para ser oferecido a outro paciente. Isso acontece de três formas:
+        quando um paciente libera manualmente uma consulta marcada com você; quando ele pede um novo horário pela tela "Editar" (o horário antigo vira vaga automaticamente); ou quando ele <strong>não confirma presença</strong> até 15h antes do horário — nesse caso o sistema libera sozinho e avisa vocês dois por e-mail.
+        Para cada vaga, sugerimos automaticamente candidatos para preenchê-la — pacientes com urgência aparecem primeiro, seguidos pelos que têm consulta marcada mais para frente.
+        Clique em <strong>"Notificar"</strong> para avisar um candidato específico, ou em <strong>"Notificar todos"</strong> para avisar todos de uma vez — o primeiro que aceitar fica com o horário.
+        Se mesmo assim o paciente confirmar presença e não comparecer, e isso acontecer em <strong>duas ocasiões</strong>, ele fica <strong>bloqueado por 60 dias</strong> para marcar novas consultas na plataforma.
+      </p>
+    </div>
+  );
+
   if (vagas.length === 0) {
     return (
       <PagePad>
@@ -133,6 +143,7 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
           <h1 style={{ fontSize: '26px', fontWeight: '800', color: '#1a1a1a', margin: 0 }}>Vagas liberadas</h1>
           <p style={{ color: '#888', fontSize: '14px', margin: '6px 0 0' }}>Horários liberados por pacientes para redistribuição.</p>
         </div>
+        <ExplicacaoVagas />
         <div style={{ ...CARD, padding: '64px', textAlign: 'center', color: '#888' }}>
           <Check size={32} color="#bbb" style={{ display: 'block', margin: '0 auto 12px' }} />
           <p style={{ margin: 0, fontSize: '15px', fontWeight: '500' }}>Nenhuma vaga liberada no momento</p>
@@ -150,6 +161,7 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
           {vagas.length} vaga{vagas.length !== 1 ? 's' : ''} disponível{vagas.length !== 1 ? 'eis' : ''} — notifique um candidato para preencher.
         </p>
       </div>
+      <ExplicacaoVagas />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
         {vagas.map(reserva => {
@@ -253,7 +265,7 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
                               <span style={{ fontWeight: '700', fontSize: '14px', color: '#1a1a1a' }}>
                                 {idx + 1}. {c.nome} {c.sobrenome}
                               </span>
-                              {c.is_urgente && (
+                              {Boolean(c.is_urgente) && (
                                 <span style={{ background: '#E8611A', color: 'white', borderRadius: '10px', padding: '2px 7px', fontSize: '11px', fontWeight: '700' }}>
                                   Urgência
                                 </span>
