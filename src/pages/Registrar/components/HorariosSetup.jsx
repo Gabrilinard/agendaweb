@@ -46,6 +46,7 @@ const HorariosSetup = ({
   const [entrada, setEntrada] = useState('08:00');
   const [saida, setSaida] = useState('17:00');
   const [duracao, setDuracao] = useState(30);
+  const [duracaoCustom, setDuracaoCustom] = useState(false);
   const [pausaAtiva, setPausaAtiva] = useState(true);
   const [pausaInicio, setPausaInicio] = useState('12:00');
   const [pausaFim, setPausaFim] = useState('13:00');
@@ -134,10 +135,40 @@ const HorariosSetup = ({
             </div>
             <div>
               <p style={{ margin: '0 0 5px', fontSize: '12px', fontWeight: '700', color: '#555' }}>DURAÇÃO DA CONSULTA</p>
-              <div style={{ display: 'flex', gap: '6px' }}>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                 {DURACOES.map(d => (
-                  <button key={d.v} type="button" onClick={() => handleDuracao(d.v)} style={chipStyle(duracao === d.v)}>{d.l}</button>
+                  <button key={d.v} type="button" onClick={() => { setDuracaoCustom(false); handleDuracao(d.v); }} style={chipStyle(!duracaoCustom && duracao === d.v)}>{d.l}</button>
                 ))}
+                <button type="button" onClick={() => setDuracaoCustom(true)} style={chipStyle(duracaoCustom)}>Outro</button>
+                {duracaoCustom && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    background: 'white', border: '1.5px solid #1B4D3E', borderRadius: '8px',
+                    padding: '4px 6px 4px 12px',
+                  }}>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      autoFocus
+                      value={duracao}
+                      onChange={e => {
+                        const digits = e.target.value.replace(/\D/g, '');
+                        const v = parseInt(digits, 10);
+                        if (digits === '') { setDuracao(''); return; }
+                        if (!Number.isNaN(v) && v > 0) handleDuracao(v);
+                      }}
+                      style={{
+                        border: 'none', outline: 'none', width: '48px',
+                        fontSize: '14px', fontWeight: '700', color: '#1B4D3E',
+                        fontFamily: 'Figtree, sans-serif', textAlign: 'right',
+                        background: 'transparent',
+                      }}
+                    />
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#555' }}>
+                      minutos
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
