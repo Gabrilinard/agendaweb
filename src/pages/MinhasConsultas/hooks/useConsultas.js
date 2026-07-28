@@ -5,6 +5,7 @@ import { useNotification } from '../../../contexts/NotificationContext';
 import { parseDia } from '../../../utils/formatters';
 import {
   aceitarVaga,
+  confirmarPresenca,
   deleteReserva,
   getReservas,
   getVagasPendentes,
@@ -145,6 +146,14 @@ export const useConsultas = ({ onLoaded } = {}) => {
     } catch { showError('Erro ao recusar.'); }
   };
 
+  const handleConfirmarPresenca = async (c) => {
+    try {
+      await confirmarPresenca(c.id);
+      success('Presença confirmada!');
+      buscarConsultas();
+    } catch { showError('Erro ao confirmar presença.'); }
+  };
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -179,5 +188,6 @@ export const useConsultas = ({ onLoaded } = {}) => {
     handleRecusarVaga,
     handleAceitarRemarcacao,
     handleRecusarRemarcacao,
+    handleConfirmarPresenca,
   };
 };

@@ -82,6 +82,7 @@ const MinhasConsultas = () => {
     onConfirmarLiberacao: consultas.handleConfirmarLiberacao,
     onAceitarRemarcacao: consultas.handleAceitarRemarcacao,
     onRecusarRemarcacao: consultas.handleRecusarRemarcacao,
+    onConfirmarPresenca: consultas.handleConfirmarPresenca,
     onEnviarAvaliacao: avaliacao.handleEnviarAvaliacao,
   };
 

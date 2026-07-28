@@ -45,16 +45,17 @@ const navBtn = (activeScreen, key) => ({
   fontSize: '14px', fontFamily: 'Figtree, sans-serif', textAlign: 'left',
 });
 
-const Sidebar = ({ user, av, initials, activeScreen, irPara, navigate, logout, setViewMode, pendentes, urgentes, vagasCount, isOpen, onClose, onAbrirStatusModal }) => {
+const Sidebar = ({ user, av, initials, activeScreen, irPara, navigate, logout, setViewMode, pendentes, urgentes, vagasCount, notificacoesCount, isOpen, onClose, onAbrirStatusModal }) => {
   const aceitandoConsultas = user?.aceitandoConsultas === undefined || Number(user.aceitandoConsultas) !== 0;
+
   const navItems = [
     { key: 'home',         icon: <Home size={16} />,          label: 'Início' },
-    { key: 'agenda',       icon: <Calendar size={16} />,      label: 'Agenda' },
+    { key: 'agenda',       icon: <Calendar size={16} />,      label: 'Agenda',       badge: notificacoesCount || null, badgeColor: '#2563EB', title: 'Notificações sobre sua agenda — pacientes que aceitaram vagas, reagendamentos confirmados, etc.' },
     { key: 'horarios',     icon: <CalendarDays size={16} />,  label: 'Editar Horários' },
     { key: 'criar',        icon: <CalendarPlus size={16} />,  label: 'Criar Consulta' },
     { key: 'solicitacoes', icon: <ClipboardList size={16} />, label: 'Solicitações', badge: pendentes || null, badgeColor: '#1B4D3E' },
-    { key: 'urgencias',    icon: <Zap size={16} />,           label: 'Urgências',    badge: urgentes || null,   badgeColor: '#E8611A' },
-    { key: 'vagas',        icon: <Unlock size={16} />,        label: 'Vagas',        badge: vagasCount || null, badgeColor: '#7C3AED' },
+    { key: 'urgencias',    icon: <Zap size={16} />,           label: 'Urgências',    badge: urgentes || null,   badgeColor: '#E8611A', title: 'Pacientes com caso mais grave que preferem ser atendidos por você em vez de ir a uma emergência hospitalar' },
+    { key: 'vagas',        icon: <Unlock size={16} />,        label: 'Vagas',        badge: vagasCount || null, badgeColor: '#7C3AED', title: 'Horários liberados por pacientes, prontos para serem notificados a outros' },
     { key: 'historico',    icon: <Clock size={16} />,         label: 'Histórico' },
     { key: 'mapa',         icon: <MapPin size={16} />,        label: 'Editar Mapa' },
     { key: 'informacoes',  icon: <User size={16} />,          label: 'Perfil' },
@@ -101,7 +102,7 @@ const Sidebar = ({ user, av, initials, activeScreen, irPara, navigate, logout, s
 
       <nav style={{ flex: 1, padding: '8px 0', overflowY: 'auto' }}>
         {navItems.map(item => (
-          <button key={item.key} onClick={() => irPara(item.key)} style={navBtn(activeScreen, item.key)}>
+          <button key={item.key} onClick={() => irPara(item.key)} style={navBtn(activeScreen, item.key)} title={item.title}>
             <span style={{ width: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.icon}</span>
             <span style={{ flex: 1 }}>{item.label}</span>
             {item.badge ? (

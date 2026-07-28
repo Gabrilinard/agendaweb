@@ -163,7 +163,7 @@ const VerSolicitacoes = ({
   selecionarReservaParaFormulario, reservaSelecionada,
   formularioSelecionado, carregandoFormulario, erroFormulario, onFecharFormulario,
   toggleStatus, mostrarMotivo, setMostrarMotivo, motivo, setMotivo, negarReserva,
-  onEditarReserva, removerReserva,
+  onEditarReserva, removerReserva, usuariosNotificados = [],
 }) => {
   const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
 
@@ -183,7 +183,7 @@ const VerSolicitacoes = ({
   };
 
   const listaFiltrada = useMemo(() => {
-    let lista = reservas.filter(r => r.dia);
+    let lista = reservas.filter(r => r.dia && r.status !== 'liberado' && r.status !== 'transferido');
 
     if (busca.trim()) {
       const q = busca.trim().toLowerCase();
@@ -335,6 +335,39 @@ const VerSolicitacoes = ({
                       </p>
                     </div>
                     <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0, flexWrap: 'wrap' }}>
+                      {r.reagendado_em && (
+                        r.status === 'confirmado' ? (
+                          <span
+                            title="Você confirmou o novo horário desta consulta reagendada."
+                            style={{ background: '#D1FAE5', color: '#065F46', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: '700' }}
+                          >
+                            Reagendada
+                          </span>
+                        ) : (
+                          <span
+                            title="O paciente pediu um novo horário para esta consulta — confirme para efetivar a mudança."
+                            style={{ background: '#FFF3E0', color: '#B8600A', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: '700' }}
+                          >
+                            A reagendar
+                          </span>
+                        )
+                      )}
+                      {Number(r.presenca_confirmada) === 1 && (
+                        <span
+                          title="O paciente confirmou presença nesta consulta."
+                          style={{ background: '#D1FAE5', color: '#065F46', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: '700' }}
+                        >
+                          ✓ Presença confirmada
+                        </span>
+                      )}
+                      {usuariosNotificados.includes(r.usuario_id) && (
+                        <span
+                          title="Este paciente foi notificado sobre uma vaga liberada e ainda não respondeu."
+                          style={{ background: '#EDE9FE', color: '#6D28D9', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: '700' }}
+                        >
+                          🔔 Notificado
+                        </span>
+                      )}
                       {r.modalidade && (
                         <span style={{ background: '#E8F5EF', color: '#1B4D3E', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: '700' }}>
                           {r.modalidade.charAt(0).toUpperCase()}{r.modalidade.slice(1)}

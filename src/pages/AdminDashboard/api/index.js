@@ -13,6 +13,13 @@ export const updateInformacoes = (id, data) => client.patch(`/usuarios/${id}/inf
 
 export const getFormularioByReserva = (reservaId) => client.get(`/formularios/reserva/${reservaId}`);
 
-export const getCandidatos = (profissional_id, dia, excluir_usuario_id) =>
-  client.get('/vagas/candidatos', { params: { profissional_id, dia, excluir_usuario_id } });
+export const getCandidatos = (profissional_id, dia, excluir_usuario_id, reserva_liberada_id) =>
+  client.get('/vagas/candidatos', { params: { profissional_id, dia, excluir_usuario_id, reserva_liberada_id } });
 export const notificarVaga = (data) => client.post('/vagas/notificar', data);
+
+export const getNotificacoesProfissional = (profissionalId) =>
+  client.get(`/notificacoes-profissional/${profissionalId}`);
+export const marcarNotificacoesProfissionalLidas = (profissionalId) =>
+  client.post(`/notificacoes-profissional/${profissionalId}/lidas`);
+export const getUsuariosNotificadosPendentes = (profissionalId) =>
+  client.get(`/vagas/notificados-pendentes/${profissionalId}`);

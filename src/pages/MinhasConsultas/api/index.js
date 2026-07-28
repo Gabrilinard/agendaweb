@@ -4,6 +4,7 @@ export const getReservas = (params) => client.get('/reservas', { params });
 export const updateReserva = (id, data) => client.patch(`/reservas/${id}`, data);
 export const editReserva = (id, data) => client.patch(`/reservas/editar/${id}`, data);
 export const deleteReserva = (id) => client.delete(`/reservas/${id}`);
+export const confirmarPresenca = (id) => client.patch(`/reservas/${id}/confirmar-presenca`);
 
 export const solicitarDados = (id) => client.get(`/usuarios/solicitarDados/${id}`);
 

@@ -1,7 +1,7 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Menu } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 const DashLayout = styled.div`
@@ -59,7 +59,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { getAvatarColor, getInitials } from '../../utils/avatar';
 import { formatarDataCompleta as formatarDataExibicao, formatarHorarioBrasil, parseDia } from '../../utils/formatters';
-import { solicitarDados, updateInformacoes } from './api';
+import { getNotificacoesProfissional, getUsuariosNotificadosPendentes, marcarNotificacoesProfissionalLidas, solicitarDados, updateInformacoes } from './api';
 import EditarReservaModal from './components/EditarReservaModal';
 import LocationPickerEdit from './components/LocationPickerEdit';
 import Sidebar from './components/Sidebar';
@@ -100,6 +100,50 @@ const AdminDashboard = () => {
   const localizacao = useLocalizacao(notify);
   const informacoes = useInformacoes(user, notify);
 
+  const [notificacoes, setNotificacoes] = useState([]);
+  const notificacoesNaoLidas = notificacoes.filter(n => !n.lida).length;
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const buscarNotificacoes = async () => {
+      try {
+        const { data } = await getNotificacoesProfissional(user.id);
+        setNotificacoes(data);
+      } catch { /* notificação não é crítica para o restante do dashboard */ }
+    };
+    buscarNotificacoes();
+    const interval = setInterval(buscarNotificacoes, 20000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
+  const marcarNotificacoesLidas = () => {
+    if (notificacoesNaoLidas === 0) return;
+    setNotificacoes(prev => prev.map(n => ({ ...n, lida: 1 })));
+    marcarNotificacoesProfissionalLidas(user.id).catch(() => {});
+  };
+
+  const [usuariosNotificados, setUsuariosNotificados] = useState([]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const buscarNotificados = async () => {
+      try {
+        const { data } = await getUsuariosNotificadosPendentes(user.id);
+        setUsuariosNotificados(data);
+      } catch { /* badge "notificado" não é crítico */ }
+    };
+    buscarNotificados();
+    const interval = setInterval(buscarNotificados, 20000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    solicitarDados(user.id)
+      .then(({ data }) => informacoes.carregarDados(data, user.id))
+      .catch(() => {});
+  }, [user?.id]);
+
   const irPara = async (screen) => {
     if (screen === 'mapa') {
       try {
@@ -115,6 +159,7 @@ const AdminDashboard = () => {
       } catch { showError('Erro ao carregar informações.'); }
       return;
     }
+    if (screen === 'agenda') marcarNotificacoesLidas();
     setActiveScreen(screen);
   };
 
@@ -137,6 +182,8 @@ const AdminDashboard = () => {
             reservas={reservas} reservasPorData={reservasPorData}
             formatarHorarioBrasil={formatarHorarioBrasil} formatarDataExibicao={formatarDataExibicao}
             irPara={irPara} user={user} modoAgenda={activeScreen === 'agenda'}
+            horariosAtendimento={informacoes.editHorariosAtendimento}
+            notificacoes={notificacoes} notificacoesCount={notificacoesNaoLidas} onAbrirNotificacoes={marcarNotificacoesLidas}
           />
         );
       case 'horarios':
@@ -169,6 +216,7 @@ const AdminDashboard = () => {
             toggleStatus={edicao.toggleStatus} mostrarMotivo={edicao.mostrarMotivo} setMostrarMotivo={edicao.setMostrarMotivo}
             motivo={edicao.motivo} setMotivo={edicao.setMotivo} negarReserva={edicao.handleNegarReserva}
             onEditarReserva={edicao.abrirEdicaoReserva} removerReserva={edicao.removerReserva}
+            usuariosNotificados={usuariosNotificados}
           />
         );
       case 'urgencias':
@@ -254,6 +302,7 @@ const AdminDashboard = () => {
         activeScreen={activeScreen} irPara={irParaComFechar}
         navigate={navigate} logout={logout} setViewMode={setViewMode}
         pendentes={pendentes} urgentes={urgentes} vagasCount={vagasCount}
+        notificacoesCount={notificacoesNaoLidas}
         isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)}
         onAbrirStatusModal={() => setShowStatusModal(true)}
       />

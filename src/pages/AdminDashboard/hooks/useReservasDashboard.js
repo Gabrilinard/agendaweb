@@ -33,6 +33,12 @@ const useReservasDashboard = (user) => {
 
   useEffect(() => { buscarReservas(); }, [buscarReservas]);
 
+  useEffect(() => {
+    if (!user?.id) return;
+    const interval = setInterval(buscarReservas, 20000);
+    return () => clearInterval(interval);
+  }, [buscarReservas]);
+
   return { reservas, setReservas, reservasPorData, buscarReservas };
 };
 

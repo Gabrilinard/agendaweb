@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CalendarDays, CalendarPlus, CheckCircle, ClipboardList, MapPin, Zap } from 'lucide-react';
 import styled from 'styled-components';
+import NotificacoesBell from '../components/NotificacoesBell';
 
 const TwoColGrid = styled.div`
   display: grid;
@@ -99,11 +100,16 @@ const HomeWrap = styled.div`
   @media (max-width: 768px) { padding: 20px 16px; }
 `;
 
-const HOUR_HEIGHT = 72;
-const START_HOUR = 7;
-const END_HOUR = 20;
-const HOURS = Array.from({ length: END_HOUR - START_HOUR }, (_, i) => i + START_HOUR);
+const ROW_HEIGHT = 56;
 const WEEK_LABELS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+// Usado só quando o profissional ainda não configurou nenhum horário de atendimento.
+const FALLBACK_ROW_TIMES = Array.from({ length: 13 }, (_, i) => 7 + i);
+
+const formatDecimalHour = (t) => {
+  const h = Math.floor(t);
+  const m = Math.round((t - h) * 60);
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+};
 
 const AVATAR_PALETTES = [
   { bg: '#FCDBB5', color: '#7A4100' },
@@ -161,31 +167,51 @@ const STATUS_LABELS = {
 };
 const getColor = (r) => STATUS_COLORS[r.status] || STATUS_COLORS.confirmado;
 
-const ApptBlock = ({ r, fmt }) => {
-  const t = parseH(r.horario);
-  if (t === null || t < START_HOUR || t >= END_HOUR) return null;
-  const endT = r.horarioFinal ? parseH(r.horarioFinal) : t + 1;
-  const top = (t - START_HOUR) * HOUR_HEIGHT + 2;
-  const height = Math.max((endT - t) * HOUR_HEIGHT - 4, 28);
+const DIAS_SEMANA_COMPLETO = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+const normalizarDiaSemana = (d) => String(d || '')
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/-?feira/g, '').replace(/\s+/g, '').trim();
+
+// Horários (em hora decimal) configurados pelo profissional para o dia da semana de `date`.
+const getHorariosDoDia = (horariosAtendimento, date) => {
+  if (!horariosAtendimento || typeof horariosAtendimento !== 'object') return [];
+  const diaSemana = DIAS_SEMANA_COMPLETO[date.getDay()];
+  const chave = Object.keys(horariosAtendimento).find((k) => normalizarDiaSemana(k) === normalizarDiaSemana(diaSemana));
+  const lista = chave ? horariosAtendimento[chave] : [];
+  return (Array.isArray(lista) ? lista : []).map((h) => parseH(h)).filter((v) => v !== null).sort((a, b) => a - b);
+};
+
+// Linhas da agenda para os dias informados: união dos horários configurados pelo
+// profissional (para cada dia da semana envolvido), mais qualquer horário de consulta
+// que não esteja na grade dele (ex.: urgência encaixada) — para nada ficar escondido.
+// Só cai no fallback de hora em hora se o profissional não tiver nada configurado.
+const getRowTimes = (dates, horariosAtendimento, reservasExtras = []) => {
+  const set = new Set();
+  dates.forEach((d) => getHorariosDoDia(horariosAtendimento, d).forEach((h) => set.add(h)));
+  reservasExtras.forEach((r) => {
+    const t = parseH(r.horario);
+    if (t !== null) set.add(t);
+  });
+  const rows = Array.from(set).sort((a, b) => a - b);
+  return rows.length ? rows : FALLBACK_ROW_TIMES;
+};
+
+const RowAppt = ({ r, fmt }) => {
   const c = getColor(r);
   const isLiberado = r.status === 'liberado';
   return (
     <div style={{
-      position: 'absolute', top, left: 3, right: 3, height,
-      background: c.bg, borderLeft: `3px solid ${c.border}`, borderRadius: 6,
-      padding: '4px 7px', overflow: 'hidden', cursor: 'pointer', zIndex: 2,
+      flex: 1, minWidth: 0, background: c.bg, borderLeft: `3px solid ${c.border}`, borderRadius: 6,
+      padding: '4px 7px', overflow: 'hidden', cursor: 'pointer', boxSizing: 'border-box',
     }}>
       <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: c.color, lineHeight: 1.2 }}>{fmt(r.horario)}</p>
-      {height > 36 && (
-        <p style={{ margin: 0, fontSize: 11, color: c.color, opacity: 0.8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {isLiberado ? STATUS_LABELS.liberado : `${r.nome} ${r.sobrenome ? r.sobrenome[0] + '.' : ''}`}
-        </p>
-      )}
+      <p style={{ margin: 0, fontSize: 11, color: c.color, opacity: 0.8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {isLiberado ? STATUS_LABELS.liberado : `${r.nome} ${r.sobrenome ? r.sobrenome[0] + '.' : ''}`}
+      </p>
     </div>
   );
 };
 
-const AgendaView = ({ reservas, formatarHorarioBrasil, irPara }) => {
+const AgendaView = ({ reservas, formatarHorarioBrasil, irPara, horariosAtendimento, notificacoes, notificacoesCount, onAbrirNotificacoes }) => {
   const [weekOffset, setWeekOffset] = useState(0);
   const [viewMode, setViewMode] = useState('semana');
   const [mobileDayOffset, setMobileDayOffset] = useState(0);
@@ -196,8 +222,6 @@ const AgendaView = ({ reservas, formatarHorarioBrasil, irPara }) => {
   const weekDays = getWeekDays(weekStart);
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const todayKey = toDayKey(today);
-  const nowH = new Date().getHours() + new Date().getMinutes() / 60;
-  const nowTop = (nowH - START_HOUR) * HOUR_HEIGHT;
 
   const selectedDay = new Date(); selectedDay.setDate(selectedDay.getDate() + dayOffset); selectedDay.setHours(0,0,0,0);
   const selectedDayKey = toDayKey(selectedDay);
@@ -280,6 +304,7 @@ const AgendaView = ({ reservas, formatarHorarioBrasil, irPara }) => {
             <button onClick={() => irPara('criar')} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 18px', background: '#1B4D3E', color: 'white', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '700', cursor: 'pointer', fontFamily: 'Figtree, sans-serif' }}>
               + Adicionar
             </button>
+            <NotificacoesBell notificacoes={notificacoes} count={notificacoesCount} onAbrir={onAbrirNotificacoes} />
           </AgendaControls>
         </AgendaTopRow>
       </AgendaTopBar>
@@ -305,33 +330,37 @@ const AgendaView = ({ reservas, formatarHorarioBrasil, irPara }) => {
                 );
               })}
             </div>
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', minHeight: 0 }}>
-              <div style={{ width: 64, flexShrink: 0, borderRight: '1px solid #F0EFE9' }}>
-                {HOURS.map(h => (
-                  <div key={h} style={{ height: HOUR_HEIGHT, display: 'flex', alignItems: 'flex-start', paddingTop: 4, boxSizing: 'border-box' }}>
-                    <span style={{ fontSize: 11, color: '#bbb', width: '100%', textAlign: 'right', paddingRight: 8 }}>{String(h).padStart(2, '0')}:00</span>
-                  </div>
-                ))}
-              </div>
-              {weekDays.map((day, i) => {
-                const key = toDayKey(day);
-                const isToday = key === todayKey;
-                const dayReservas = byDay[key] || [];
-                const totalH = HOURS.length * HOUR_HEIGHT;
-                return (
-                  <div key={i} style={{ flex: 1, position: 'relative', borderLeft: '1px solid #F0EFE9', minWidth: 0, background: isToday ? '#FAFFFE' : 'white', minHeight: totalH }}>
-                    {HOURS.map(h => <div key={h} style={{ position: 'absolute', top: (h - START_HOUR) * HOUR_HEIGHT, left: 0, right: 0, borderTop: '1px solid #F5F5F0', height: HOUR_HEIGHT }} />)}
-                    {isToday && nowTop >= 0 && nowTop <= totalH && (
-                      <div style={{ position: 'absolute', top: nowTop, left: 0, right: 0, zIndex: 5, pointerEvents: 'none' }}>
-                        <div style={{ position: 'absolute', left: -5, top: -5, width: 10, height: 10, borderRadius: '50%', background: '#E8611A' }} />
-                        <div style={{ height: 2, background: '#E8611A', position: 'absolute', left: 5, right: 0, top: -1 }} />
+            {(() => {
+              const rows = getRowTimes(weekDays, horariosAtendimento, reservas);
+              return (
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', minHeight: 0 }}>
+                  <div style={{ width: 64, flexShrink: 0, borderRight: '1px solid #F0EFE9' }}>
+                    {rows.map(t => (
+                      <div key={t} style={{ height: ROW_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 8, boxSizing: 'border-box', borderBottom: '1px solid #F5F5F0' }}>
+                        <span style={{ fontSize: 11, color: '#bbb' }}>{formatDecimalHour(t)}</span>
                       </div>
-                    )}
-                    {dayReservas.map(r => <ApptBlock key={r.id} r={r} fmt={formatarHorarioBrasil} />)}
+                    ))}
                   </div>
-                );
-              })}
-            </div>
+                  {weekDays.map((day, i) => {
+                    const key = toDayKey(day);
+                    const isToday = key === todayKey;
+                    const dayReservas = byDay[key] || [];
+                    return (
+                      <div key={i} style={{ flex: 1, borderLeft: '1px solid #F0EFE9', minWidth: 0, background: isToday ? '#FAFFFE' : 'white' }}>
+                        {rows.map(t => {
+                          const itens = dayReservas.filter(r => parseH(r.horario) === t);
+                          return (
+                            <div key={t} style={{ height: ROW_HEIGHT, borderBottom: '1px solid #F5F5F0', display: 'flex', alignItems: 'stretch', gap: 3, padding: 3, boxSizing: 'border-box' }}>
+                              {itens.map(r => <RowAppt key={r.id} r={r} fmt={formatarHorarioBrasil} />)}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </>}
 
           {/* ── DIA ── */}
@@ -348,25 +377,31 @@ const AgendaView = ({ reservas, formatarHorarioBrasil, irPara }) => {
                 </p>
               </div>
             </div>
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', minHeight: 0 }}>
-              <div style={{ width: 64, flexShrink: 0, borderRight: '1px solid #F0EFE9' }}>
-                {HOURS.map(h => (
-                  <div key={h} style={{ height: HOUR_HEIGHT, display: 'flex', alignItems: 'flex-start', paddingTop: 4, boxSizing: 'border-box' }}>
-                    <span style={{ fontSize: 11, color: '#bbb', width: '100%', textAlign: 'right', paddingRight: 8 }}>{String(h).padStart(2, '0')}:00</span>
+            {(() => {
+              const dayReservas = byDay[selectedDayKey] || [];
+              const rows = getRowTimes([selectedDay], horariosAtendimento, dayReservas);
+              return (
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', minHeight: 0 }}>
+                  <div style={{ width: 64, flexShrink: 0, borderRight: '1px solid #F0EFE9' }}>
+                    {rows.map(t => (
+                      <div key={t} style={{ height: ROW_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 8, boxSizing: 'border-box', borderBottom: '1px solid #F5F5F0' }}>
+                        <span style={{ fontSize: 11, color: '#bbb' }}>{formatDecimalHour(t)}</span>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              <div style={{ flex: 1, position: 'relative', background: selectedDayKey === todayKey ? '#FAFFFE' : 'white', minHeight: HOURS.length * HOUR_HEIGHT }}>
-                {HOURS.map(h => <div key={h} style={{ position: 'absolute', top: (h - START_HOUR) * HOUR_HEIGHT, left: 0, right: 0, borderTop: '1px solid #F5F5F0', height: HOUR_HEIGHT }} />)}
-                {selectedDayKey === todayKey && nowTop >= 0 && nowTop <= HOURS.length * HOUR_HEIGHT && (
-                  <div style={{ position: 'absolute', top: nowTop, left: 0, right: 0, zIndex: 5, pointerEvents: 'none' }}>
-                    <div style={{ position: 'absolute', left: -5, top: -5, width: 10, height: 10, borderRadius: '50%', background: '#E8611A' }} />
-                    <div style={{ height: 2, background: '#E8611A', position: 'absolute', left: 5, right: 0, top: -1 }} />
+                  <div style={{ flex: 1, background: selectedDayKey === todayKey ? '#FAFFFE' : 'white' }}>
+                    {rows.map(t => {
+                      const itens = dayReservas.filter(r => parseH(r.horario) === t);
+                      return (
+                        <div key={t} style={{ height: ROW_HEIGHT, borderBottom: '1px solid #F5F5F0', display: 'flex', alignItems: 'stretch', gap: 3, padding: 3, boxSizing: 'border-box' }}>
+                          {itens.map(r => <RowAppt key={r.id} r={r} fmt={formatarHorarioBrasil} />)}
+                        </div>
+                      );
+                    })}
                   </div>
-                )}
-                {(byDay[selectedDayKey] || []).map(r => <ApptBlock key={r.id} r={r} fmt={formatarHorarioBrasil} />)}
-              </div>
-            </div>
+                </div>
+              );
+            })()}
           </>}
 
           {/* ── MÊS ── */}
@@ -471,25 +506,30 @@ const AgendaView = ({ reservas, formatarHorarioBrasil, irPara }) => {
               <button onClick={() => setMobileDayOffset(d => d + 1)} style={navBtnStyle}>›</button>
             </div>
           </div>
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', minHeight: 0 }}>
-            <div style={{ width: 52, flexShrink: 0, borderRight: '1px solid #F0EFE9' }}>
-              {HOURS.map(h => (
-                <div key={h} style={{ height: HOUR_HEIGHT, display: 'flex', alignItems: 'flex-start', paddingTop: 4, boxSizing: 'border-box' }}>
-                  <span style={{ fontSize: 10, color: '#bbb', width: '100%', textAlign: 'right', paddingRight: 6 }}>{String(h).padStart(2,'0')}:00</span>
+          {(() => {
+            const rows = getRowTimes([mobileDay], horariosAtendimento, mobileDayReservas);
+            return (
+              <div style={{ flex: 1, overflowY: 'auto', display: 'flex', minHeight: 0 }}>
+                <div style={{ width: 52, flexShrink: 0, borderRight: '1px solid #F0EFE9' }}>
+                  {rows.map(t => (
+                    <div key={t} style={{ height: ROW_HEIGHT, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 6, boxSizing: 'border-box', borderBottom: '1px solid #F5F5F0' }}>
+                      <span style={{ fontSize: 10, color: '#bbb' }}>{formatDecimalHour(t)}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <div style={{ flex: 1, position: 'relative', background: mobileDayKey === todayKey ? '#FAFFFE' : 'white', minHeight: HOURS.length * HOUR_HEIGHT }}>
-              {HOURS.map(h => <div key={h} style={{ position: 'absolute', top: (h - START_HOUR) * HOUR_HEIGHT, left: 0, right: 0, borderTop: '1px solid #F5F5F0', height: HOUR_HEIGHT }} />)}
-              {mobileDayKey === todayKey && nowTop >= 0 && nowTop <= HOURS.length * HOUR_HEIGHT && (
-                <div style={{ position: 'absolute', top: nowTop, left: 0, right: 0, zIndex: 5, pointerEvents: 'none' }}>
-                  <div style={{ position: 'absolute', left: -5, top: -5, width: 10, height: 10, borderRadius: '50%', background: '#E8611A' }} />
-                  <div style={{ height: 2, background: '#E8611A', position: 'absolute', left: 5, right: 0, top: -1 }} />
+                <div style={{ flex: 1, background: mobileDayKey === todayKey ? '#FAFFFE' : 'white' }}>
+                  {rows.map(t => {
+                    const itens = mobileDayReservas.filter(r => parseH(r.horario) === t);
+                    return (
+                      <div key={t} style={{ height: ROW_HEIGHT, borderBottom: '1px solid #F5F5F0', display: 'flex', alignItems: 'stretch', gap: 3, padding: 3, boxSizing: 'border-box' }}>
+                        {itens.map(r => <RowAppt key={r.id} r={r} fmt={formatarHorarioBrasil} />)}
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
-              {mobileDayReservas.map(r => <ApptBlock key={r.id} r={r} fmt={formatarHorarioBrasil} />)}
-            </div>
-          </div>
+              </div>
+            );
+          })()}
         </>}
 
         {/* ── MOBILE SEMANA ── */}
@@ -678,8 +718,13 @@ const HomeView = ({ reservas, reservasPorData, formatarHorarioBrasil, formatarDa
   );
 };
 
-const Inicio = ({ reservas, reservasPorData, formatarHorarioBrasil, formatarDataExibicao, irPara, user, modoAgenda }) => {
-  if (modoAgenda) return <AgendaView reservas={reservas} formatarHorarioBrasil={formatarHorarioBrasil} irPara={irPara} />;
+const Inicio = ({ reservas, reservasPorData, formatarHorarioBrasil, formatarDataExibicao, irPara, user, modoAgenda, horariosAtendimento, notificacoes, notificacoesCount, onAbrirNotificacoes }) => {
+  if (modoAgenda) return (
+    <AgendaView
+      reservas={reservas} formatarHorarioBrasil={formatarHorarioBrasil} irPara={irPara} horariosAtendimento={horariosAtendimento}
+      notificacoes={notificacoes} notificacoesCount={notificacoesCount} onAbrirNotificacoes={onAbrirNotificacoes}
+    />
+  );
   return <HomeView reservas={reservas} reservasPorData={reservasPorData} formatarHorarioBrasil={formatarHorarioBrasil} formatarDataExibicao={formatarDataExibicao} irPara={irPara} user={user} />;
 };
 
