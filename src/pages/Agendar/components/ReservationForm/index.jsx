@@ -117,10 +117,7 @@ const ReservationForm = ({
   modalidadeSelecionada,
   setModalidadeSelecionada,
   isDateAvailable,
-  adicionarDiaReserva,
   enviarReservas,
-  reservasTemporarias,
-  datasSelecionadas,
   onEmergencyClick,
 }) => {
   const modalidadesDisponiveis = parseModalidades(profissionalInfo?.modalidade);
@@ -276,34 +273,6 @@ const ReservationForm = ({
             })}
           </div>
         )}
-
-        {/* Consultas selecionadas */}
-        {datasSelecionadas && datasSelecionadas.length > 0 && (
-          <div style={{ marginTop: '16px' }}>
-            {datasSelecionadas.map((data, index) => {
-              const dataFormatada = new Date(data + 'T00:00:00').toLocaleDateString('pt-BR');
-              return (
-                <div key={index} style={{
-                  background: '#F7F7F4', borderRadius: '8px', padding: '12px 14px', marginBottom: '8px',
-                }}>
-                  <p style={{ fontWeight: '600', fontSize: '13px', margin: '0 0 6px', color: '#1a1a1a' }}>
-                    {dataFormatada}
-                  </p>
-                  {reservasTemporarias
-                    .filter(r => r.dia === data)
-                    .map((r, idx) => (
-                      <span key={idx} style={{
-                        background: '#D1FAE5', color: '#065F46', borderRadius: '6px',
-                        padding: '2px 10px', fontSize: '13px', marginRight: '6px', fontWeight: '500',
-                      }}>
-                        {formatarHorarioBrasil(r.horario)}
-                      </span>
-                    ))}
-                </div>
-              );
-            })}
-          </div>
-        )}
       </div>
 
       {/* Footer */}
@@ -323,19 +292,6 @@ const ReservationForm = ({
             : 'Selecione data e horário para continuar'}
         </span>
         <div style={{ display: 'flex', gap: '10px', flexShrink: 0 }}>
-          <button
-            onClick={adicionarDiaReserva}
-            disabled={modalidadesDisponiveis.length > 0 && !modalidadeSelecionada}
-            style={{
-              padding: '9px 16px', borderRadius: '8px', fontSize: '13px',
-              fontWeight: '500', cursor: 'pointer', background: 'white',
-              border: '1.5px solid #E0DFD9', color: '#555',
-              fontFamily: 'Figtree, sans-serif',
-              opacity: (modalidadesDisponiveis.length > 0 && !modalidadeSelecionada) ? 0.5 : 1,
-            }}
-          >
-            + Adicionar dia
-          </button>
           <button
             onClick={enviarReservas}
             disabled={modalidadesDisponiveis.length > 0 && !modalidadeSelecionada}

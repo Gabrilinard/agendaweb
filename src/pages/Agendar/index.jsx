@@ -54,10 +54,7 @@ const Agendar = () => {
         setModalidadeSelecionada,
         getValorModalidade,
         isDateAvailable,
-        adicionarDiaReserva,
         enviarReservasEmLote,
-        reservasTemporarias,
-        datasSelecionadas
     } = useAgendamento(user, profissionalInfo, reservasProfissional, nomeProfissional, emailNotification, {
         dia: diaSugerido,
         horario: horarioSugerido,
@@ -174,20 +171,18 @@ const Agendar = () => {
         }
 
         if (TIPOS_COM_FORMULARIO.has(tipoProfissional)) {
-            const pendingReservas = reservasTemporarias.length > 0
-                ? reservasTemporarias
-                : dataSelecionada && horario
-                    ? [{ dia: formatarDataBrasil(dataSelecionada), horario, horarioFinal: calcHorarioFinal(horario) }]
-                    : null;
-
-            if (!pendingReservas) {
+            if (!dataSelecionada || !horario) {
                 return;
             }
 
             const valorModalidade = getValorModalidade(modalidadeSelecionada);
-            const pendingReservasComModalidade = pendingReservas.map(r => ({
-                ...r, modalidade: modalidadeSelecionada, valor: valorModalidade,
-            }));
+            const pendingReservasComModalidade = [{
+                dia: formatarDataBrasil(dataSelecionada),
+                horario,
+                horarioFinal: calcHorarioFinal(horario),
+                modalidade: modalidadeSelecionada,
+                valor: valorModalidade,
+            }];
 
             navigate('/Formulario', {
                 state: {
@@ -284,10 +279,7 @@ const Agendar = () => {
                             modalidadeSelecionada={modalidadeSelecionada}
                             setModalidadeSelecionada={setModalidadeSelecionada}
                             isDateAvailable={isDateAvailable}
-                            adicionarDiaReserva={() => adicionarDiaReserva(reservas)}
                             enviarReservas={handleSolicitarConsulta}
-                            reservasTemporarias={reservasTemporarias}
-                            datasSelecionadas={datasSelecionadas}
                             onEmergencyClick={() => setShowEmergencyModal(true)}
                         />
                     </Container_Important>

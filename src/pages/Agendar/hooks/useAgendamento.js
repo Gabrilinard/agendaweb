@@ -15,9 +15,6 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
   const [horariosDisponiveis, setHorariosDisponiveis] = useState([]);
   const [modalidadeSelecionada, setModalidadeSelecionada] = useState(sugestaoInicial?.modalidade || '');
 
-  const [reservasTemporarias, setReservasTemporarias] = useState([]);
-  const [datasSelecionadas, setDatasSelecionadas] = useState([]);
-
   const { setSolicitCount } = emailNotification;
 
   const normalizarDiaSemana = (dia) => {
@@ -76,27 +73,40 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
     }
   }, [horario]);
 
+  const isHorarioPassado = (hFormatado, data) => {
+    const agora = new Date();
+    if (formatarDataBrasil(data) !== formatarDataBrasil(agora)) return false;
+    const [h, m] = hFormatado.split(':').map(Number);
+    const horarioDate = new Date(agora);
+    horarioDate.setHours(h || 0, m || 0, 0, 0);
+    return horarioDate.getTime() <= agora.getTime();
+  };
+
+  const getHorariosDoDiaFormatados = (date) => {
+    const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    const diaSemana = diasSemana[date.getDay()];
+
+    let horariosDoDia = [];
+    if (profissionalInfo?.horariosAtendimento) {
+      if (typeof profissionalInfo.horariosAtendimento === 'object' && !Array.isArray(profissionalInfo.horariosAtendimento)) {
+        const horariosAtendimento = profissionalInfo.horariosAtendimento;
+        const chaveExata = Object.keys(horariosAtendimento).find((k) => (
+          normalizarDiaSemana(k) === normalizarDiaSemana(diaSemana)
+        ));
+        horariosDoDia = (chaveExata ? horariosAtendimento[chaveExata] : horariosAtendimento[diaSemana]) || [];
+      }
+    }
+
+    return (Array.isArray(horariosDoDia) ? horariosDoDia : [])
+      .map((h) => formatarHorarioBrasil(h))
+      .filter(Boolean)
+      .filter((hFormatado) => !isHorarioPassado(hFormatado, date));
+  };
+
   useEffect(() => {
     if (profissionalInfo && dataSelecionada) {
-      const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
-      const diaSemana = diasSemana[dataSelecionada.getDay()];
-      
-      let horariosDoDia = [];
-      if (profissionalInfo.horariosAtendimento) {
-        if (typeof profissionalInfo.horariosAtendimento === 'object' && !Array.isArray(profissionalInfo.horariosAtendimento)) {
-          const horariosAtendimento = profissionalInfo.horariosAtendimento;
-          const chaveExata = Object.keys(horariosAtendimento).find((k) => (
-            normalizarDiaSemana(k) === normalizarDiaSemana(diaSemana)
-          ));
-          horariosDoDia = (chaveExata ? horariosAtendimento[chaveExata] : horariosAtendimento[diaSemana]) || [];
-        }
-      }
-
+      const horariosDoDiaFormatados = getHorariosDoDiaFormatados(dataSelecionada);
       const dataFormatada = formatarDataBrasil(dataSelecionada);
-      
-      const horariosDoDiaFormatados = (Array.isArray(horariosDoDia) ? horariosDoDia : [])
-        .map((h) => formatarHorarioBrasil(h))
-        .filter(Boolean);
 
       const horariosLivres = horariosDoDiaFormatados.filter((hFormatado) => {
         const ocupado = (Array.isArray(reservasProfissional) ? reservasProfissional : []).some((reserva) => {
@@ -111,7 +121,7 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
       });
 
       setHorariosDisponiveis(horariosLivres);
-      
+
       if (horario && !horariosLivres.includes(horario)) {
           setHorario('');
       }
@@ -120,16 +130,23 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
 
   const isDateAvailable = (date) => {
     if (!profissionalInfo || !profissionalInfo.diasAtendimento) return true;
-    
+
     const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     const diaSemana = diasSemana[date.getDay()];
-    
-    if (Array.isArray(profissionalInfo.diasAtendimento)) {
-        if (profissionalInfo.diasAtendimento.includes('Todos os dias')) return true;
-        return profissionalInfo.diasAtendimento.some((d) => (
-          normalizarDiaSemana(d) === normalizarDiaSemana(diaSemana)
-        ));
+
+    const diaNaAgenda = Array.isArray(profissionalInfo.diasAtendimento)
+      ? profissionalInfo.diasAtendimento.includes('Todos os dias') ||
+        profissionalInfo.diasAtendimento.some((d) => normalizarDiaSemana(d) === normalizarDiaSemana(diaSemana))
+      : true;
+
+    if (!diaNaAgenda) return false;
+
+    // Se for hoje e todos os horários de hoje já passaram, o dia deixa de ser selecionável.
+    const hoje = new Date();
+    if (formatarDataBrasil(date) === formatarDataBrasil(hoje)) {
+      return getHorariosDoDiaFormatados(date).length > 0;
     }
+
     return true;
   };
 
@@ -178,54 +195,6 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
     }
   };
 
-  const adicionarDiaReserva = (reservasExistentes) => {
-    if (!dataSelecionada || !horario) {
-      warning('Por favor, preencha todos os campos.');
-      return;
-    }
-    const dataFormatada = formatarDataBrasil(dataSelecionada);
-    
-    const jaNaLista = reservasTemporarias.some(res => 
-      res.dia === dataFormatada && res.horario === horario
-    );
-
-    if (jaNaLista) {
-      warning('Você já adicionou este horário à lista.');
-      return;
-    }
-
-    const jaReservado = reservasExistentes.some(res => {
-      let dataReserva = res.dia;
-      if (typeof res.dia === 'string' && res.dia.includes('T')) {
-          dataReserva = res.dia.split('T')[0];
-      }
-      return dataReserva === dataFormatada && 
-             formatarHorarioBrasil(res.horario) === formatarHorarioBrasil(horario) && 
-             res.status !== 'cancelado' && 
-             res.status !== 'recusado' &&
-             res.status !== 'negado';
-    });
-
-    if (jaReservado) {
-      warning('Você já possui um agendamento neste horário.');
-      return;
-    }
-
-    if (dataFormatada && !datasSelecionadas.includes(dataFormatada)) {
-      setDatasSelecionadas([...datasSelecionadas, dataFormatada]);
-    }
-    
-    const novaReserva = {
-      dia: dataFormatada,
-      horario,
-      horarioFinal,
-    };
-    setReservasTemporarias([...reservasTemporarias, novaReserva]);
-
-    setDataSelecionada(new Date());
-    setHorario('');
-  };
-
   const enviarReservasEmLote = async (options = {}) => {
     const onSuccess = typeof options === 'function' ? options : options?.onSuccess;
 
@@ -239,47 +208,30 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
       return;
     }
 
-    const reservasParaEnviar = reservasTemporarias.length > 0
-      ? reservasTemporarias
-      : (() => {
-          if (!dataSelecionada || !horario) {
-            showError('Por favor, preencha todos os campos corretamente.');
-            return null;
-          }
+    if (!dataSelecionada || !horario) {
+      showError('Por favor, preencha todos os campos corretamente.');
+      return;
+    }
 
-          const dataFormatada = formatarDataBrasil(dataSelecionada);
-          return [{
-            dia: dataFormatada,
-            horario,
-            horarioFinal: calcularHorarioFinal(horario)
-          }];
-        })();
-
-    if (!reservasParaEnviar) return;
+    const dataFormatada = formatarDataBrasil(dataSelecionada);
 
     try {
-      const idsCriados = await Promise.all(reservasParaEnviar.map(async (reserva) => {
-        const response = await agendarService.createReserva({
-          nome: user.nome,
-          sobrenome: user.sobrenome,
-          email: user.email,
-          telefone: user.telefone,
-          dia: reserva.dia,
-          horario: reserva.horario,
-          horarioFinal: reserva.horarioFinal,
-          qntd_pessoa: 1,
-          usuario_id: user.id,
-          nomeProfissional: nomeProfissional || null,
-          profissional_id: profissionalInfo?.id || null,
-          modalidade: modalidadeSelecionada,
-          valor: getValorModalidade(modalidadeSelecionada),
-        });
+      const response = await agendarService.createReserva({
+        nome: user.nome,
+        sobrenome: user.sobrenome,
+        email: user.email,
+        telefone: user.telefone,
+        dia: dataFormatada,
+        horario,
+        horarioFinal: calcularHorarioFinal(horario),
+        qntd_pessoa: 1,
+        usuario_id: user.id,
+        nomeProfissional: nomeProfissional || null,
+        profissional_id: profissionalInfo?.id || null,
+        modalidade: modalidadeSelecionada,
+        valor: getValorModalidade(modalidadeSelecionada),
+      });
 
-        return response?.data?.id;
-      }));
-
-      setReservasTemporarias([]);
-      setDatasSelecionadas([]);
       setDataSelecionada(new Date());
       setHorario('');
 
@@ -287,7 +239,7 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
       success('Solicitação Enviada!');
 
       if (onSuccess) {
-        onSuccess({ reservaIds: idsCriados.filter(Boolean) });
+        onSuccess({ reservaIds: [response?.data?.id].filter(Boolean) });
       }
     } catch (error) {
       console.error('Erro ao enviar reservas:', error);
@@ -306,9 +258,6 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
     getValorModalidade,
     isDateAvailable,
     agendarConsulta,
-    adicionarDiaReserva,
     enviarReservasEmLote,
-    reservasTemporarias,
-    datasSelecionadas
   };
 };
