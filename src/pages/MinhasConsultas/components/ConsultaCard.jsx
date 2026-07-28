@@ -104,6 +104,7 @@ const ConsultaCard = ({
   onConfirmarLiberacao,
   onAceitarRemarcacao,
   onRecusarRemarcacao,
+  onConfirmarPresenca,
   onEnviarAvaliacao,
 }) => {
   const dia = parseDia(c.dia);
@@ -123,7 +124,9 @@ const ConsultaCard = ({
     dt.setHours(h || 0, m || 0, 0, 0);
     return dt;
   })();
-  const faltaMenosDe24h = !!dataHoraConsulta && (dataHoraConsulta.getTime() - Date.now()) < 24 * 60 * 60 * 1000;
+  const faltaMenosDe48h = !!dataHoraConsulta && (dataHoraConsulta.getTime() - Date.now()) < 48 * 60 * 60 * 1000;
+  const presencaConfirmada = Number(c.presenca_confirmada) === 1;
+  const precisaConfirmarPresenca = c.status === 'confirmado' && faltaMenosDe48h && !isPast && !presencaConfirmada;
   const jaAvaliou = avaliacoesFeitas.has(c.id);
   const isAvaliando = avaliandoId === c.id;
   const valor = c.valorConsulta ? `· R$ ${Number(c.valorConsulta).toFixed(0)}` : '';
@@ -147,6 +150,7 @@ const ConsultaCard = ({
             <BadgesRow>
               <StatusBadge $bg={bg} $color={color}>{label}</StatusBadge>
               {isUrgente && <StatusBadge $bg="#FFF0E6" $color="#C2410C">⚡ Emergente</StatusBadge>}
+              {presencaConfirmada && <StatusBadge $bg="#D1FAE5" $color="#065F46">✓ Presença confirmada</StatusBadge>}
               <ModalityBadge>Online</ModalityBadge>
             </BadgesRow>
             <ProfRow>
@@ -165,12 +169,12 @@ const ConsultaCard = ({
                   <FileText size={14} /> Formulário
                 </ActionBtn>
               )}
-              {!isRescheduled && !isPast && (
+              {!isRescheduled && !isPast && !faltaMenosDe48h && (
                 <ActionBtn onClick={() => onEditar(c)}>
                   <Edit2 size={14} /> Editar
                 </ActionBtn>
               )}
-              {!faltaMenosDe24h && (
+              {!faltaMenosDe48h && (
                 <ActionBtn $danger onClick={() => onCancelar(c.id)}>
                   <X size={14} /> Cancelar
                 </ActionBtn>
@@ -206,12 +210,27 @@ const ConsultaCard = ({
               <ConfirmYes style={{ background: '#1C5C40' }} onClick={() => onAceitarRemarcacao(c)}>Confirmar</ConfirmYes>
             </ConfirmBtns>
           </RescheduleBar>
+        ) : precisaConfirmarPresenca ? (
+          <RescheduleBar style={{ background: '#EFF6FF', borderColor: '#BFDBFE', flexDirection: 'column', alignItems: 'stretch', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <span style={{ flex: '1 1 auto', minWidth: 0 }}>
+                Sua consulta é em menos de 48h. Confirma presença? Se não confirmar até 15h antes do horário, ele será liberado automaticamente para outro paciente.
+              </span>
+              <ConfirmBtns>
+                <ConfirmNo onClick={() => onLiberarHorario(c.id)}>Não posso, liberar horário</ConfirmNo>
+                <ConfirmYes style={{ background: '#1C5C40' }} onClick={() => onConfirmarPresenca(c)}>Confirmar presença</ConfirmYes>
+              </ConfirmBtns>
+            </div>
+            <span style={{ fontSize: '0.78rem', color: MUTED }}>
+              Atenção: faltar a uma consulta já confirmada pela 2ª vez bloqueia novos agendamentos por 60 dias.
+            </span>
+          </RescheduleBar>
         ) : isActive && (
           <CardFooter>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
               <Calendar size={13} />
-              {faltaMenosDe24h
-                ? 'Faltam menos de 24h — não é mais possível cancelar, mas você pode '
+              {faltaMenosDe48h
+                ? 'Faltam menos de 48h — não é mais possível cancelar, mas você pode '
                 : 'Não vai poder ir? '}
               <LibeLink onClick={() => onLiberarHorario(c.id)}>Liberar horário</LibeLink>
               &nbsp;— outro paciente pode aproveitá-lo.

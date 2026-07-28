@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import pngLogoAgende from '../../assets/pnglogoagende.png';
 import { useAuth } from '../../contexts/AuthContext';
+import NotificacoesBell from './NotificacoesBell';
 import {
     Avatar,
     BrandArea,
@@ -77,13 +78,16 @@ const Header = () => {
 
                 <RightArea>
                     {user ? (
-                        <UserChip onClick={() => go('/Conta')}>
-                            <Avatar>{initials || 'U'}</Avatar>
-                            <UserDetails>
-                                <UserNameText>{user.nome} {user.sobrenome}</UserNameText>
-                                <UserRoleText>{tipoLabel}</UserRoleText>
-                            </UserDetails>
-                        </UserChip>
+                        <>
+                            <UserChip onClick={() => go('/Conta')}>
+                                <Avatar>{initials || 'U'}</Avatar>
+                                <UserDetails>
+                                    <UserNameText>{user.nome} {user.sobrenome}</UserNameText>
+                                    <UserRoleText>{tipoLabel}</UserRoleText>
+                                </UserDetails>
+                            </UserChip>
+                            {tipoLabel === 'Paciente' && <NotificacoesBell usuarioId={user.id} />}
+                        </>
                     ) : (
                         <LoginBtn onClick={() => go('/Entrar')}>Entrar</LoginBtn>
                     )}
