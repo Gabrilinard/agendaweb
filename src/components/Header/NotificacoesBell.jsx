@@ -61,9 +61,9 @@ const NotificacoesBell = ({ usuarioId }) => {
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      <BellBtn onClick={handleAbrir} aria-label="Notificações">
+      <BellBtn onClick={handleAbrir} aria-label={naoLidas > 0 ? `Notificações — ${naoLidas} nova(s)` : 'Notificações'}>
         <Bell size={19} />
-        {naoLidas > 0 && <NotifBadge />}
+        {naoLidas > 0 && <NotifBadge>{naoLidas > 9 ? '9+' : naoLidas}</NotifBadge>}
       </BellBtn>
 
       {aberto && (

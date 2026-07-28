@@ -169,13 +169,21 @@ export const BellBtn = styled.button`
 
 export const NotifBadge = styled.span`
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  top: -4px;
+  right: -4px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 10px;
   background: #E53E3E;
   border: 1.5px solid #fff;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 `;
 
 export const UserChip = styled.div`

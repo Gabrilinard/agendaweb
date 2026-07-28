@@ -159,7 +159,6 @@ const AdminDashboard = () => {
       } catch { showError('Erro ao carregar informações.'); }
       return;
     }
-    if (screen === 'agenda') marcarNotificacoesLidas();
     setActiveScreen(screen);
   };
 
