@@ -155,7 +155,7 @@ const EmergencyModal = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
             <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: '8px', padding: '6px 10px', fontSize: '18px' }}>⚡</div>
             <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-              CONSULTA EMERGENTE
+              CONSULTA URGENTE
             </span>
           </div>
           <h2 style={{ color: 'white', fontSize: '22px', fontWeight: '700', margin: '0 0 8px', fontFamily: 'Figtree, sans-serif' }}>

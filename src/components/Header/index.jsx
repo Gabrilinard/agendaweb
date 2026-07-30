@@ -107,7 +107,7 @@ const Header = () => {
                     ))}
                     {user ? (
                         <>
-                            <MobileNavLink onClick={() => go('/urgencia')}>Consulta Emergente</MobileNavLink>
+                            <MobileNavLink onClick={() => go('/urgencia')}>Consulta Urgente</MobileNavLink>
                             <MobileNavLink onClick={() => go('/Conta')}>Minha Conta</MobileNavLink>
                         </>
                     ) : (

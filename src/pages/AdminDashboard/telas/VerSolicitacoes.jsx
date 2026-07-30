@@ -48,7 +48,7 @@ const STATUS_FILTERS = [
   { key: 'pendente',                        label: 'Pendentes' },
   { key: 'aguardando_confirmacao_paciente', label: 'Aguard. paciente' },
   { key: 'negado',                          label: 'Negados' },
-  { key: 'urgente',                         label: '⚡ Emergentes' },
+  { key: 'urgente',                         label: '⚡ Urgentes' },
 ];
 
 const parseDia = (dia) => {
@@ -375,7 +375,7 @@ const VerSolicitacoes = ({
                       )}
                       {isUrgente && (
                         <span style={{ background: '#FFF0E6', color: '#C2410C', borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: '700' }}>
-                          ⚡ Emergente
+                          ⚡ Urgente
                         </span>
                       )}
                       <span style={{ background: s.bg, color: s.color, borderRadius: '20px', padding: '3px 10px', fontSize: '11px', fontWeight: '600' }}>{s.label}</span>

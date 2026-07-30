@@ -377,7 +377,7 @@ const EditarInformacoes = ({
                 />
                 <div>
                   <p style={{ margin: 0, fontSize: '13px', fontWeight: '700', color: aceitarEmergentes ? '#E8611A' : '#555' }}>
-                    Aceitar consultas emergentes
+                    Aceitar consultas urgentes
                   </p>
                   <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#888' }}>
                     Receba notificação para casos urgentes (até 1h de janela)

@@ -83,8 +83,8 @@ const specialties = [
 const differentials = [
     {
         icon: <FaBolt />,
-        name: 'Consulta Emergente',
-        desc: 'Anexe arquivo, descreva o caso e receba retorno em menos de 1h. Sem precisar ir à emergência se expor.',
+        name: 'Consulta Urgente',
+        desc: 'Anexe arquivo, descreva o caso e o profissional é avisado na hora. Sem resposta em 1h, avisamos você e sugerimos outro profissional disponível.',
         iconColor: '#E5830F',
         iconBg: '#FEF0E2',
     },
@@ -98,7 +98,7 @@ const differentials = [
     {
         icon: <FaUsers />,
         name: 'Horário liberado, fila inteligente',
-        desc: 'Se alguém faltar, o sistema oferece o horário ao próximo paciente. 1h para confirmar — e a vaga não se perde.',
+        desc: 'Se alguém faltar ou liberar o horário, o profissional vê os candidatos interessados e escolhe quem notificar — sem precisar remarcar tudo na mão.',
         iconColor: '#2D6A4F',
         iconBg: '#E0F0E8',
     },
@@ -189,7 +189,7 @@ const Home = () => {
                     </HeroTitle>
                     <HeroDesc>
                         Marque consultas com médicos, dentistas, nutricionistas e mais. Sem filas,
-                        sem esperar um mês — e com a opção de consulta emergente quando o tempo não pode esperar.
+                        sem esperar um mês — e com a opção de consulta urgente quando o tempo não pode esperar.
                     </HeroDesc>
                     <HeroButtons>
                         <PrimaryButton onClick={() => navigate(user ? '/profissionais' : '/Entrar')}>

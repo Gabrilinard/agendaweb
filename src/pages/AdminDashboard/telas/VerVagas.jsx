@@ -273,7 +273,7 @@ const VerVagas = ({ reservas, formatarDataExibicao, formatarHorarioBrasil, user,
                             </div>
                             <p style={{ margin: '2px 0 0', fontSize: '12px', color: '#888', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                               {c.is_urgente
-                                ? (c.descricao_urgencia || 'Consulta emergencial')
+                                ? (c.descricao_urgencia || 'Consulta urgente')
                                 : `${formatarDataExibicao(String(c.dia).split('T')[0])} às ${formatarHorarioBrasil(c.horario)}`}
                             </p>
                           </div>

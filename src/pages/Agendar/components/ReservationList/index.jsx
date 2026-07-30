@@ -67,7 +67,7 @@ const ReservationItem = ({ reserva, actions }) => {
             borderRadius: '20px', padding: '4px 12px',
             fontSize: '12px', fontWeight: '600',
           }}>
-            ⚡ Emergente
+            ⚡ Urgente
           </span>
         )}
 

@@ -149,7 +149,7 @@ const ConsultaCard = ({
           <CardInfoArea>
             <BadgesRow>
               <StatusBadge $bg={bg} $color={color}>{label}</StatusBadge>
-              {isUrgente && <StatusBadge $bg="#FFF0E6" $color="#C2410C">⚡ Emergente</StatusBadge>}
+              {isUrgente && <StatusBadge $bg="#FFF0E6" $color="#C2410C">⚡ Urgente</StatusBadge>}
               {presencaConfirmada && <StatusBadge $bg="#D1FAE5" $color="#065F46">✓ Presença confirmada</StatusBadge>}
               <ModalityBadge>Online</ModalityBadge>
             </BadgesRow>
