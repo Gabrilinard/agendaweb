@@ -1,4 +1,4 @@
-import { Check, Edit2, LogOut, Users, X } from 'lucide-react';
+import { Check, Edit2, LogOut, Trash2, Users, X } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
@@ -7,7 +7,7 @@ import Header from '../../components/Header';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotification } from '../../contexts/NotificationContext';
 import { OPCOES_GENERO } from '../../utils/titulo';
-import { updatePerfil } from './api';
+import { excluirConta, updatePerfil } from './api';
 
 const DARK_GREEN = '#1C5C40';
 const MID_GREEN = '#2D8A62';
@@ -235,6 +235,8 @@ const ProfBtn = styled.button`
 const LogoutSection = styled.div`
   display: flex;
   justify-content: center;
+  align-items: center;
+  gap: 4px;
   padding: 16px 0 0;
   margin-top: auto;
 `;
@@ -257,6 +259,88 @@ const LogoutBtn = styled.button`
   &:hover {
     background: #FFF5F5;
   }
+`;
+
+const DeleteAccountBtn = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: transparent;
+  border: none;
+  color: #C53030;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Figtree', sans-serif;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.15s;
+
+  &:hover {
+    background: #FFF5F5;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const LogoutDivider = styled.span`
+  color: ${BORDER};
+`;
+
+const ConfirmExclusaoBox = styled.div`
+  width: 100%;
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: #FFF5F5;
+  border: 1.5px solid #F5C6C6;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const ConfirmExclusaoTexto = styled.p`
+  margin: 0;
+  font-size: 0.78rem;
+  color: #8B2C2C;
+  line-height: 1.4;
+`;
+
+const ConfirmExclusaoAcoes = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const ConfirmExcluirBtn = styled.button`
+  padding: 7px 14px;
+  background: #C53030;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Figtree', sans-serif;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const ConfirmCancelarBtn = styled.button`
+  padding: 7px 14px;
+  background: transparent;
+  color: ${MUTED};
+  border: 1.5px solid ${BORDER};
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Figtree', sans-serif;
 `;
 
 const InfoSelect = styled.select`
@@ -360,6 +444,8 @@ const Conta = () => {
     const [editTelefone, setEditTelefone] = useState('');
     const [editGenero, setEditGenero] = useState('');
     const [salvando, setSalvando] = useState(false);
+    const [excluindo, setExcluindo] = useState(false);
+    const [confirmandoExclusao, setConfirmandoExclusao] = useState(false);
 
     const initials = user
         ? `${user.nome?.[0] || ''}${user.sobrenome?.[0] || ''}`.toUpperCase()
@@ -376,6 +462,22 @@ const Conta = () => {
     const handleLogout = () => {
         logout();
         navigate('/');
+    };
+
+    const handleConfirmarExclusao = async () => {
+        if (!user?.id) {
+            showError('Erro ao identificar usuário.');
+            return;
+        }
+        setExcluindo(true);
+        try {
+            await excluirConta(user.id);
+            logout();
+            navigate('/');
+        } catch {
+            showError('Erro ao excluir conta. Tente novamente.');
+            setExcluindo(false);
+        }
     };
 
     const handleIniciarEdicao = () => {
@@ -544,11 +646,32 @@ const Conta = () => {
                             </ProfCard>
                         )}
 
-                        <LogoutSection>
+                        <LogoutSection style={{ flexWrap: 'wrap' }}>
                             <LogoutBtn onClick={handleLogout}>
                                 <LogOut size={14} />
                                 Sair da conta
                             </LogoutBtn>
+                            <LogoutDivider>·</LogoutDivider>
+                            <DeleteAccountBtn onClick={() => setConfirmandoExclusao(true)} disabled={excluindo}>
+                                <Trash2 size={14} />
+                                Excluir conta
+                            </DeleteAccountBtn>
+
+                            {confirmandoExclusao && (
+                                <ConfirmExclusaoBox>
+                                    <ConfirmExclusaoTexto>
+                                        Tem certeza? Todos os seus dados (consultas, formulários, notificações e anexos) serão apagados permanentemente. Essa ação não pode ser desfeita.
+                                    </ConfirmExclusaoTexto>
+                                    <ConfirmExclusaoAcoes>
+                                        <ConfirmExcluirBtn onClick={handleConfirmarExclusao} disabled={excluindo}>
+                                            {excluindo ? 'Excluindo...' : 'Sim, excluir minha conta'}
+                                        </ConfirmExcluirBtn>
+                                        <ConfirmCancelarBtn onClick={() => setConfirmandoExclusao(false)} disabled={excluindo}>
+                                            Cancelar
+                                        </ConfirmCancelarBtn>
+                                    </ConfirmExclusaoAcoes>
+                                </ConfirmExclusaoBox>
+                            )}
                         </LogoutSection>
                     </RightCol>
                 </Grid>
