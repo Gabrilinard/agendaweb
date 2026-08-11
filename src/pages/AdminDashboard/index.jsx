@@ -13,6 +13,7 @@ const DashLayout = styled.div`
 const DashMain = styled.main`
   margin-left: 260px;
   flex: 1;
+  min-width: 0;
   min-height: 100vh;
   background: #F0EFE9;
 

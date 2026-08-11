@@ -2,6 +2,11 @@
   font-family: 'Figtree', sans-serif;
 }
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 body {
   font-family: 'Figtree', sans-serif;
   margin: 0;

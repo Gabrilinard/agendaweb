@@ -6,6 +6,7 @@ const SidebarAside = styled.aside`
   width: 260px;
   background: white;
   height: 100vh;
+  height: 100dvh;
   position: fixed;
   left: 0;
   top: 0;
