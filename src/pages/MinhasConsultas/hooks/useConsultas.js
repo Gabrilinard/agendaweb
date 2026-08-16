@@ -4,15 +4,15 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { parseDia } from '../../../utils/formatters';
 import {
-  aceitarVaga,
-  confirmarPresenca,
-  deleteReserva,
-  getReservas,
-  getVagasPendentes,
-  liberarVaga,
-  recusarVaga,
-  solicitarDados,
-  updateReserva,
+    aceitarVaga,
+    confirmarPresenca,
+    deleteReserva,
+    getReservas,
+    getVagasPendentes,
+    liberarVaga,
+    recusarVaga,
+    solicitarDados,
+    updateReserva,
 } from '../api';
 
 export const useConsultas = ({ onLoaded } = {}) => {
