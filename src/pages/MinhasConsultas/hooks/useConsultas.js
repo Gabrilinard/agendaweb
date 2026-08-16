@@ -28,9 +28,15 @@ export const useConsultas = ({ onLoaded } = {}) => {
   const [liberandoId, setLiberandoId] = useState(null);
 
   const buscarConsultas = async () => {
+    if (!user?.id) return;
+
+    let isActive = true;
+    setConsultas([]);
+    setLoading(true);
+
     try {
-      setLoading(true);
       const { data } = await getReservas({ usuario_id: user.id });
+      if (!isActive) return;
 
       const enriched = await Promise.all((data || []).map(async (c) => {
         const otherId = c.profissional_id;
@@ -47,13 +53,19 @@ export const useConsultas = ({ onLoaded } = {}) => {
         } catch { return c; }
       }));
 
+      if (!isActive) return;
       setConsultas(enriched);
       onLoaded?.(enriched);
     } catch {
+      if (!isActive) return;
       showError('Erro ao carregar consultas.');
     } finally {
-      setLoading(false);
+      if (isActive) setLoading(false);
     }
+
+    return () => {
+      isActive = false;
+    };
   };
 
   const buscarVagasPendentes = async () => {

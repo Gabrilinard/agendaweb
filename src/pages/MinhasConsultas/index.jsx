@@ -50,7 +50,7 @@ const MinhasConsultas = () => {
     if (!user?.id) { navigate('/Entrar'); return; }
     consultas.buscarConsultas();
     consultas.buscarVagasPendentes();
-  }, []);
+  }, [user?.id, navigate]);
 
   const tabMap = {
     proximas:  consultas.proximas,
