@@ -3,7 +3,7 @@ import client from '../../../api/client';
 export const agendarService = {
   getProfissionais: () => client.get('/profissionais'),
 
-  getProfissionalById: (id) => client.get(`/usuarios/solicitarDados/${id}`),
+  getProfissionalById: (id) => client.get(`/profissionais/${id}`),
 
   getReservasProfissional: (profissionalId) =>
     client.get('/reservas', { params: { profissional_id: profissionalId } }),
