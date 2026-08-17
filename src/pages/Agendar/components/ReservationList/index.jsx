@@ -1,6 +1,7 @@
 import React from 'react';
 import { CalendarDays } from 'lucide-react';
 import DatePicker from 'react-datepicker';
+import { useNavigate } from 'react-router-dom';
 import {
   ContainerEdicao,
   DatePickerWrapper,
@@ -35,14 +36,21 @@ const ReservationItem = ({ reserva, actions }) => {
 
   const isEditing = reservaEditando?.id === reserva.id;
   const status = getStatus(reserva.status);
+  const navigate = useNavigate();
 
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '14px 18px', borderRadius: '10px',
-      border: '1px solid #F0EFE9', background: 'white',
-      flexWrap: 'wrap', gap: '10px', fontFamily: 'Figtree, sans-serif',
-    }}>
+    <div
+      onClick={() => navigate('/minhas-consultas')}
+      style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '14px 18px', borderRadius: '10px',
+        border: '1px solid #F0EFE9', background: 'white',
+        flexWrap: 'wrap', gap: '10px', fontFamily: 'Figtree, sans-serif',
+        cursor: 'pointer', transition: 'background 0.15s, border-color 0.15s',
+      }}
+      onMouseEnter={e => { e.currentTarget.style.background = '#FAFAF7'; e.currentTarget.style.borderColor = '#DDD8D0'; }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.borderColor = '#F0EFE9'; }}
+    >
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         <CalendarDays size={18} color="#888" />
         <span style={{ fontSize: '14px', color: '#1a1a1a' }}>
@@ -52,7 +60,7 @@ const ReservationItem = ({ reserva, actions }) => {
         </span>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+      <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
         <span style={{
           background: status.bg, color: status.color,
           borderRadius: '20px', padding: '4px 12px',
@@ -113,7 +121,7 @@ const ReservationItem = ({ reserva, actions }) => {
       </div>
 
       {isEditing && novaData && (
-        <ContainerEdicao style={{ width: '100%', marginTop: '10px' }}>
+        <ContainerEdicao onClick={e => e.stopPropagation()} style={{ width: '100%', marginTop: '10px' }}>
           <Label>Data:</Label>
           <DatePickerWrapper>
             <DatePicker
