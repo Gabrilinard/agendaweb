@@ -248,7 +248,7 @@ export const Button_geral = styled.div`
 
 export const Container_Important = styled.div`
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
   gap: 20px;
   width: 100%;
   margin-bottom: 16px;

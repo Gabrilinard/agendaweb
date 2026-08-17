@@ -44,7 +44,7 @@ const CardOuter = styled.div`
   flex-shrink: 0;
   overflow: hidden;
   border: 1.5px solid #F0EFE9;
-  align-self: stretch;
+  align-self: flex-start;
 
   @media (max-width: 768px) {
     max-width: 100%;
