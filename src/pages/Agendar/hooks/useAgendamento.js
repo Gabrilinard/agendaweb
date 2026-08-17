@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNotification } from '../../../contexts/NotificationContext';
 import { parseDia } from '../../../utils/formatters';
 import { agendarService } from '../services/api';
@@ -128,18 +128,20 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
     }
   }, [dataSelecionada, profissionalInfo, reservasProfissional]);
 
-  const isDateAvailable = (date) => {
+  const diaNaAgendaDoProfissional = (date) => {
     if (!profissionalInfo || !profissionalInfo.diasAtendimento) return true;
 
     const diasSemana = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
     const diaSemana = diasSemana[date.getDay()];
 
-    const diaNaAgenda = Array.isArray(profissionalInfo.diasAtendimento)
+    return Array.isArray(profissionalInfo.diasAtendimento)
       ? profissionalInfo.diasAtendimento.includes('Todos os dias') ||
         profissionalInfo.diasAtendimento.some((d) => normalizarDiaSemana(d) === normalizarDiaSemana(diaSemana))
       : true;
+  };
 
-    if (!diaNaAgenda) return false;
+  const isDateAvailable = (date) => {
+    if (!diaNaAgendaDoProfissional(date)) return false;
 
     // Se for hoje e todos os horários de hoje já passaram, o dia deixa de ser selecionável.
     const hoje = new Date();
@@ -149,6 +151,33 @@ export const useAgendamento = (user, profissionalInfo, reservasProfissional, nom
 
     return true;
   };
+
+  const encontrarProximaDataDisponivel = (apartirDe) => {
+    for (let i = 1; i <= 60; i++) {
+      const candidata = new Date(apartirDe);
+      candidata.setDate(candidata.getDate() + i);
+      if (diaNaAgendaDoProfissional(candidata) && getHorariosDoDiaFormatados(candidata).length > 0) {
+        return candidata;
+      }
+    }
+    return null;
+  };
+
+  const ajusteInicialFeito = useRef(false);
+
+  useEffect(() => {
+    if (ajusteInicialFeito.current) return;
+    if (sugestaoInicial?.dia) { ajusteInicialFeito.current = true; return; }
+    if (!profissionalInfo) return;
+
+    ajusteInicialFeito.current = true;
+
+    const dataAtualTemHorario = isDateAvailable(dataSelecionada) && getHorariosDoDiaFormatados(dataSelecionada).length > 0;
+    if (dataAtualTemHorario) return;
+
+    const proximaData = encontrarProximaDataDisponivel(dataSelecionada);
+    if (proximaData) setDataSelecionada(proximaData);
+  }, [profissionalInfo]);
 
   const agendarConsulta = async (onSuccess) => {
     if (!user) return;
