@@ -26,6 +26,25 @@ const Agendar = () => {
     const { warning } = useNotification();
     const navigate = useNavigate();
     const location = useLocation();
+    const STORAGE_KEY = 'agendar:ultimoProfissional';
+
+    if (location.state?.nome || location.state?.profissionalId) {
+        try {
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(location.state));
+        } catch (e) {
+            // Ignora erros de storage indisponível
+        }
+    }
+
+    const estadoNavegacao = location.state || (() => {
+        try {
+            const salvo = sessionStorage.getItem(STORAGE_KEY);
+            return salvo ? JSON.parse(salvo) : {};
+        } catch (e) {
+            return {};
+        }
+    })();
+
     const {
         nome: nomeProfissional,
         tipo,
@@ -34,7 +53,7 @@ const Agendar = () => {
         diaSugerido,
         horarioSugerido,
         modalidadeSugerida,
-    } = location.state || {};
+    } = estadoNavegacao;
     const emailNotification = useEmailNotification(user);
 
     const {
