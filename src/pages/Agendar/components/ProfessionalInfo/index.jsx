@@ -113,6 +113,26 @@ const ProfessionalInfo = ({ profissionalInfo, location, endereco }) => {
     return String(raw).split(',').map(s => s.trim()).filter(Boolean);
   })();
 
+  const horarioEntries = (() => {
+    const raw = profissionalInfo.horariosAtendimento;
+    if (!raw) return [];
+    try {
+      const obj = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      return Object.entries(obj)
+        .map(([dia, horas]) => {
+          const arr = Array.isArray(horas) ? horas.filter(Boolean) : [];
+          if (!arr.length) return null;
+          const abrev = dia.slice(0, 3);
+          return arr.length === 1
+            ? `${abrev}: ${arr[0]}`
+            : `${abrev}: ${arr[0]} – ${arr[arr.length - 1]}`;
+        })
+        .filter(Boolean);
+    } catch {
+      return [];
+    }
+  })();
+
   return (
     <CardOuter>
       <div style={{
@@ -207,6 +227,25 @@ const ProfessionalInfo = ({ profissionalInfo, location, endereco }) => {
                 fontSize: '13px', fontWeight: '500', width: 'fit-content',
               }}>
                 {pub}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Horários de atendimento */}
+      {horarioEntries.length > 0 && (
+        <div style={{ background: '#F7F7F4', borderRadius: '10px', padding: '12px', marginBottom: '4px' }}>
+          <p style={{ ...sectionLabel, textAlign: 'center' }}>Horários de atendimento</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', justifyContent: 'center' }}>
+            {horarioEntries.map((entry, i) => (
+              <span key={i} style={{
+                display: 'inline-block', background: 'white',
+                border: '1px solid #D1FAE5', color: '#065F46',
+                borderRadius: '6px', padding: '4px 10px',
+                fontSize: '12.5px', fontWeight: '600', width: 'fit-content',
+              }}>
+                {entry}
               </span>
             ))}
           </div>
