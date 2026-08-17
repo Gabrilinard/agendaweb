@@ -15,7 +15,7 @@ import {
     updateReserva,
 } from '../api';
 
-export const useConsultas = ({ onLoaded } = {}) => {
+export const useConsultas = ({ onLoaded, isPacienteView = true } = {}) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { success, error: showError } = useNotification();
@@ -35,7 +35,8 @@ export const useConsultas = ({ onLoaded } = {}) => {
     setLoading(true);
 
     try {
-      const { data } = await getReservas({ usuario_id: user.id });
+      const params = isPacienteView ? { usuario_id: user.id } : { profissional_id: user.id };
+      const { data } = await getReservas(params);
       if (!isActive) return;
 
       const enriched = await Promise.all((data || []).map(async (c) => {

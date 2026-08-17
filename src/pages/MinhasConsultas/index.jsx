@@ -34,13 +34,14 @@ const TABS = [
 ];
 
 const MinhasConsultas = () => {
-  const { user } = useAuth();
+  const { user, viewMode } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('proximas');
+  const isPacienteView = user?.tipoUsuario !== 'profissional' || viewMode === 'paciente';
 
   const avaliacao = useAvaliacao();
 
-  const consultas = useConsultas({ onLoaded: avaliacao.verificarAvaliacoes });
+  const consultas = useConsultas({ onLoaded: avaliacao.verificarAvaliacoes, isPacienteView });
 
   const edit = useEditConsulta({ onSaved: consultas.buscarConsultas });
 
@@ -61,7 +62,7 @@ const MinhasConsultas = () => {
 
   const cardProps = {
     today: consultas.today,
-    isPaciente: true,
+    isPaciente: isPacienteView,
     confirmingId: consultas.confirmingId,
     setConfirmingId: consultas.setConfirmingId,
     liberandoId: consultas.liberandoId,
